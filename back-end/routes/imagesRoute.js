@@ -1,0 +1,104 @@
+const router = require('express').Router()
+const authorization = require('../middlewares/authorization')
+const mongoose = require('mongoose')
+const { customError } = require('../middlewares/error')
+const imageFiles = require('../schema/imagefilesSchema')
+const createimage = require("../middlewares/createimage")
+const multer = require('multer')
+
+const storage = multer.memoryStorage()
+const upload = multer({ storage })
+
+router.get('/images', async (req, res, next) => {
+    const { query: { skip = 0, limit = 0 } } = req
+
+    try {
+        const images = await imageFiles
+            .find()
+            .skip(skip)
+            .limit(limit)
+
+        if (!images.length) throw new Error('Not Found: no image found')
+
+        res.json(images.map((image) => image._id))
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+
+})
+
+router.get('/images/:authorUserName', authorization, async (req, res, next) => {
+    const { params: { authorUserName }, query: { skip = 0, limit = 0 } } = req
+
+    try {
+
+        // get display advater image
+        const userImages = await imageFiles
+            .find({ uploader: authorUserName })
+            .skip(skip)
+            .limit(limit)
+
+        if (!userImages.length) throw new Error('Not Found: no image found')
+
+        res.json(userImages.map((image) => image._id))
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+
+})
+
+router.get('/image/:_id', async (req, res, next) => {
+    const { params: { _id } } = req
+
+    try {
+
+        // verify image id
+        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Not Found: invalid image id')
+
+        // get display advater image
+        const displayImage = await imageFiles.findById({ _id })
+        if (!displayImage) throw new Error('Not Found: no image found')
+
+        res.contentType(displayImage.contentType)
+        res.send(displayImage.data)
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+
+})
+
+router.post('/addimage', authorization, upload.single('file'), createimage, async (req, res, next) => {
+
+    try {
+        res.json(req.image)
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+
+})
+
+router.delete('/deleteimage/:_id', authorization, async (req, res, next) => {
+    const { params: { _id } } = req
+
+    try {
+
+        // verify image id
+        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: invalid image id!')
+
+        // get display advater image
+        const deleteImage = await imageFiles.findByIdAndDelete({ _id })
+        if (!deleteImage) throw new Error('Bad Request: image not deleted!')
+
+        res.json({ deleted: 'sucessfully deleted image' })
+
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+})
+
+module.exports = router
