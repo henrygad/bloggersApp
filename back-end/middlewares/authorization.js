@@ -35,7 +35,6 @@ const authorization = async (req, res, next) => {
 
         next()
     } catch (error) {
-        
         next(new customError(error, 401))
     }
 }

@@ -20,17 +20,22 @@ import { useFetchData, useUserIsLogin } from "./hooks";
 import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser } from "./components";
 import { Homeicon, Mailicon, Notificationsicon, Penicon, Profileicon, Searchicon } from "./components/Icons";
 import tw from "tailwind-styled-components";
-import { useDispatch } from "react-redux";
 import { addProfile } from "./redux/slices/userProfileSlices";
 import { addBlogposts } from "./redux/slices/userBlogpostSlices";
+import { useAppDispatch } from "./redux/slices";
+import { addComments } from "./redux/slices/userCommentsSlices";
+import { Advaterprops, Blogpostprops, Commentprops, Userprops } from "./entities";
+import { addAdvaters } from "./redux/slices/userAdvaters";
 
 const App = () => {
   const [authenticationDialog, setAuthenticationDialog] = useState('');
   const [authenticationCurrentTabOn, setAuthenticationCurrentTabOn] = useState('login');
-  const { loginStatus: { isLogin, loginUserName }, } = useUserIsLogin();
-  const { data: profileData, error: profileError, loading: profileLoading } = useFetchData('/api/loginuser', [isLogin]);
-  const { data: blogpostData, error: blogpostError, loading: blogpostLoading } = useFetchData(isLogin ? `/api/blogposts/${loginUserName}?skip=0&limit=20` : null, [isLogin]);
-  const dispatch = useDispatch();
+  const { loginStatus: { isLogin, loginUserName } } = useUserIsLogin();
+  const { data: profileData, error: profileError, loading: profileLoading } = useFetchData<Userprops>(isLogin ? '/api/loginuser' : null, [isLogin]);
+  const { data: blogpostData, error: blogpostError, loading: blogpostLoading } = useFetchData<Blogpostprops[]>(isLogin ? `/api/blogposts/${loginUserName}?skip=0&limit=5` : null, [isLogin]);
+  const { data: commentData, error: commentError, loading: commentLoading } = useFetchData<Commentprops[]>(isLogin ? '/api/usercomments/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
+  const { data: advaterData, error: advaterError, loading: advaterLoading } = useFetchData<Advaterprops[]>(isLogin ? '/api/images/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
+  const appDispatch = useAppDispatch();
 
   const handleDisplayValidationPage = (item: string) => {
     setAuthenticationDialog('authenticationDialog');
@@ -126,23 +131,43 @@ const App = () => {
   ];
 
   const handleFetchUserProfileData = () => {
-
-    dispatch(addProfile({
+    appDispatch(addProfile({
       data: profileData,
       loading: profileLoading,
       error: profileError,
     }));
 
-    dispatch(addBlogposts({
-      data: blogpostData,
+    appDispatch(addBlogposts({
+      data: blogpostData || [],
       loading: blogpostLoading,
       error: blogpostError
     }));
+
+    appDispatch(addComments({
+      data: commentData || [],
+      loading: commentLoading,
+      error: commentError
+    }));
+
+    appDispatch(addAdvaters({
+      data: advaterData || [],
+      loading: advaterLoading,
+      error: advaterError
+    }));
+
   };
 
   useEffect(() => {
     isLogin && handleFetchUserProfileData();
-  }, [profileLoading, blogpostLoading]);
+  }, [
+    isLogin,
+    profileData, profileLoading, profileError,
+    blogpostData, blogpostLoading, blogpostError,
+    commentData, commentLoading, commentError,
+    advaterData, advaterLoading, advaterError,
+  ]);
+
+
 
   return <Appwrapper>
     <header className="container w-full">
@@ -171,7 +196,7 @@ const App = () => {
         }
       </div>
     </header>
-    <main className="container w-full">
+    <main className="container w-full pb-20">
       <Suspense fallback={<Pageloading />}>
         <Routes>
           <Route path="*" element={<Page404 />} />
@@ -224,7 +249,7 @@ const App = () => {
                     <Tab
                       id="authentication-tab"
                       arrOfTab={authenticationTabs}
-                      parentClass=""
+                      tabClass=""
                       currentTab={authenticationCurrentTabOn}
                     />
                   </div>

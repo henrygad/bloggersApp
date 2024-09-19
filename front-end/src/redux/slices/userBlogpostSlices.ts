@@ -1,9 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { Blogpostprops, Userprops } from "../../entities";
 
-const initialState = {
+type Initialstate = {
     userBlogposts: {
-        data: [{}],
-        loading: true,
+        data: Blogpostprops[]
+        loading: boolean,
+        error: string
+    }
+};
+
+const initialState: Initialstate = {
+    userBlogposts: {
+        data: [],
+        loading: false,
         error: ''
     },
 };
@@ -16,7 +25,7 @@ const userBlogposts = createSlice({
             state.userBlogposts = action.payload;
         },
         createBlogpost: (state, action) => {
-            state.userBlogposts.data.push(action.payload)
+            state.userBlogposts.data = [action.payload, ...state.userBlogposts.data];
         },
         editBlogposts: (state, action) => {
             state.userBlogposts.data = state.userBlogposts.data.map(
@@ -25,10 +34,8 @@ const userBlogposts = createSlice({
         },
         deleteBlogposts: (state, action) => {
             state.userBlogposts.data = state.userBlogposts.data.filter(
-                (item) => item._id === action.payload ? null : item
+                (item) => item._id !== action.payload
             );
-
-            console.log(state.userBlogposts.data);
         },
     },
 });

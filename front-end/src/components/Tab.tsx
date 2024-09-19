@@ -11,7 +11,7 @@ type TabProps = {
             content: ReactNode | null
         }[]
     }[]
-    parentClass: string
+    tabClass: string
     currentTab: string
     childrenTabs?: string
 };
@@ -25,32 +25,32 @@ type Eachtabprops = {
             content: ReactNode | null,
         }[]
     }
-    parentClass: string
+    tabClass: string
     currentTab: string
     childrenTabs?: string
 };
 
-const EatchTab = ({ item, parentClass, childrenTabs }: Eachtabprops) => {
+const EatchTab = ({ item, tabClass, childrenTabs }: Eachtabprops) => {
     
-    return <div>
+    return <>
         {
            ( item.child &&
             item.child.length )?
             <Tab
                 arrOfTab={item.child}
                 id={item.name}
-                parentClass={parentClass}
+                tabClass={tabClass}
                 currentTab={childrenTabs || ''}
             />:
            item.content
         }
        
-    </div>
+    </>
 };
 
-const Tab = ({ id = 'tab', arrOfTab, parentClass, currentTab, childrenTabs}: TabProps) => {
+const Tab = ({ id = 'tab', arrOfTab, tabClass, currentTab, childrenTabs}: TabProps) => {
 
-    return <div id={id} className={parentClass}>
+    return <div id={id} className={tabClass}>
         {
             arrOfTab &&
                 arrOfTab.length ?
@@ -60,7 +60,7 @@ const Tab = ({ id = 'tab', arrOfTab, parentClass, currentTab, childrenTabs}: Tab
                         item={item}
                         key={item.name}
                         currentTab={currentTab}
-                        parentClass={parentClass}
+                        tabClass={tabClass}
                         childrenTabs={childrenTabs}
                     />
                 ) :

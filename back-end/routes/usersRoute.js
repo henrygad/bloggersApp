@@ -43,7 +43,7 @@ router.get('/users/:userName', async (req, res, next) => { // single user
         // get the login user data
         const users = await usersData
             .findOne({ userName })
-            .select('email userName name displayImage bio sex followers following interests _id updatedAt createdAt')
+            .select('email userName name bio country phoneNumber dateOfBirth website displayImage sex followers following interests updatedAt createdAt')
 
         if (!users) throw new Error('Not Found: no user found')
 
@@ -83,7 +83,7 @@ router.patch('/editprofile', authorization, upload.single('avater'), createimage
 
         //sanitized body
         const sanitizedBody = {
-            displayImage: (req.image) && req.image,
+            displayImage: req.image ? req.image : '',
             name: body?.name,
             bio: body?.bio,
             dateOfBirth: body?.dateOfBirth,
@@ -95,13 +95,13 @@ router.patch('/editprofile', authorization, upload.single('avater'), createimage
         }
 
         // update other user data
-        const updateUserData = await usersData.findOneAndUpdate({ userName: authorizeUser }, { ...sanitizedBody })
+        const updateUserData = await usersData.findOneAndUpdate({ userName: authorizeUser }, 
+            { ...sanitizedBody },
+            {new: true}
+        )
         if (!updateUserData) throw new Error('bad request: user data was not updated')
 
-        // grap the updated user data
-        const getUpdatedUserData = await usersData.findOne({ userName: updateUserData.userName })
-
-        res.json(getUpdatedUserData)
+        res.json(updateUserData)
 
     } catch (error) {
 

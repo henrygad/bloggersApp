@@ -5,27 +5,34 @@ const usePostData = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const postData = async (url: string, body: {} | [] | string | null | undefined) => {
+    const postData = async <T,>(url: string, body: {} | [] | string | null | undefined) => {
         try {
             setLoading(true);
             setError('');
 
             const response = await axios.post(url, body);
-            const data = await response.data;
+            const data: T = await response.data;
 
             if (data &&
-                (data.length || Object.keys(data))
+                (Object.keys(data))
             ) {
                 setError('');
                 setLoading(false);
                 return { data: data, ok: true };
             } else throw new Error('this is new error');
             
-        } catch (error) {
+        } catch (_error) {
+            const error = _error as {
+                response: {
+                    data: {
+                        message: string
+                    }
+                }
+            };
             console.error(error);
             setError(error.response.data.message);
             setLoading(false);
-            return { data: '', ok: false };
+            return { data: null, ok: false };
         };
     };
 

@@ -12,21 +12,24 @@ require('dotenv').config()
 const SECRETE = process.env.SECRETE
 
 router.get('/status', authorization, (req, res, next) => {
-    const { authorizeUser } = req
+    const { authorizeUser, session } = req
 
     try {
 
         res.json({
             greetings: `Hi! ${authorizeUser}`,
             status: true,
-            loginUser: authorizeUser
+            loginUser: authorizeUser,
+            sessionId: session.id
         })
 
     } catch (error) {
 
         res.json({
             status: false,
-            loginUser: ''
+            loginUser: '',
+            greetings: `Hi! friend. You logout. login bacck or create a new account.`,
+            sessionId: session.id
         })
     }
 

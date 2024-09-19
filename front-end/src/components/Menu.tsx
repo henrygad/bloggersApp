@@ -1,4 +1,4 @@
-import {  ReactNode, useState } from "react";
+import { ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
 
@@ -36,8 +36,8 @@ type Listprops = {
 };
 
 type Toggledropdownnavprops = {
-  displayParentNav: null
-  setDisplayParentNav: (value: null) => void
+  displayParentNav: Record<string, string>
+  setDisplayParentNav: (value: Record<string, string | string>) => void
   name: string
 };
 
@@ -47,7 +47,7 @@ const Toggledropdownnav = ({ name, displayParentNav, setDisplayParentNav }: Togg
     setDisplayParentNav(
       {
         ...displayParentNav,
-        [getParentName]: !(displayParentNav && displayParentNav[getParentName])
+        [getParentName]: displayParentNav[getParentName] ? '' : getParentName
       }
     );
   };
@@ -64,15 +64,15 @@ const Toggledropdownnav = ({ name, displayParentNav, setDisplayParentNav }: Togg
 
 };
 
-const List = ({ childClass, parentClass, item, nestedChildParentClass }: Listprops) => {
-  const [displayParentNav, setDisplayParentNav] = useState(null);
+const List = ({ childClass, item, nestedChildParentClass }: Listprops) => {
+  const [displayParentNav, setDisplayParentNav] = useState<Record<string, string>>({});
   if (!item) return;
 
   return <li id={item.name}
     className={childClass}
   >
     {item.to ?
-      <Link to={item.to}>
+      <Link className="px-1 border-b" to={'/' + item.to}>
         {item.name}
         {item.child &&
           item.child.length ?
@@ -95,7 +95,7 @@ const List = ({ childClass, parentClass, item, nestedChildParentClass }: Listpro
           /> :
           null
         }
-      </span> 
+      </span>
     }
 
     {(item.child &&

@@ -1,4 +1,4 @@
-import { ReactNode, useRef} from "react";
+import { ReactNode, useRef } from "react";
 import { useClickOutSide } from "../hooks";
 
 type Props = {
@@ -21,11 +21,13 @@ const Dialog = ({
     setDialog,
 }: Props) => {
     const dialogRef = useRef(null);
-    useClickOutSide(dialogRef, () => { setDialog('') });
+    useClickOutSide(dialogRef, () => { setDialog(dialog ? '' : dialog) });
 
     return <main
-        className={`${dialog === currentDialog ? 'block' : 'hidden'} fixed top-0 bottom-0 right-0 left-0 z-50 ${parentClass}`}>
-        <div ref={dialogRef} className={childClass}>
+        id={id}
+        className={`${dialog.trim().toLocaleLowerCase() === currentDialog.trim().toLocaleLowerCase() ? 'block' : 'hidden'} 
+        fixed top-0 bottom-0 right-0 left-0 backdrop-blur-sm  z-50 ${parentClass}`}>
+        <div ref={dialogRef} className={`${childClass}  `}>
             {children}
         </div>
     </main>

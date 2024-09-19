@@ -25,7 +25,7 @@ router.get('/searchblogposts', async (req, res, next) => {
             !session.searchHistory.length
         ) throw new Error('not found: epmty field or no session search history array provided')
 
-        // search through all blogpost return search result
+        // search through all blogpost and return search result
         const searchedBlogposts = await blogpostsData
             .find({ $or: conditions })
             .skip(skip)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Trythistexteditor from '../custom-text-editor/Trythistexteditor'
 import { Button, Dialog, Displayimage, Fileinput, Input, Menu } from '../components';
-import displayImagePlaceHolder from '../assert/imageicon.png'
+import displayImagePlaceHolder from '../assert/imageplaceholder.png'
 import { useDeleteData, useGetLocalMedia, usePatchData, usePostData } from '../hooks';
 import { useDispatch} from 'react-redux';
 import { createBlogpost, deleteBlogposts, editBlogposts } from '../redux/slices/userBlogpostSlices';
@@ -112,7 +112,7 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
                     </>}
                     buttonClass='test-base'
                     id="delete"
-                    handleClick={() => handleUnpublishedBlogpost(blogpostToEdit?._id || getBlogpostId)}
+                    handleClick={() => handleUnpublishBlogpost(blogpostToEdit?._id || getBlogpostId)}
                 /> :
                 null
         },
@@ -129,7 +129,7 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
                     </>}
                     buttonClass='test-base'
                     id="delete"
-                    handleClick={() => blogpostStatus === 'unpublished' && handleRepublishedBlogpost(blogpostToEdit?._id || getBlogpostId)}
+                    handleClick={() => blogpostStatus === 'unpublished' && handleRepublishBlogpost(blogpostToEdit?._id || getBlogpostId)}
                 /> :
                 null
         },
@@ -233,7 +233,7 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
         await edit(_id, body, 'published');
     };
 
-    const handleUnpublishedBlogpost = async (_id: string) => {
+    const handleUnpublishBlogpost = async (_id: string) => {
         const body = {
             displayImage: '',
             title: getTitleContent?.text,
@@ -255,7 +255,7 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
         await edit(_id, body, 'unpublished');
     };
 
-    const handleRepublishedBlogpost = async (_id: string) => {
+    const handleRepublishBlogpost = async (_id: string) => {
         const body = {
             displayImage: '',
             title: getTitleContent?.text,
@@ -278,7 +278,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
     };
 
     const handleDeleteBlogpost = async (_id: string) => {
-
         const url = '/api/deleteblogpost/' + _id;
 
         const response = await deleteData(url);

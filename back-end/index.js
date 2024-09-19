@@ -52,7 +52,7 @@ Mongoose.connect(DBURI)
                 session.searchHistory = []
             }
 
-            res.json({ greetings: 'Wellcome! friend' })
+            res.json({ greetings: 'Wellcome! friend', sessionId: session.id })
         })
 
         app.use('/api', routes)

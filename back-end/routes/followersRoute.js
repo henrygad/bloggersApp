@@ -4,58 +4,71 @@ const { customError } = require('../middlewares/error')
 const usersData = require('../schema/usersDataSchema')
 
 
-router.patch('/addfollowerto/:userToFollow', authorization, async (req, res, next) => {
+router.patch('/follow/:userToFollow', authorization, async (req, res, next) => {
     const { params: { userToFollow }, authorizeUser } = req
 
     try {
 
-        if (!userName ||
-            !userNameToNotify.startsWith('@')
-        ) throw new Error('bad request: empty fields or invalid userName')
+        if (!userToFollow.startsWith('@')) throw new Error('bad request: empty fields or invalid userName')
 
         // check if user to follow exist
         const getUser = await usersData.findOne({ userName: userToFollow })
-        if (!getUser) throw new Error('bad request: no user was found')
+        if (!getUser) throw new Error('bad request: this user was not found')
 
-        // check if already followed user
-        const alreadyFollowing = getUser.followers.includes(authorizeUser)
-        if (alreadyFollowing) throw new Error('bad request: user already followed')
+        // check if already followed this user
+        const alreadyFollowed = getUser.followers.includes(authorizeUser)
+        if (alreadyFollowed) throw new Error('bad request: already followed user')
 
-        // follow user
-        const followed = await usersData.findOneAndUpdate({ userName: getUser.userName }, { followers: [...getUser.followers, authorizeUser] })
-        if(!followed) throw new Error('bad request: user was not followed')
-            
-        res.json({ followed: userToFollow})
+        // follow this user
+        const followed = await usersData.findOneAndUpdate({ userName: getUser.userName },
+            { $push: { followers: authorizeUser } },
+            { new: true }
+        )
+        if (!followed.followers) throw new Error('bad request: user was not followed')
+
+        // add the userName to follow to the requestee following 
+        const addFollowing = await usersData.findOneAndUpdate({ userName: authorizeUser }, {
+            $push: { following: followed.userName }  // start from here
+        })
+        if (!addFollowing.following) throw new Error('bad request: user was not add to following')
+
+        res.json({ followed: followed.userName })
 
     } catch (error) {
 
         next(new customError(error, 400))
     }
-
 })
 
-router.delete('/unfollowerfrom/:userToUnfollow', authorization, async (req, res, next) => {
+router.patch('/unfollow/:userToUnfollow', authorization, async (req, res, next) => {
     const { params: { userToUnfollow }, authorizeUser } = req
 
     try {
 
-        if (!userName ||
-            !userNameToNotify.startsWith('@')
-        ) throw new Error('bad request: empty fields or invalid userName')
-        
+        if (!userToUnfollow.startsWith('@')) throw new Error('bad request: empty fields or invalid userName')
+
         // check if user exist
         const getUser = await usersData.findOne({ userName: userToUnfollow })
-        if (!getUser) throw new Error('bad request: no user was found')
+        if (!getUser) throw new Error('bad request: this user was not found')
 
         // unfollow user
-        const unFollowd = await usersData.findOneAndUpdate({ userName: getUser.userName }, { followers: getUser.followers.filter((user) => user !== authorizeUser) })
-        if (!unFollowd) throw new Error('bad request: user not followed')
+        const unFollowd = await usersData.findOneAndUpdate({ userName: getUser.userName },
+            { $pull: { followers: authorizeUser } },
+            { new: true }
+        )
+        if (!unFollowd.followers) throw new Error('bad request: user not followed')
 
-        res.json({ unFollowd: userToUnfollow })
+        // delete the userName to unfollow from the requestee following 
+        const removeFollowing = await usersData.findOneAndUpdate({ userName: authorizeUser }, {
+            $pull: { following: unFollowd.userName }
+        })
+        if (!removeFollowing.following) throw new Error('bad request: user was not remove from following')
+
+        res.json({ unFollowd: unFollowd.userName })
 
     } catch (error) {
 
-       next(new customError(error, 400))
+        next(new customError(error, 400))
     }
 
 })

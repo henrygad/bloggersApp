@@ -1,11 +1,4 @@
 
-
-export type User = {
-    id: number
-    name: string
-    isAdmin?: boolean
-};
-
 export type Userauthentication = {
     token: string
     userName: string
@@ -23,6 +16,13 @@ export type Signup = {
     password: string
 };
 
+export type UsershortInforprops = {
+    userName: string,
+    name: string,
+    image: string,
+    displayImage: string
+};
+
 export type Userprops = {
     _id: string
     displayImage: string
@@ -31,7 +31,7 @@ export type Userprops = {
     name: string
     dateOfBirth: string
     country: string
-    phoneNumber: number,
+    phoneNumber: number
     sex: string
     website: string
     bio: string
@@ -49,35 +49,43 @@ export type Userprops = {
 
 export type Blogpostprops = {
     _id: string
-    displayImage: string,
-    authorUserName: string,
-    title: string,
-    body: string,
-    _html: { title: string, body: string },
-    catigory: string,
-    tags: string,
-    mentions: string,
-    slug: string,
-    url: string,
-    likes: Number,
-    views: Number,
-    status: string,
+    displayImage: string
+    authorUserName: string
+    title: string
+    body: string
+    _html: { title: string, body: string }
+    catigory: string
+    tags: string
+    mentions: string
+    slug: string
+    url: string
+    likes: string[]
+    views: string[]
+    shares: string[]
+    status: string
     updatedAt: string
     createdAt: string
 };
 
 export type Commentprops = {
-    _id: string;
-    parentBlogpostId: string
-    parentCommentId: string
+    _id: string
     authorUserName: string
-    contentBody: { _html: string, wholeText: string }
-    mentions: string[]
+    blogpostId: string
+    parentId: string | null
+    children: Commentprops[]
+    url: string
+    body: { _html: string, text: string }
+    commentIsAReplyTo: string[]
+    mentions: string
+    likes: string[]
+    shares: string[]
+    updatedAt: string
+    createdAt: string
 };
 
-export type Quickuserinforprops = {
-    userName: string,
-    name: string,
-    image: string,
-    displayImage: string
+export type Advaterprops = {
+    _id: string
+    fileName: string,
+    size: number,
+    uploader: string,
 };

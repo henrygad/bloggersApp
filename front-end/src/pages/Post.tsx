@@ -41,11 +41,6 @@ const Post = () => {
         content: <Button children="Articles" buttonClass="" id="" handleClick={() => ''} />,
         child: [
           {
-            name: "Published",
-            to: '',
-            content: <Button children="Published" buttonClass="" id="" handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('Published') }} />
-          },
-          {
             name: "Unpublished",
             to: '',
             content: <Button children="Unpublished" buttonClass="" id="" handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('unpublished') }} />
@@ -110,7 +105,6 @@ const Post = () => {
     },
   ];
 
-
   const handleSwitchBetweenParentTabs = (newTabName: string) => {
     const preTabName = parentTabs;
     if (preTabName.trim().toLocaleLowerCase() === 'post' &&
@@ -120,8 +114,6 @@ const Post = () => {
 
     setParentTabs(newTabName);
   };
-
-
 
 
   return <div>
@@ -135,11 +127,11 @@ const Post = () => {
           nestedChildParentClass='space-y-2 ml-4 py-2'
         />
       </div>
-      <div className="flex-1 px-4 pb-40 pt-3">
+      <div className="flex-1 px-4 pt-3">
         <Tab
           id="alltabs"
           arrOfTab={sideBar.map(item => item.tab)}
-          parentClass=""
+          tabClass=""
           currentTab={parentTabs}
           childrenTabs={childrenTabs}
         />

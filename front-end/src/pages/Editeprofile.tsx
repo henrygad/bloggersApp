@@ -29,7 +29,6 @@ const Editeprofile = () => {
     const [file, setFile] = useState<Blob | string>('');
     const url = '/api/editprofile';
 
-    console.log(accountProfile)
 
     const arrOfInputs = [
         {
@@ -132,10 +131,10 @@ const Editeprofile = () => {
         setDateOfBirth(dateOfBirth || '');
         setImageUrl("/api/image/" + displayImage || '');
         setFullName(name || '');
-        setCountry(country || '');
+        setCountry(country || 'USA');
         setWebsite(website || '');
         setBio(bio || '');
-        setSex(sex || '');
+        setSex(sex || 'male');
         setPhoneNumber(phoneNumber || '');
         setEmail(email || '');
     };

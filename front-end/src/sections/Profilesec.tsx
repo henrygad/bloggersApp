@@ -1,59 +1,144 @@
-import React, { useState } from 'react';
-import { Blogpostprops, Userprops } from '../entities';
-import { Button, Displayimage, Menu, Tab } from '../components';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Advaterprops, Blogpostprops, Commentprops, Userprops } from '../entities';
+import { Button, Displayimage, Followbutton, Menu, Tab, Userdotnav } from '../components';
+import Blogpostsec from './Blogpostsec';
+import CommentSec from './CommentSec';
+import Advatersec from './Advatersec';
+import { useUserIsLogin } from '../hooks';
 
 type Props = {
   profileLoading: boolean
   profileError: string
   profileData: Userprops
+
   profileBlogposts: Blogpostprops[]
   profileBlogpostsLoading: boolean
   profileBlogpostsError: string
+  handleServerLoadMoreBlogposts: () => void
+  moreBlogpostsLoading: boolean
+  moreBlogpostsError: string
+
+  profileCommentsData: Commentprops[]
+  profileCommentsLoading: boolean
+  profileCommentsError: string
+  handleServerLoadMoreComments: () => void
+  moreCommentsLoading: boolean
+  moreCommentsError: string
+
+
+  profileAdvatersData: Advaterprops[],
+  profileAdvatersLoading: boolean,
+  profileAdvatersError: string,
+  handleServerLoadMoreAdvaters: () => void,
+  moreAdvatersLoading: boolean,
+  moreAdvatersError: string,
 };
 
 
-const Profilesec = ({ profileLoading, profileError, profileData, profileBlogposts, profileBlogpostsError, profileBlogpostsLoading }: Props) => {
-  const [currentProfileTab, setCurrentProfileTab] = useState('posts');
-  const navigate  = useNavigate();
+const Profilesec = ({
+  profileLoading,
+  profileData,
 
-  const arrProfiletabs = [
+  profileBlogposts,
+  profileBlogpostsLoading,
+  profileBlogpostsError,
+  handleServerLoadMoreBlogposts,
+  moreBlogpostsLoading,
+  moreBlogpostsError,
+
+  profileCommentsData,
+  profileCommentsLoading,
+  profileCommentsError,
+  handleServerLoadMoreComments,
+  moreCommentsLoading,
+  moreCommentsError,
+
+  profileAdvatersData,
+  profileAdvatersLoading,
+  profileAdvatersError,
+  handleServerLoadMoreAdvaters,
+  moreAdvatersLoading,
+  moreAdvatersError,
+
+}: Props) => {
+  const { loginStatus: { loginUserName } } = useUserIsLogin();
+  const isAccountOwner = profileData && profileData?.userName === loginUserName;
+
+  const [currentProfileTab, setCurrentProfileTab] = useState('blogpostssec');
+
+  const profileTabs = [
     {
-      name: 'Post',
-      to: '',
-      content: <Button children={'Post'} buttonClass='' handleClick={() => setCurrentProfileTab('')} />,
-      tab: <div>Post</div>
+      menu: {
+        name: 'blogpostssec',
+        to: '',
+        content: <Button children={'Posts'} buttonClass='' handleClick={() => setCurrentProfileTab('blogpostssec')} />,
+      },
+      tab: {
+        name: 'blogpostssec',
+        to: '',
+        content: <Blogpostsec
+          profileBlogposts={profileBlogposts}
+          profileBlogpostsLoading={profileBlogpostsLoading}
+          profileBlogpostsError={profileBlogpostsError}
+          handleServerLoadMoreBlogposts={handleServerLoadMoreBlogposts}
+          moreBlogpostsLoading={moreBlogpostsLoading}
+          moreBlogpostsError={moreBlogpostsError}
+        />
+      }
     },
     {
-      name: 'Comments',
-      to: '',
-      content: <Button children={'Comments'} buttonClass='' handleClick={() => setCurrentProfileTab('')} />,
-      tab: <div>Comments</div>,
+      menu: {
+        name: 'commentssec',
+        to: '',
+        content: <Button children={'Comments'} buttonClass='' handleClick={() => setCurrentProfileTab('commentssec')} />,
+      },
+      tab: {
+        name: 'commentssec',
+        to: '',
+        content: <CommentSec
+          profileCommentsData={profileCommentsData}
+          profileCommentsLoading={profileCommentsLoading}
+          profileCommentsError={profileCommentsError}
+          handleServerLoadMoreComments={handleServerLoadMoreComments}
+          moreCommentsLoading={moreCommentsLoading}
+          moreCommentsError={moreCommentsError}
+        />
+      },
     },
     {
-      name: 'Profile images',
-      to: '',
-      content: <Button children={'Profile images'} buttonClass='' handleClick={() => setCurrentProfileTab('')} />,
-      tab: <div>Profile images</div>,
+      menu: {
+        name: 'advaterssec',
+        to: '',
+        content: <Button children={'Advaters'} buttonClass='' handleClick={() => setCurrentProfileTab('advaterssec')} />,
+        tab: <div>Profile images</div>,
+      },
+      tab: {
+        name: 'advaterssec',
+        to: '',
+        content: <Advatersec
+          profileAdvatersData={profileAdvatersData}
+          profileAdvatersLoading={profileAdvatersLoading}
+          profileAdvatersError={profileAdvatersError}
+          handleServerLoadMoreAdvaters={handleServerLoadMoreAdvaters}
+          moreAdvatersLoading={moreAdvatersLoading}
+          moreAdvatersError={moreAdvatersError}
+        />
+      },
     },
     {
-      name: 'Groups',
-      to: '',
-      content: <Button children={'Groups'} buttonClass='' handleClick={() => setCurrentProfileTab('')} />,
-      tab: <div>Grops</div>,
-    },
-    {
-      name: 'Cousers',
-      to: '',
-      content: <Button children={'Cousers'} buttonClass='' handleClick={() => setCurrentProfileTab('')} />,
-      tab: <div>Cousers</div>,
+      menu: {
+        name: 'groupssec',
+        to: '',
+        content: <Button children={'Groups'} buttonClass='' handleClick={() => setCurrentProfileTab('groupssec')} />,
+        tab: <div>Grops</div>,
+      },
+      tab: {
+        name: 'groupssec',
+        to: '',
+        content: <div>Groups</div>
+      },
     },
   ];
-
-
-  const handleEditBlogpost = (blogpost: Blogpostprops)=>{
-    navigate('/createpost', {state: {toEdit: true, data: blogpost}});
-  };
 
   return <>
     {
@@ -70,48 +155,55 @@ const Profilesec = ({ profileLoading, profileError, profileData, profileBlogpost
 
                     <Displayimage
                       id={'avater'}
-                      imageUrl={"/api/image/" + profileData.displayImage}
+                      imageUrl={"/api/image/" + profileData?.displayImage}
                       parentClass='h-14 w-14'
                       imageClass='object-contain rounded-full border-2 border-green-300'
                       onClick={() => ''}
                     />
                     <div className='flex flex-col font-secondary '>
-                      <span id='userName' className='text-sm opacity-50 ' >{profileData.userName}</span>
-                      <span id='name' className='text-base font-semibold' >{profileData.name}</span>
+                      <span id='name' className='text-base font-semibold' >{profileData?.name}</span>
+                      <span id='userName' className='text-sm opacity-50 ' >{profileData?.userName}</span>
                     </div>
                     <div className='font-text'>
                       <div className='mt-4' ></div>
-                      <span id='bio' className='block text-[0.94rem] md:text-base text-wrap max-w-[320px]'>{profileData.bio}</span>
+                      <span id='bio' className='block text-[0.94rem] md:text-base text-wrap max-w-[480px]'>{profileData?.bio}</span>
                     </div>
                     <div className='flex flex-col gap-1 text-sm'>
-                      <span id='sex' className=' capitalize' >{profileData.sex}</span>
-                      <span id="dateOfBirth">{profileData.dateOfBirth}</span>
+                      <span id='sex' className=' capitalize' >{profileData?.sex}</span>
+                      <span id="dateOfBirth">{profileData?.dateOfBirth}</span>
                     </div>
                     <div className='flex flex-col gap-1 text-sm'>
                       <div className='mt-1'></div>
-                      <span id='email'>{profileData.email}</span>
-                      <span id='phoneNumber'>{profileData.phoneNumber}</span>
-                      <a id="website" href={profileData.website} className='underline cursor-pointer '>{profileData.website}</a>
-                      <span id='country'>{profileData.country}</span>
+                      <span id='email'>{profileData?.email}</span>
+                      <span id='phoneNumber'>{profileData?.phoneNumber}</span>
+                      <a id="website" href={profileData?.website} className='underline cursor-pointer '>{profileData?.website}</a>
+                      <span id='country'>{profileData?.country}</span>
                     </div>
                   </div>
-                  <div className='flex flex-col items-end gap-8 h-full mt-10'>
+                  <div className='flex flex-col items-end gap-8 relative h-full'>
                     {/* user intertractions */}
-                    <div className='flex items-center gap-4 '>
-                      <Button children={'Follow'} buttonClass='border' />
-                      <Button children={'DM'} buttonClass='border' />
-                    </div>
+                    <Userdotnav
+                      userName={profileData?.userName}
+                    />
+                    <div id='space'></div>
+                    {!isAccountOwner ?
+                      <div className='flex items-center gap-4'>
+                        <Followbutton userName={profileData?.userName} />
+                        <Button children={'DM'} buttonClass='border' />
+                      </div> :
+                      null
+                    }
                     <div className='flex flex-wrap items-center justify-end gap-4'>
                       <Button children={
                         <>
                           <span className='border-b pb-1'>Followers</span>
-                          <span className='block pt-1'>90</span>
+                          <span className='block pt-1'>{profileData?.followers?.length}</span>
                         </>
                       } buttonClass='' />
                       <Button children={
                         <>
                           <span className='border-b pb-1'>Following</span>
-                          <span className='block pt-1'>1000</span>
+                          <span className='block pt-1'>{profileData?.following?.length}</span>
                         </>
                       } buttonClass='' />
                       <Button children={
@@ -125,44 +217,18 @@ const Profilesec = ({ profileLoading, profileError, profileData, profileBlogpost
                 </div>
                 <div id='profile-tabs' className='w-full pt-5'>
                   {/* tabs */}
-                  <div id='profile-tab-menu' className='relative'>
+                  <div id='profile-tab-menus' className='sticky top-0 '>
                     <Menu
-                      arrOfMenu={arrProfiletabs}
-                      parentClass="flex justify-between gap-4 sticky bottom-0 border px-2 py-1"
+                      arrOfMenu={profileTabs.map(item => item.menu)}
+                      parentClass="flex justify-between gap-4 border px-2 py-1 shadow-sm"
                       childClass=""
                     />
                   </div>
-                  <div id='profile-tab'>
+                  <div id='profile-tabs'>
                     <Tab
-                      id={'profileTab'}
-                      arrOfTab={[
-                        {
-                          name: 'posts', content: <div>
-                            <div>
-                              {!profileBlogpostsLoading ?
-                                <div>
-                                  {profileBlogposts &&
-                                    profileBlogposts.length ?
-                                    <div className='space-y-4'>
-                                      {profileBlogposts.map(
-                                        (item) => <div  key={item._id}
-                                        className='border'
-                                        >
-                                          <div>{item.title}</div>
-                                          <div>{item.body}</div>
-                                          <button onClick={()=>handleEditBlogpost(item)}  >edit</button>
-                                        </div>
-                                      )}
-                                    </div> :
-                                    <div>no blog post</div>
-                                  }
-                                </div> :
-                                <div>loading blogpost...</div>}
-                            </div>
-                          </div>
-                        }
-                      ]}
-                      parentClass="py-4"
+                      id={'profile-tab-wrapper'}
+                      arrOfTab={profileTabs.map(item => item.tab)}
+                      tabClass="flex justify-center pt-5"
                       currentTab={currentProfileTab}
                     />
                   </div>
@@ -171,7 +237,7 @@ const Profilesec = ({ profileLoading, profileError, profileData, profileBlogpost
               <div>profile not found</div>
           }
         </div> :
-        <div>loading profileData...</div>
+        <div>loading profileData?...</div>
     }
   </>
 }

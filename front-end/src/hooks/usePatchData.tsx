@@ -21,7 +21,14 @@ const usePatchData = () => {
                 return { data: data, ok: true };
             } else throw new Error('this is new error');
             
-        } catch (error) {
+        } catch (_error) {
+            const error = _error as {
+                response: {
+                    data: {
+                        message: string
+                    }
+                }
+            };
             console.error(error);
             setError(error.response.data.message);
             setLoading(false);

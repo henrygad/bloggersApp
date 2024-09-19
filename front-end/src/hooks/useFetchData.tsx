@@ -1,44 +1,58 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
-const useFetchData = (url?: string | null, dependences: (string | boolean | undefined | null)[] = []) => {
-    const [data, setData] = useState(null);
+const useFetchData = <T,>(url?: string | null, dependences: any[] = []) => {
+    const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const fetchData = async (url: string) => {
-
         try {
-            setError('');
             setLoading(true);
+            setError('');
 
             const response = await axios.get(url);
-            const data = await response.data;
+            const data: T = await response.data;
 
-            if (data &&
-                (data.length || Object.keys(data))
-            ) {
+            if (data ||
+                (data && Object.keys(data))) {
+
                 setData(data);
-                setError('');
+                setError(' ');
                 setLoading(false);
+
+                return { ok: true, data };
+
             } else throw new Error('this is new error');
 
-        } catch (error) {
+        } catch (_error) {
+
+            const error = _error as {
+                response: {
+                    data: {
+                        message: string
+                    }
+                }
+            };
+
             setData(null);
             setError(error.response.data.message);
             setLoading(false);
             console.error(error);
 
+            return { ok: true, data: null };
         };
+
     };
 
     useEffect(() => {
-        url ?
+        url?.trim() ?
             url.trim() !== '' && fetchData(url) :
             null;
     }, dependences);
 
-    return { fetchData, data, error, loading };
+    return { fetchData, data, error, loading};
 };
 
 export default useFetchData
+

@@ -11,8 +11,9 @@ const blogpostsData = new mongoose.Schema({
     mentions: String,
     slug: { type: String, unique: true },
     url: { type: String, unique: true },
-    likes: Number,
-    views: Number,
+    likes: [String],
+    views: [String],
+    shares: [String],
     status: String,
 },
     {

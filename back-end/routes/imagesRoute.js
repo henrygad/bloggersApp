@@ -41,7 +41,13 @@ router.get('/images/:authorUserName', authorization, async (req, res, next) => {
 
         if (!userImages.length) throw new Error('Not Found: no image found')
 
-        res.json(userImages.map((image) => image._id))
+        res.json(userImages.map((image) => ({
+            _id:image._id, 
+            fileName: image.fileName, 
+            size: image.size,
+            uploader: image.uploader
+        })))
+        
     } catch (error) {
 
         next(new customError(error, 404))

@@ -27,7 +27,7 @@ const Index = ({
   HandleOnTextAreaChange,
   placeHolder = 'start typing' }: Props) => {
 
-  const snaitizeHTML = (html: string) => {
+  const sanitizeHTML = (html: string) => {
     return {
       __html: DOMPurify.sanitize(html)
     };
@@ -82,7 +82,7 @@ const Index = ({
       contentEditable
       onInput={handleInput}
       onMouseLeave={handleMouseLeave}
-      dangerouslySetInnerHTML={snaitizeHTML(!textAreaConfig.addNew ? textAreaConfig?.body || '' : '')}
+      dangerouslySetInnerHTML={sanitizeHTML(!textAreaConfig.addNew ? textAreaConfig?.body || '' : '')}
     >
     </div>
   </div>

@@ -16,8 +16,20 @@ import Displayimage from './Displayimage';
 import Fileinput from './Fileinput';
 import Selectinput from './Selectinput';
 import Button from './Button';
+import Singleblogpost from './Singleblogpost';
+import UsershortInfor from './UsershortInfor';
+import Dotnav from './Dotnav';
+import Singlecomment from './Singlecomment';
+import SingleImage from './SingleImage';
+import Userdotnav from './Userdotnav';
+import Followbutton from './Followbutton';
+import Likebutton from './Likebutton';
+import Blogpostcommentbutton from './Blogpostcommentbutton';
+import Viewbutton from './Viewbutton';
 
 export {
+    Viewbutton,
+    Blogpostcommentbutton,
     Button,
     Menu,
     Conpanylogo,
@@ -34,6 +46,7 @@ export {
     Openeye,
     Closedeye,
     Dialog,
+    Likebutton,
     Tab,
     Signinuser,
     Signupuser,
@@ -43,5 +56,12 @@ export {
     Fileinput,
     Imageplaceholder,
     Selectinput,
+    Singleblogpost,
+    UsershortInfor,
+    Dotnav,
+    Singlecomment,
+    SingleImage,
+    Userdotnav,
+    Followbutton,
 };
 

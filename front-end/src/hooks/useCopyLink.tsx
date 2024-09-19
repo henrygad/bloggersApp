@@ -1,12 +1,23 @@
+import { useState } from "react";
 
-const useCopyLink = (url: string | null | undefined = '') => {
-    const handleCopyLink =()=>{
-        navigator.clipboard.writeText(url || '')
-        .then(()=>console.log('copied'))
-        .catch((err)=> console.log(err))
-     };
+const useCopyLink = (url: string) => {
+  const [copied, setCopied] = useState(false);
 
-  return {copyLink: handleCopyLink};
+  const handleCopyLink = () => {
+    navigator
+      .clipboard
+      .writeText(url)
+      .then(() => {
+        setCopied(true);
+
+        setTimeout(()=> {
+          setCopied(false);
+        }, 1000)
+      })
+      .catch(() => setCopied(false));
+  };
+
+  return { handleCopyLink, copied };
 }
 
 export default useCopyLink;
