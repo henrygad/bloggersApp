@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useUserIsLogin, usePostData } from '../hooks';
 import Input from './Input';
 import tw from 'tailwind-styled-components';
+import { Userstatusprops } from '../entities';
 
 type Props = {
     switchPages: () => void
@@ -11,7 +12,7 @@ type Props = {
 const Signinuser = ({ switchPages, closePages }: Props) => {
     const [value, setValue] = useState('');
     const [passWord, setPassWord] = useState('');
-    const { postData, loading, error: signInError } = usePostData();
+    const { postData, loading, error: signInError } = usePostData()
     const url = 'api/login';
     const { setLoginStatus } = useUserIsLogin();
 
@@ -19,13 +20,13 @@ const Signinuser = ({ switchPages, closePages }: Props) => {
         e.preventDefault();
 
         const body = { value, password: passWord };
-        const response = await postData(url, body); // sign up user
+        const response = await postData<Userstatusprops>(url, body); // sign up user
+        const {ok, data} = response;
 
-        if (response?.ok) {// login user
-            const { data: { status, loginUser } } = response;
+        if (ok && data) {
             setLoginStatus({
-                isLogin: status,
-                loginUserName: loginUser,
+                isLogin: data.isLogin,
+                loginUserName: data.loginUserName,
             });
             setValue('');
             setPassWord('');

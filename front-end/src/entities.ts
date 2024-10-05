@@ -4,6 +4,13 @@ export type Userauthentication = {
     userName: string
 };
 
+export type Userstatusprops = {
+    isLogin: boolean
+    loginUserName: string
+    greetings?: string
+    sessionId?: string
+}
+
 export type Login = {
     userName: string
     email: string
@@ -39,13 +46,19 @@ export type Userprops = {
     followers: string[]
     following: string[]
     interests: string[]
-    notifications: string[]
+    notifications: Notificationsprops[]
     chatIds: string[]
-    media: {
-        avatersImages: string[]
-        blogpostImages: string[]
-    }
 };
+
+export type Notificationsprops = {
+    _id: string
+    typeOfNotification: string
+    msg: string
+    url: string
+    notifyFrom: string
+    checked: boolean,
+    pegs: Notificationsprops[] | []
+}
 
 export type Blogpostprops = {
     _id: string
@@ -55,7 +68,6 @@ export type Blogpostprops = {
     body: string
     _html: { title: string, body: string }
     catigory: string
-    tags: string
     mentions: string
     slug: string
     url: string
@@ -73,7 +85,7 @@ export type Commentprops = {
     blogpostId: string
     parentId: string | null
     children: Commentprops[]
-    url: string
+    parentUrl: string
     body: { _html: string, text: string }
     commentIsAReplyTo: string[]
     mentions: string

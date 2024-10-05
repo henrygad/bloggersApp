@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import Pageloading from "./Pageloading";
-const Home = lazy(()=> import('./Home'));
+const Feed = lazy(()=> import('./Feed'));
 const About = lazy(()=> import('./About'));
 const Contact = lazy(()=> import('./Contact'));
 const Search = lazy(()=> import('./Search'));
@@ -15,7 +15,7 @@ const Notification = lazy(()=> import('./Notification'));
 const Directmessage = lazy(()=> import('./Directmessage'));
 
 export {
-  Home,
+  Feed,
   About,
   Contact,
   Search,

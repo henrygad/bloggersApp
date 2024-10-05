@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Menu, Tab } from "../components";
 import { Button } from "../components";
 import { Createblogpostsec } from "../sections";
@@ -10,22 +10,7 @@ const Post = () => {
   const [parentTabs, setParentTabs] = useState('post');
   const [childrenTabs, setChildrenTabs] = useState('');
 
-  useEffect(() => { // auto move to the post section to edit
-    if (location.state?.toEdit) {
-      setParentTabs('post');
-    };
-  }, [location.state?.toEdit]);
-
-
   const sideBar = [
-    {
-      menu: {
-        name: 'Home',
-        to: '',
-        content: <Button children="Home" buttonClass="" id="" handleClick={() => handleSwitchBetweenParentTabs('home')} />,
-      },
-      tab: { name: 'Home', content: <div id="home">home</div> }
-    },
     {
       menu: {
         name: 'Post',
@@ -38,7 +23,7 @@ const Post = () => {
       menu: {
         name: 'Articles',
         to: '',
-        content: <Button children="Articles" buttonClass="" id="" handleClick={() => ''} />,
+        content: <Button children="Article" buttonClass="" id="" handleClick={() => ''} />,
         child: [
           {
             name: "Unpublished",
@@ -106,28 +91,20 @@ const Post = () => {
   ];
 
   const handleSwitchBetweenParentTabs = (newTabName: string) => {
-    const preTabName = parentTabs;
-    if (preTabName.trim().toLocaleLowerCase() === 'post' &&
-      newTabName.trim().toLocaleLowerCase() !== 'post') {
-      alert('you about to leave this page');
-    };
-
     setParentTabs(newTabName);
   };
-
-
   return <div>
     <div className="flex">
-      <div className="min-w-[140px] border-r  border-stone-700">
+      <div className="min-w-[100px] border-r  border-stone-700">
         <Menu
           arrOfMenu={sideBar.map(item => item.menu)}
           parentClass="text-base font-secondary space-y-3 "
           childClass=""
           id="sideBar"
-          nestedChildParentClass='space-y-2 ml-4 py-2'
+          nestedChildParentClass='space-y-2 ml-2 py-2'
         />
       </div>
-      <div className="flex-1 px-4 pt-3">
+      <div className="flex justify-center pl-4">
         <Tab
           id="alltabs"
           arrOfTab={sideBar.map(item => item.tab)}

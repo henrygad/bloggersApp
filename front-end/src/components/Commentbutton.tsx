@@ -3,67 +3,89 @@ import { Commentprops } from "../entities"
 import Button from "./Button";
 import Dialog from "./Dialog";
 import Trythistexteditor from "../custom-text-editor/Trythistexteditor";
-import { useDeleteData, useFetchData, usePostData } from "../hooks";
+import { useDeleteData, useFetchData, useNotification, usePostData, useUserIsLogin } from "../hooks";
 import { deleteAllText } from "../custom-text-editor/text-area/Config";
 import { useAppDispatch } from "../redux/slices";
 import { createComment, deleteComments } from "../redux/slices/userCommentsSlices";
 import Singlecomment from "./Singlecomment";
+import { current } from "@reduxjs/toolkit";
 
 type Props = {
     arrOfcomment: Commentprops[]
     loadingComment: boolean
+
     blogpostId: string
     blogpostAuthorUserName: string
     blogpostUrl: string
+    blogpostTitle: string
+
+    autoOpenTargetComment?: { autoOpen: boolean, commentId: string, commentAddress: string, comment: Commentprops | null, blogpostId: string, targetLike: { autoOpen: boolean, commentId: string, like: string } }
 }
 
-const Blogpostcomment = ({ arrOfcomment, blogpostId, loadingComment, blogpostAuthorUserName, blogpostUrl }: Props) => {
+const Commentbutton = ({
+    arrOfcomment,
+    loadingComment,
+
+    blogpostId,
+    blogpostAuthorUserName,
+    blogpostTitle,
+    blogpostUrl,
+
+    autoOpenTargetComment = { autoOpen: false, commentId: '', commentAddress: '', comment: null, blogpostId: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
+}: Props) => {
+
+    const { loginStatus: { loginUserName } } = useUserIsLogin()
+
     const { fetchData: fetchSeeMoreCommentData, loading: loadingMoreComment } = useFetchData<Commentprops[]>(null);
-    const seeMoreBlogpostRef = useRef(2);
+    const seeMoreCommentRef = useRef(5);
     const [displayCommentData, setDisplayCommentData] = useState<Commentprops[] | null>(null);
 
+    const [getCommentContent, setGetCommentContent] = useState<{ _html: string, text: string } | undefined>(undefined);
+    const [parentComment, setParentCpmment] = useState<Commentprops | null>(null);
     const [replying, setReplying] = useState<string[] | null>(null);
     const [parentId, setParentId] = useState<string | null>(null);
-    const [getCommentContent, setGetCommentContent] = useState<{ _html: string, text: string } | undefined>(undefined);
+
     const { postData, loading: postCommentLoading } = usePostData();
     const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
     const appDispatch = useAppDispatch();
 
-    const [toggleDialog, setToggleDialog] = useState('');
+    const notify = useNotification();
+
+    const [toggleCommentDialog, setToggleCommentDialog] = useState(' ');
     const [toggleListOfComments, setToggleListOfComments] = useState(false);
 
     const handleAddComment = async (comment: {
         blogpostId: string,
         parentId: string | null,
-        url: string,
+        parentUrl: string,
         body: { _html: string, text: string },
         commentIsAReplyTo: string[]
     }) => {
 
-        if (comment.blogpostId.trim() === ' ') return;
+        if (!comment.blogpostId.trim()) return;
+
         const url = '/api/addcomment';
         const body = comment;
         const response = await postData<Commentprops>(url, { ...body });
         const { ok, data } = response;
 
-        if (ok &&
-            data) {
+        if (ok && data) {
             const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div
             contentEditAbleELe.forEach((element) =>
                 deleteAllText(element as HTMLDivElement)
             );
 
-
-            if (data.parentId) {
-                setDisplayCommentData((pre) => pre ? displayChildrenCommentRecursively(pre, response.data) : pre);
+            if (parentId) {
+                setDisplayCommentData((pre) => pre ? displayChildrenCommentRecursively(pre, data) : pre);
             } else {
-                setDisplayCommentData((pre) => pre ? [response.data, ...pre] : pre);
+                setDisplayCommentData((pre) => pre ? [data, ...pre] : pre);
             };
 
-            setReplying(null);
+            setReplying(null)
             setParentId(null);
             appDispatch(createComment(data));
 
+            handleNotification(data?.parentId || '', data);
         };
     };
 
@@ -118,16 +140,76 @@ const Blogpostcomment = ({ arrOfcomment, blogpostId, loadingComment, blogpostAut
     };
 
     const handleLoadMoreComments = async () => {
-        const { data, ok } = await fetchSeeMoreCommentData(`/api/blogpostcommentsandnestedcomments/${blogpostId}?skip=${seeMoreBlogpostRef.current}&limit=2`);
+        const { data, ok } = await fetchSeeMoreCommentData(`/api/blogpostcommentsandnestedcomments/${blogpostId}?skip=${seeMoreCommentRef.current}&limit=2`);
         if (ok && data) {
             setDisplayCommentData((pre) => pre ? [...pre, ...data] : pre);
-            seeMoreBlogpostRef.current += 2;
+            seeMoreCommentRef.current += seeMoreCommentRef.current;
         };
     };
 
+    const handleNotification = async (parentId: string, comment: Commentprops) => {
+        const { commentIsAReplyTo, authorUserName, parentUrl, _id } = comment;
+
+        if (parentId) { // for notifying all users involve in this comment
+
+            commentIsAReplyTo.map(async (item) => {
+                const isCommentAuthor = authorUserName === item;
+                if (isCommentAuthor) return;
+
+                const url = '/api/notification/' + item;
+                const body = {
+                    typeOfNotification: 'replyComment',
+                    msg: `replied to ${item === parentComment?.authorUserName ?
+                        'your' :
+                        `<span class="font-bold" >${parentComment?.authorUserName?.slice(1)}</span>`
+                        } comment, <span class="underline">${parentComment?.body.text}</span>`,
+                    url: parentUrl + '&' + _id,
+                    notifyFrom: loginUserName,
+                };
+
+                await notify(url, body);
+            });
+
+        } else { // for notifying just the author of the bloppost
+
+            const isCommentAuthor = authorUserName === blogpostAuthorUserName;
+            if (isCommentAuthor) return;
+
+            const url = '/api/notification/' + blogpostAuthorUserName;
+            const body = {
+                typeOfNotification: 'blogpostComment',
+                msg: `commmented on your post, <span class="underline">${blogpostTitle}</span>`,
+                url: parentUrl + '&' + _id,
+                notifyFrom: loginUserName,
+            };
+
+            await notify(url, body);
+        };
+
+    };
+
     useEffect(() => {
-        setDisplayCommentData(arrOfcomment);
-    }, [arrOfcomment]);
+        setDisplayCommentData(
+            autoOpenTargetComment?.autoOpen &&
+                autoOpenTargetComment?.comment ?
+                [autoOpenTargetComment.comment, ...arrOfcomment.filter(item => item._id !== autoOpenTargetComment.comment?._id)] :
+                arrOfcomment
+        );
+    }, [
+        arrOfcomment,
+        autoOpenTargetComment?.autoOpen,
+        autoOpenTargetComment.blogpostId,
+    ]);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setToggleCommentDialog(autoOpenTargetComment?.autoOpen ? autoOpenTargetComment.blogpostId : '');
+            setToggleListOfComments(autoOpenTargetComment?.autoOpen ? true : false);
+        }, 1000);
+    }, [
+        autoOpenTargetComment?.autoOpen,
+        autoOpenTargetComment.blogpostId,
+    ]);
 
     return <div>
         <div>
@@ -135,25 +217,25 @@ const Blogpostcomment = ({ arrOfcomment, blogpostId, loadingComment, blogpostAut
                 id='comment-btn'
                 children={<>
                     Comment:
-                    <span className="bg-blue-300 p-1" onClick={(e) => { { setToggleDialog('blogpostcommentsdialog'); setToggleListOfComments(true); e.stopPropagation() } }}>
+                    <span className="bg-blue-300 p-1" onClick={(e) => { { setToggleCommentDialog(blogpostId); setToggleListOfComments(true); e.stopPropagation() } }}>
                         {displayCommentData ? displayCommentData.length : 0}
                     </span>
                 </>}
                 buttonClass="text-sm border px-1 rounded-md"
-                handleClick={() => { setToggleListOfComments(false); setToggleDialog('blogpostcommentsdialog') }}
+                handleClick={() => { setToggleListOfComments(false); setToggleCommentDialog(blogpostId) }}
             />
         </div>
         <div className="comment-dialog">
             <Dialog
                 id="blogpost-comments-dialog"
-                currentDialog="blogpostcommentsdialog"
+                currentDialog={blogpostId}
                 parentClass="flex justify-center"
                 childClass={`
                     w-full min-w-[280px] sm:min-w-[320px] max-w-[768px] 
                     ${toggleListOfComments ? 'overflow-y-scroll max-h-screen pb-[200px]' : ''}
                 ` }
-                dialog={toggleDialog}
-                setDialog={() => { setToggleDialog(' '); setReplying(null); setParentId(null); }}
+                dialog={toggleCommentDialog}
+                setDialog={() => { setToggleCommentDialog(' '); setReplying(null); setParentId(null); }}
                 children={
                     <>
                         {toggleListOfComments ?
@@ -165,24 +247,24 @@ const Blogpostcomment = ({ arrOfcomment, blogpostId, loadingComment, blogpostAut
                                             {displayCommentData &&
                                                 displayCommentData.length ?
                                                 <>
-                                                    <div>
-                                                        {
-                                                            displayCommentData.map((item, index) =>
-                                                                <Singlecomment
-                                                                    key={index}
-                                                                    index={index}
-                                                                    type="text"
-                                                                    allowNested={true}
-                                                                    comment={item}
-                                                                    setParentId={setParentId}
-                                                                    setReplying={setReplying}
-                                                                    handleDeleteComment={handleDeleteComment}
-                                                                    blogpostId={blogpostId}
-                                                                    deletingLoading={deleteCommentLoading}
-                                                                />
-                                                            )
-                                                        }
-                                                    </div>
+                                                    {
+                                                        displayCommentData.map((item, index) =>
+                                                            <Singlecomment
+                                                                key={index}
+                                                                index={index}
+                                                                type="text"
+                                                                allowNested={true}
+                                                                comment={item}
+                                                                setParentId={setParentId}
+                                                                setReplying={setReplying}
+                                                                setParentComment={setParentCpmment}
+                                                                handleDeleteComment={handleDeleteComment}
+                                                                deletingLoading={deleteCommentLoading}
+
+                                                                autoOpenTargetComment={autoOpenTargetComment}
+                                                            />
+                                                        )
+                                                    }
                                                     <span className="cursor-pointer" onClick={handleLoadMoreComments} >
                                                         {!loadingMoreComment ? 'load more' : 'loading...'}
                                                     </span>
@@ -225,9 +307,9 @@ const Blogpostcomment = ({ arrOfcomment, blogpostId, loadingComment, blogpostAut
                                     handleClick={() => handleAddComment({
                                         blogpostId: blogpostId,
                                         parentId: parentId || null,
-                                        url: blogpostUrl + '/#comments-section/' + Date.now(),
-                                        body: getCommentContent ? getCommentContent : { _html: '', text: '' },
-                                        commentIsAReplyTo: replying ? replying : [blogpostAuthorUserName],
+                                        parentUrl: parentComment?.parentUrl ? (parentComment.parentUrl + '&' + parentComment._id) : blogpostUrl,
+                                        body: getCommentContent || { _html: '', text: '' },
+                                        commentIsAReplyTo: replying || [blogpostAuthorUserName],
                                     })}
                                 />
                             </div>
@@ -239,4 +321,4 @@ const Blogpostcomment = ({ arrOfcomment, blogpostId, loadingComment, blogpostAut
     </div>
 };
 
-export default Blogpostcomment;
+export default Commentbutton;

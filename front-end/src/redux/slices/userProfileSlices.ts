@@ -41,9 +41,20 @@ const userProfile = createSlice({
                 ...data,
                 following: data.following.filter(item => item !== action.payload)
             };
+        },
+        updateNotification: (state, action)=> {
+            const {data} = state.userProfile;
+            state.userProfile.data = {
+                ...data,
+                notifications: action.payload
+            }
         }
+
     }
 });
 
-export const { addProfile, editProfile, deleteProfile, addFollowing, removeFollowing } = userProfile.actions;
+export const { 
+    addProfile, editProfile, 
+    deleteProfile, addFollowing, 
+    removeFollowing, updateNotification } = userProfile.actions;
 export default userProfile.reducer;

@@ -13,21 +13,19 @@ const SECRETE = process.env.SECRETE
 
 router.get('/status', authorization, (req, res, next) => {
     const { authorizeUser, session } = req
-
     try {
 
         res.json({
             greetings: `Hi! ${authorizeUser}`,
-            status: true,
-            loginUser: authorizeUser,
+            isLogin: true,
+            loginUserName: authorizeUser,
             sessionId: session.id
         })
 
     } catch (error) {
-
         res.json({
-            status: false,
-            loginUser: '',
+            isLogin: false,
+            loginUserName: '',
             greetings: `Hi! friend. You logout. login bacck or create a new account.`,
             sessionId: session.id
         })
@@ -84,8 +82,8 @@ router.post('/signup', async (req, res, next) => {
         //send back athorizetion
         res.json({
             greetings: `Hi! ${createUser.userName}`,
-            status: createUser.userName && true,
-            loginUser: createUser.userName
+            isLogin: createUser.userName && true,
+            loginUserName: createUser.userName
         })
 
     } catch (error) {
@@ -126,8 +124,8 @@ router.post('/login', async (req, res, next) => {
         //send back athorizetion
         res.json({
             greetings: `Hi! ${existedUser.userName}`,
-            status: existedUser.userName && true,
-            loginUser: existedUser.userName
+            isLogin: existedUser.userName && true,
+            loginUserName: existedUser.userName
         })
 
     } catch (error) {
@@ -136,16 +134,18 @@ router.post('/login', async (req, res, next) => {
     }
 })
 
-router.post('/logout', (req, res, next) => {
-    const { body: { userName } } = req
+router.post('/logout', authorization, async (req, res, next) => {
+    const { authorizeUser } = req
+
     try {
-        if (!userName) throw new Error('no username was provided')
-        req.session.jwtToken = null  // terminate the jwt token 
+        req.session.jwtToken = null  // terminate the jwt token
+
         res.json({
-            status: false,
-            loginUser: '',
-            greetings: `Hi! ${userName} you loged out `,
+            isLogin: false,
+            loginUserName: '',
+            greetings: `Hi! ${authorizeUser} you loged out `,
         })
+        
     } catch (error) {
         next(new customError(error, 400))
     }

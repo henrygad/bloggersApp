@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import {
-  Home,
+  Feed,
   About,
   Contact,
   Search,
@@ -22,19 +22,21 @@ import { Homeicon, Mailicon, Notificationsicon, Penicon, Profileicon, Searchicon
 import tw from "tailwind-styled-components";
 import { addProfile } from "./redux/slices/userProfileSlices";
 import { addBlogposts } from "./redux/slices/userBlogpostSlices";
-import { useAppDispatch } from "./redux/slices";
+import { useAppDispatch, useAppSelector } from "./redux/slices";
 import { addComments } from "./redux/slices/userCommentsSlices";
 import { Advaterprops, Blogpostprops, Commentprops, Userprops } from "./entities";
-import { addAdvaters } from "./redux/slices/userAdvaters";
+import { addAdvaters } from "./redux/slices/userAdvatersSlices";
 
 const App = () => {
+
   const [authenticationDialog, setAuthenticationDialog] = useState('');
   const [authenticationCurrentTabOn, setAuthenticationCurrentTabOn] = useState('login');
   const { loginStatus: { isLogin, loginUserName } } = useUserIsLogin();
-  const { data: profileData, error: profileError, loading: profileLoading } = useFetchData<Userprops>(isLogin ? '/api/loginuser' : null, [isLogin]);
-  const { data: blogpostData, error: blogpostError, loading: blogpostLoading } = useFetchData<Blogpostprops[]>(isLogin ? `/api/blogposts/${loginUserName}?skip=0&limit=5` : null, [isLogin]);
-  const { data: commentData, error: commentError, loading: commentLoading } = useFetchData<Commentprops[]>(isLogin ? '/api/usercomments/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
-  const { data: advaterData, error: advaterError, loading: advaterLoading } = useFetchData<Advaterprops[]>(isLogin ? '/api/images/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
+  const { data: getProfileData, error: profileError, loading: profileLoading } = useFetchData<Userprops>(isLogin ? '/api/authorizeduser' : null, [isLogin]);
+  const { data: getBlogpostData, error: blogpostError, loading: blogpostLoading } = useFetchData<Blogpostprops[]>(isLogin ? `/api/blogposts/${loginUserName}?skip=0&limit=5` : null, [isLogin]);
+  const { data: getCommentData, error: commentError, loading: commentLoading } = useFetchData<Commentprops[]>(isLogin ? '/api/usercomments/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
+  const { data: getAdvaterData, error: advaterError, loading: advaterLoading } = useFetchData<Advaterprops[]>(isLogin ? '/api/images/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
+  const { userProfile: { data: profileData } } = useAppSelector((state) => state.userProfileSlices);
   const appDispatch = useAppDispatch();
 
   const handleDisplayValidationPage = (item: string) => {
@@ -61,7 +63,26 @@ const App = () => {
   ];
 
   const loginHeaderMenu = [
-    { name: 'toggleBGColor', to: '', content: <div>toggleBGColor</div> },
+    { name: 'saves', to: '/saves' },
+    {
+      name: 'notifications',
+      to: '',
+      content: <Link to='/notifications' className="relative block">
+        {
+          profileData && profileData.notifications ?
+            profileData.notifications.filter((item) => item.checked === false).length ?
+              <span className="absolute flex justify-center items-center text-[.6rem] w-4 h-4 font-bold text-white rounded-full bg-red-400">{
+                profileData.notifications.filter((item) => item.checked === false).length
+              }</span> :
+              null
+            :
+            null
+        }
+        <Notificationsicon width="30px" height="30px" />
+      </Link>
+    },
+    { name: 'settings', to: '/settings' },
+    { name: 'help', to: '/help' }
   ];
 
   const logOutFooterMenu = [
@@ -96,10 +117,10 @@ const App = () => {
       </Link>
     },
     {
-      name: 'notifications',
+      name: 'directmessages',
       to: '',
-      content: <Link to='/notifications' >
-        <Notificationsicon width="30px" height="30px" />
+      content: <Link to='/directmessages' >
+        <Mailicon width="30px" height="30px" />
       </Link>
     },
     {
@@ -107,13 +128,6 @@ const App = () => {
       to: '',
       content: <Link to={'/' + loginUserName} >
         <Profileicon width="30px" height="30px" />
-      </Link>
-    },
-    {
-      name: 'directmessages',
-      to: '',
-      content: <Link to='/directmessages' >
-        <Mailicon width="30px" height="30px" />
       </Link>
     },
 
@@ -132,25 +146,25 @@ const App = () => {
 
   const handleFetchUserProfileData = () => {
     appDispatch(addProfile({
-      data: profileData,
+      data: getProfileData,
       loading: profileLoading,
       error: profileError,
     }));
 
     appDispatch(addBlogposts({
-      data: blogpostData || [],
+      data: getBlogpostData || [],
       loading: blogpostLoading,
       error: blogpostError
     }));
 
     appDispatch(addComments({
-      data: commentData || [],
+      data: getCommentData || [],
       loading: commentLoading,
       error: commentError
     }));
 
     appDispatch(addAdvaters({
-      data: advaterData || [],
+      data: getAdvaterData || [],
       loading: advaterLoading,
       error: advaterError
     }));
@@ -161,13 +175,11 @@ const App = () => {
     isLogin && handleFetchUserProfileData();
   }, [
     isLogin,
-    profileData, profileLoading, profileError,
-    blogpostData, blogpostLoading, blogpostError,
-    commentData, commentLoading, commentError,
-    advaterData, advaterLoading, advaterError,
+    getProfileData, profileLoading, profileError,
+    getBlogpostData, blogpostLoading, blogpostError,
+    getCommentData, commentLoading, commentError,
+    getAdvaterData, advaterLoading, advaterError,
   ]);
-
-
 
   return <Appwrapper>
     <header className="container w-full">
@@ -175,23 +187,19 @@ const App = () => {
         {isLogin ?
           <nav id="login-header-nav" className="flex items-center gap-5 justify-between">
             <Conpanylogo />
-            <div>
-              <Menu
-                arrOfMenu={loginHeaderMenu}
-                parentClass="flex item-center gap-4 text-sm"
-                childClass="hover:text-green-400 active:bg-green-400" />
-            </div>
-
+            <Menu
+              arrOfMenu={loginHeaderMenu}
+              parentClass="flex item-center gap-4 text-sm"
+              childClass="hover:text-green-400 active:bg-green-400"
+            />
           </nav> :
           <nav id="logout-header-nav" className="flex items-center gap-5 justify-between">
             <Conpanylogo />
-            <div>
-              <Menu
-                arrOfMenu={logOutHeaderMenu}
-                parentClass="flex item-center gap-4 text-sm"
-                childClass="hover:text-green-400 active:bg-green-400"
-              />
-            </div>
+            <Menu
+              arrOfMenu={logOutHeaderMenu}
+              parentClass="flex item-center gap-4 text-sm"
+              childClass="hover:text-green-400 active:bg-green-400"
+            />
           </nav>
         }
       </div>
@@ -204,7 +212,7 @@ const App = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/:authorUserName/:slug" element={<Singleblogpostpage />} />
           <Route path="/" element={isLogin ? <Navigate to={`/${loginUserName}`} /> : <Landingpage />} />
-          <Route path="/home" element={isLogin ? <Home /> : <Navigate to="/" />} />
+          <Route path="/home" element={isLogin ? <Feed /> : <Navigate to="/" />} />
           <Route path="/:userName" element={isLogin ? <Profile /> : <Navigate to={'/'} />} />
           <Route path="/createpost" element={isLogin ? <Post /> : <Navigate to={'/'} />} />
           <Route path="/notifications" element={isLogin ? <Notification /> : <Navigate to={'/'} />} />
@@ -218,8 +226,7 @@ const App = () => {
     <footer className="container relative w-full ">
       <div>
         {isLogin ?
-          <nav id="login-footer-nav"
-            className="container fixed bottom-0 right-0 left-0 w-ful py-2">
+          <nav id="login-footer-nav" className="container fixed bottom-0 right-0 left-0 w-ful py-2">
             <Menu
               arrOfMenu={loginFooterMenu}
               parentClass="w-full flex justify-around items-center"
@@ -228,13 +235,11 @@ const App = () => {
           </nav> :
           <nav id="logout-footer-nav">
             <Conpanylogo />
-            <div >
-              <Menu
-                arrOfMenu={logOutFooterMenu}
-                parentClass="space-y-3 max-w-[480px]"
-                childClass="block border-b"
-              />
-            </div>
+            <Menu
+              arrOfMenu={logOutFooterMenu}
+              parentClass="space-y-3 max-w-[480px]"
+              childClass="block border-b"
+            />
             <div>
               {/* authentication dialog */}
               <Dialog

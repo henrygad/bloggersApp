@@ -5,7 +5,7 @@ import { useFetchData } from "../hooks";
 import { addBlogposts } from "../redux/slices/userBlogpostSlices";
 import { Advaterprops, Blogpostprops, Commentprops } from "../entities";
 import { addComments } from "../redux/slices/userCommentsSlices";
-import { addAdvaters } from "../redux/slices/userAdvaters";
+import { addAdvaters } from "../redux/slices/userAdvatersSlices";
 
 const Ownerprofilesec = ({ loginUserName }: { loginUserName: string }) => {
 
@@ -31,7 +31,7 @@ const Ownerprofilesec = ({ loginUserName }: { loginUserName: string }) => {
     data: ownerAdvaters,
     loading: ownerAdvaterLoading,
     error: ownerAdvaterError,
-  } } = useAppSelector((state) => state.userAdvaters);
+  } } = useAppSelector((state) => state.userAdvatersSlices);
 
   const { fetchData: fetchMoreBlogpostData, loading: loadingMoreBlogpost, error: errorMoreBlogpost } = useFetchData<Blogpostprops[]>(null);
   const countLoadMoreBlogpostsRef = useRef(5);

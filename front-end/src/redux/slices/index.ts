@@ -2,15 +2,15 @@ import { configureStore } from "@reduxjs/toolkit";
 import userProfileSlices from "./userProfileSlices";
 import userBlogpostSlices from "./userBlogpostSlices";
 import userCommentsSlices from "./userCommentsSlices";
+import userAdvatersSlices from "./userAdvatersSlices";
 import { useDispatch, useSelector } from "react-redux";
-import userAdvaters from "./userAdvaters";
 
 const store = configureStore({
     reducer: {
         userProfileSlices,
         userBlogpostSlices,
         userCommentsSlices,
-        userAdvaters,
+        userAdvatersSlices,
     },
 });
 

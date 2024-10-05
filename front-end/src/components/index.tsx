@@ -24,12 +24,18 @@ import SingleImage from './SingleImage';
 import Userdotnav from './Userdotnav';
 import Followbutton from './Followbutton';
 import Likebutton from './Likebutton';
-import Blogpostcommentbutton from './Blogpostcommentbutton';
+import Commentbutton from './Commentbutton';
 import Viewbutton from './Viewbutton';
+import Singlenotification from './Singlenotification';
+import Signoutuser from './Signoutuser';
+import Deleteuseraccount from './Deleteuseraccount';
 
 export {
+    Signoutuser,
+    Deleteuseraccount,
+    Singlenotification,
     Viewbutton,
-    Blogpostcommentbutton,
+    Commentbutton,
     Button,
     Menu,
     Conpanylogo,

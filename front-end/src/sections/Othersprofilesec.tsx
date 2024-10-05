@@ -39,8 +39,6 @@ const Othersprofilesec = ({ userName }: { userName: string }) => {
   const [othersAdvaters, setOthersAdvaters] = useState<Advaterprops[] | null>(null);
   const countLoadMoreAdvatersRef = useRef(5);
 
-  // load more data
-
   const { fetchData: fetchMoreBlogpostsData, loading: loadingMoreBlogposts, error: errorMoreBlogposts } = useFetchData(null)
   const { fetchData: fetchMoreCommentsData, loading: loadingMoreComments, error: errorMoreComments } = useFetchData(null)
   const { fetchData: fetchMoreAdvatersData, loading: loadingMoreAdvaters, error: errorMoreAdvaters } = useFetchData(null)

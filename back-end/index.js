@@ -36,6 +36,7 @@ Mongoose.connect(DBURI)
                 maxAge: (hour * 2), // live for 2 hour
                 httpOnly: true, // Prevents JavaScript access
                 secure: false,   // Ensures cookie is sent over HTTPS
+                //sameSite: 'None', // Allows the cookie to be sent in all contexts
             },
             store: MongoStore.create({
                 client: Mongoose.connection.getClient()
@@ -51,7 +52,6 @@ Mongoose.connect(DBURI)
             } else {
                 session.searchHistory = []
             }
-
             res.json({ greetings: 'Wellcome! friend', sessionId: session.id })
         })
 
@@ -71,5 +71,4 @@ Mongoose.connect(DBURI)
         const error = new customError('no network connected')
         console.log(error.message)
     })
-
     

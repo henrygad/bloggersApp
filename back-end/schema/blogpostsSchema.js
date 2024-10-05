@@ -1,20 +1,19 @@
 const mongoose = require('mongoose')
 
 const blogpostsData = new mongoose.Schema({
-    displayImage: String,
-    authorUserName: String,
-    title: String,
-    body: String,
+    displayImage: {type: String},
+    authorUserName: {type: String},
+    title: {type: String},
+    body: {type: String},
     _html: { title: String, body: String },
-    catigory: String,
-    tags: String,
-    mentions: String,
+    catigory: {type: String},
+    mentions: {type: String},
     slug: { type: String, unique: true },
     url: { type: String, unique: true },
     likes: [String],
     views: [String],
     shares: [String],
-    status: String,
+    status: {type: String},
 },
     {
         timestamps: true

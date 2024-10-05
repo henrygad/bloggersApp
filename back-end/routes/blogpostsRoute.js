@@ -31,10 +31,33 @@ router.get('/blogposts', async (req, res, next) => {
     }
 })
 
+router.get('/blogposts/:authorUserName/:slug', async (req, res, next) => {
+    const { params: { authorUserName, slug } } = req
+
+    try {
+
+        if (!authorUserName.startsWith('@') ||
+            slug.trim() === ' '
+        ) throw new Error('Bad Request: invalid username!')
+
+        const url = authorUserName + '/' + slug;
+        const blogpost = await blogpostsData.findOne({ url })
+
+        if (!blogpost) throw new Error('Not Found: no blogpost found')
+
+        res.json(blogpost);
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+})
+
 router.get('/blogposts/:authorUserName', authorization, async (req, res, next) => {
     const { params: { authorUserName }, query: { skip = 0, limit = 0 } } = req
 
     try {
+
+        if (!authorUserName.startsWith('@')) throw new Error('Bad Request: invalid username!')
 
         // get all user blogposts
         const userBlogposts = await blogpostsData
@@ -53,16 +76,27 @@ router.get('/blogposts/:authorUserName', authorization, async (req, res, next) =
     }
 })
 
-router.get('/blogposts/:authorUserName/:slug', async (req, res, next) => {
-    const { params: { authorUserName, slug } } = req
-    const url = authorUserName + '/' + slug;
+router.get('/feed/timeline/:timeline', authorization, async (req, res, next) => {
+    const { params: { timeline }, query: { skip = 0, limit = 0 } } = req
 
     try {
-        // get user a single blogpost
-        const blogpost = await blogpostsData.find({ url })
-        if (!blogpost) throw new Error('Not Found: no blogpost found')
 
-        res.json(blogpost[0]);
+        if (timeline.trim() === '') throw new Error('Bad Request: empty field!')
+
+        const getArrOfTimeline = timeline.split('&');
+        getArrOfTimeline.map(item => {
+            if (!item.startsWith('@')) throw new Error('Bad Request: invalid username!')
+        })
+
+        const getFeeds = await blogpostsData
+            .find({ authorUserName: { $in: getArrOfTimeline } })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+        if (!getFeeds.length) throw new Error('Bad Request: no blogpost found!')
+
+        res.json(getFeeds)
+
     } catch (error) {
 
         next(new customError(error, 404))
@@ -96,7 +130,6 @@ router.post('/addblogpost', authorization, upload.single('blogpostimage'), creat
             body: body.body,
             _html: body._html,
             catigory: body.catigory,
-            tags: body.tags,
             mentions: !body.mentions,
             slug: validataSlug,
             url: `${authorizeUser}/${validataSlug}`,
@@ -135,7 +168,6 @@ router.patch('/editblogpost/:_id', authorization, upload.single('image'), create
                 body: body?.body,
                 _html: body?._html,
                 catigories: body?.catigories,
-                tags: body?.tags,
                 mentions: body?.mentions,
                 status: body?.status
             },

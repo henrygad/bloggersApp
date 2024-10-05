@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Closedeye, Openeye } from "./Icons";
 
 type Props = {
+    id: string
     type: string
-    inputName: string
+    inputName?: string
     value: string | number | readonly string[] | undefined
     setValue: (value: string | number | Date | undefined) => void
     inputClass: string
@@ -18,8 +19,9 @@ type Props = {
 };
 
 const Input = ({
+    id,
     type,
-    inputName,
+    inputName = '',
     value,
     setValue,
     inputClass,
@@ -44,7 +46,7 @@ const Input = ({
         };
     }, []);
 
-    return <label htmlFor={inputName} className={` ${labelClass}`}>
+    return <label htmlFor={id} className={` ${labelClass}`}>
         {inputName}
         <span className="relative block">
             <input
@@ -55,7 +57,7 @@ const Input = ({
                 }
                 placeholder={placeHolder}
                 name={inputName}
-                id={inputName}
+                id={id}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 ref={inputRef}

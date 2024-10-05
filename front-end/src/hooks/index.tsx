@@ -9,8 +9,12 @@ import usePatchData from "./usePatchData";
 import useClickOutSide from "./useClickOutSide";
 import useSanitize from "./useSanitize";
 import useTrimWords from "./useTrimWords";
+import useNotification from "./useNotification";
+import useSeeMore from "./useSeeMore";
 
 export {
+    useSeeMore,
+    useNotification,
     useUserIsLogin,
     useValidation,
     useCopyLink,

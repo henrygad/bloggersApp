@@ -1,63 +1,52 @@
-import axios from "axios";
-import { ReactElement, createContext, useState } from "react";
+import { ReactElement, createContext, useEffect, useState } from "react";
+import { useFetchData } from "../hooks";
+import { Userstatusprops } from "../entities";
+
 
 type Contextprops = {
-  loginStatus: {
-    isLogin: boolean
-    loginUserName: string
-    greetings: string
-    sessionId: string
-  }
-  setLoginStatus: React.Dispatch<React.SetStateAction<{
-    isLogin: boolean
-    loginUserName: string
-    greetings: string
-    sessionId: string
-  }>>
+  loginStatus: Userstatusprops
+  setLoginStatus: React.Dispatch<React.SetStateAction<Userstatusprops>>
 };
 
-export const Context = createContext<Contextprops>({
-  loginStatus: {
-    isLogin: false,
-    loginUserName: '',
-    greetings: '',
-    sessionId: '',
-  },
-  setLoginStatus: () => ({
-    isLogin: false,
-    loginUserName: '',
-    greetings: '',
-    sessionId: '',
-  })
-});
-
-const status = {
+const userStatus = {
   isLogin: false,
   loginUserName: '',
   greetings: '',
   sessionId: '',
 };
 
-try {
-  const clientData = await axios('/api/');
-  const { data: getClientData } = clientData;
-  status.sessionId = getClientData.sessionId;
-  status.greetings = getClientData.greetings;
-
-  const userData = await axios('/api/status');
-  const { data: getUserData } = userData;
-  status.isLogin = getUserData.status;
-  status.loginUserName = getUserData.loginUser;
-  status.sessionId = getUserData.sessionId;
-  status.greetings = getUserData.greetings;
-
-} catch (error) {
-  console.error(error);
-}
+export const Context = createContext<Contextprops>({
+  loginStatus: userStatus,
+  setLoginStatus: () => (userStatus)
+});
 
 
 const Authenticateusercontexts = ({ Children }: { Children: ReactElement }) => {
-  const [loginStatus, setLoginStatus] = useState(status);
+  const { fetchData } = useFetchData<Userstatusprops | null>(null);
+  const [loginStatus, setLoginStatus] = useState<Userstatusprops>(userStatus);
+
+  const handleClientStatus = async () => {
+      const { data: client } = await fetchData('/api/');
+
+      if(client){
+        setLoginStatus({
+          isLogin: false ,
+          loginUserName: '',
+          greetings: client.greetings,
+          sessionId: client.greetings,
+        });
+      };
+
+      const {data: user} = await fetchData('/api/status');
+
+      if(user){
+        setLoginStatus((pre)=> pre ? {...pre, ...user} : pre);
+      };
+  };
+
+  useEffect(() => {
+    handleClientStatus()
+  }, []);
 
   return <Context.Provider value={{ loginStatus, setLoginStatus }}>
     {Children}

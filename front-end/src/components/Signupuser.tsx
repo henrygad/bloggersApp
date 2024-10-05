@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useUserIsLogin, useValidation, usePostData } from '../hooks';
 import tw from 'tailwind-styled-components';
 import Input from './Input';
+import { Userstatusprops } from '../entities';
 
 type Props = {
     switchPages: () => void
@@ -31,13 +32,13 @@ const Signupuser = ({ switchPages, closePages }: Props) => {
             return;
         };
 
-        const response = await postData(url, body); // sign up user
+        const response = await postData<Userstatusprops>(url, body); // sign up user
+        const {ok, data} = response;
 
-        if (response?.ok) {// login user
-            const { data: { status, loginUser } } = response;
+        if (ok && data) {
             setLoginStatus({
-                isLogin: status,
-                loginUserName: loginUser,
+                isLogin: data.isLogin,
+                loginUserName: data.loginUserName,
             });
             setUserName('');
             setEmail('');

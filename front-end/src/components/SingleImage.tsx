@@ -8,7 +8,7 @@ import { useDeleteData, useUserIsLogin } from "../hooks";
 import Dialog from "./Dialog";
 import Button from "./Button";
 import { useAppDispatch } from "../redux/slices";
-import { deleteAdvaters } from "../redux/slices/userAdvaters";
+import { deleteAdvaters } from "../redux/slices/userAdvatersSlices";
 
 type Props = {
     image: Advaterprops,

@@ -55,7 +55,7 @@ router.get('/users/:userName', async (req, res, next) => { // single user
     }
 })
 
-router.get('/loginuser', authorization, async (req, res, next) => { // single authorized user
+router.get('/authorizeduser', authorization, async (req, res, next) => { // single authorized user
     const { authorizeUser } = req
 
     try {
@@ -114,9 +114,8 @@ router.delete('/deleteprofile', authorization, async (req, res, next) => {
     const { authorizeUser } = req
 
     try {
-
         // logout user
-        req.session.jwtToken = null
+        req.session.jwtToken = null        
 
         // delete user authenticated data
         const deleteAuthenticatedUser = await authenticatedUser.findOneAndDelete({ userName: authorizeUser })

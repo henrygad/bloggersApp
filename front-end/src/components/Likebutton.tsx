@@ -1,29 +1,73 @@
 import { useEffect, useState } from "react";
 import Button from "./Button";
-import { usePatchData, useUserIsLogin } from "../hooks";
+import { useNotification, usePatchData, useUserIsLogin } from "../hooks";
 import Dialog from "./Dialog";
 import UsershortInfor from "./UsershortInfor";
-import Followbutton from "./Followbutton";
 import Userdotnav from "./Userdotnav";
 
 type Props = {
+    parentId: string
     arrOfLikes: string[]
     apiForLike: string,
     apiForUnlike: string
+
+    autoOpenTargetLike: { autoOpen: boolean, commentId: string, like: string },
+
+    notificationUrl: string
+    notificationTitle: string
+    userNameToNotify: string
+    liking: string;
 };
 
-const Likebutton = ({ arrOfLikes, apiForLike, apiForUnlike }: Props) => {
-    const { loginStatus: { loginUserName } } = useUserIsLogin();
-    const [liked, setLiked] = useState(false);
-    const [likes, setLikes] = useState<string[]>(arrOfLikes);
-    const { patchData, loading: loadingLike } = usePatchData();
+const Likebutton = ({
+    parentId,
+    arrOfLikes,
+    apiForLike,
+    apiForUnlike,
 
-    const [toggleDialog, setToggleDialog] = useState('');
+    autoOpenTargetLike = { autoOpen: false, commentId: '', like: '' },
+
+    userNameToNotify,
+    notificationTitle,
+    notificationUrl,
+    liking,
+}: Props) => {
+    const { loginStatus: { loginUserName } } = useUserIsLogin();
+
+    const [liked, setLiked] = useState(false);
+    const [likes, setLikes] = useState<string[]>(
+        autoOpenTargetLike?.autoOpen && autoOpenTargetLike?.like ?
+            [autoOpenTargetLike.like, ...arrOfLikes.filter(item => item !== autoOpenTargetLike.like)] :
+            arrOfLikes
+    );
+    const { patchData, loading: loadingLike } = usePatchData();
+    const notify = useNotification();
+
+    const [toggleLikesDialog, setToggleLikesDialog] = useState(' ');
+
+    const [targetLike, setTargetLike] = useState(' ');
 
     useEffect(() => {
         setLiked((likes).includes(loginUserName));
-    }, [likes, loginUserName]);
+    }, [
+        likes,
+        loginUserName,
+    ]);
 
+    useEffect(() => {
+        setTimeout(() => {
+            setToggleLikesDialog(autoOpenTargetLike?.autoOpen ? autoOpenTargetLike?.commentId : ' ')
+        }, 1000);
+
+        setTargetLike(autoOpenTargetLike?.autoOpen ? autoOpenTargetLike?.like : ' ');
+
+        setTimeout(() => {
+            setTargetLike(' ');
+        }, 2000);
+    }, [
+        autoOpenTargetLike?.autoOpen,
+        autoOpenTargetLike?.commentId
+    ])
 
     const handlelike = async (apiForLike: string) => {
         if (liked) return;
@@ -36,6 +80,8 @@ const Likebutton = ({ arrOfLikes, apiForLike, apiForUnlike }: Props) => {
         if (ok) {
             setLikes(data);
             setLiked(true);
+
+            handleNotification();
         };
 
     };
@@ -54,6 +100,21 @@ const Likebutton = ({ arrOfLikes, apiForLike, apiForUnlike }: Props) => {
         };
     };
 
+    const handleNotification = async () => {
+        const isOwnerOfBlogpost = userNameToNotify === loginUserName;
+        if (isOwnerOfBlogpost) return;
+
+        const url = '/api/notification/' + userNameToNotify;
+        const body = {
+            typeOfNotification: liking,
+            msg: `liked your ${liking.includes('blogpost') ? 'blogpost' : 'comment'}, ${notificationTitle}`,
+            url: notificationUrl,
+            notifyFrom: loginUserName,
+        };
+
+        await notify(url, body);
+    };
+
     return <div>
         <div>
             <Button
@@ -66,7 +127,7 @@ const Likebutton = ({ arrOfLikes, apiForLike, apiForUnlike }: Props) => {
                                 'liked') :
                             'loading...')
                     }
-                    : <span className="bg-blue-200 P-1" onClick={(e) => { setToggleDialog('blogpostlikedialog'); e.stopPropagation() }} >
+                    : <span className="bg-blue-200 P-1" onClick={(e) => { setToggleLikesDialog(parentId); e.stopPropagation() }} >
                         {likes ? likes.length : 0}
                     </span>
                 </>
@@ -80,9 +141,9 @@ const Likebutton = ({ arrOfLikes, apiForLike, apiForUnlike }: Props) => {
                 id='blogpost-like-dialog'
                 parentClass='flex justify-center'
                 childClass=' w-full min-w-[280px] sm:min-w-[320px] max-w-[768px] overflow-y-scroll max-h-screen pb-[200px]'
-                currentDialog='blogpostlikedialog'
-                dialog={toggleDialog}
-                setDialog={setToggleDialog}
+                currentDialog={parentId}
+                dialog={toggleLikesDialog}
+                setDialog={setToggleLikesDialog}
                 children={
                     <div className="flex flex-col items-center gap-4 py-2">
                         <span>{likes ? likes.length : 0} : likes</span>
@@ -91,16 +152,13 @@ const Likebutton = ({ arrOfLikes, apiForLike, apiForUnlike }: Props) => {
                                 likes.length ?
                                 <>
                                     {likes.map((item, index) =>
-                                        <div key={item} className={`relative flex items-start gap-6 py-4 px-2 ${index % 2 == 0 ? 'border-b rounded-md' : 'border-none'}`}>
-                                            <UsershortInfor userName={item} />
-                                            <Userdotnav userName={item} />
-                                            <div className="mt-6">
-                                                {loginUserName === item ?
-                                                    null :
-                                                    <Followbutton userName={item} />
-                                                }
-
+                                        <div
+                                            key={item}
+                                            className={` relative  ${index % 2 == 0 ? 'border-b rounded-md' : 'border-none'}  ${targetLike === item ? 'bg-red-50' : ''} `} >
+                                            <div className="pr-12 py-3">
+                                                <UsershortInfor userName={item} />
                                             </div>
+                                            <Userdotnav userName={item} />
                                         </div>
                                     )}
                                 </> :

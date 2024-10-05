@@ -8,7 +8,6 @@ router.get('/comments', async (req, res, next) => {
     const { query: { skip = 0, limit = 0 } } = req
 
     try {
-
         // get all user comments
         const comments = await commentsData
             .find()
@@ -19,27 +18,31 @@ router.get('/comments', async (req, res, next) => {
         if (!comments.length) throw new Error('Not Found: no comment found')
 
         res.json(comments)
-
     } catch (error) {
 
         next(new customError(error, 404))
     }
 })
 
-router.get('/blogpostcomments/:blogpostId', async (req, res, next) => {
-    const { params: { blogpostId }, query: { skip = 0, limit = 0 } } = req
+router.get('/comments/:_id', async (req, res, next) => {
+    const { params: { _id }} = req
 
     try {
-
-        // verify blogpost id
-        if (!mongoose.Types.ObjectId.isValid(blogpostId)) throw new Error('Not Found: invalid blogpost id')
+        // verify comment id
+        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Not Found: invalid comment id')
 
         // get single comments for user
         const comment = await commentsData
-            .find({ blogpostId })
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
+            .findById({ _id })
+            .populate({
+                path: 'children',
+                populate: {
+                    path: 'children',
+                    populate: {
+                        path: 'children',
+                    }
+                }
+            }) // recursive populate nested comment
 
         if (!comment) throw new Error('Not Found: no comment was found')
         res.json(comment)
@@ -49,11 +52,10 @@ router.get('/blogpostcomments/:blogpostId', async (req, res, next) => {
     }
 })
 
-router.get('/blogpostcommentsandnestedcomments/:blogpostId', async (req, res, next) => {
-    const { params: { blogpostId }, query: { skip = 0, limit = 0 } } = req
+router.get('/blogpostcomments/:blogpostId', async (req, res, next) => {
+    const { params: { blogpostId, authorizeUser }, query: { skip = 0, limit = 0 } } = req
 
     try {
-
         // verify blogpost id
         if (!mongoose.Types.ObjectId.isValid(blogpostId)) throw new Error('Not Found: invalid blogpost id')
 
@@ -68,8 +70,7 @@ router.get('/blogpostcommentsandnestedcomments/:blogpostId', async (req, res, ne
                         path: 'children',
                     }
                 }
-            }) // recursive populate nested comment)
-            .sort({ createdAt: -1 })
+            }) // recursive populate nested comment
             .skip(skip)
             .limit(limit)
 

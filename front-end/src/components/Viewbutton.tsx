@@ -1,27 +1,32 @@
 import { useEffect, useState } from "react";
-import { usePatchData, useUserIsLogin } from "../hooks";
+import { useNotification, usePatchData, useUserIsLogin } from "../hooks";
 
 type Props = {
     url: string
-    arrOfViewes: string[]
+    arrOfViews: string[]
     elementRef: React.MutableRefObject<HTMLElement | null>
     onLoadView: boolean
+    notificationUrl: string
+    notificationTitle: string
 };
 
-const Viewbutton = ({ url, arrOfViewes, onLoadView = false, elementRef }: Props) => {
-    const { loginStatus: { sessionId } } = useUserIsLogin();
-    const [viewes, setViewes] = useState(arrOfViewes);
+const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificationTitle, notificationUrl }: Props) => {
+    const { loginStatus: { loginUserName, sessionId } } = useUserIsLogin();
+    const [views, setViews] = useState(arrOfViews);
     const { patchData } = usePatchData();
+
+    const notify = useNotification();
 
     const handleView = async (url: string, sessionId: string) => {
 
-        if (viewes.includes(sessionId)) return;
+        if (views.includes(sessionId)) return;
         const body = null;
         const response = await patchData(url, body);
         const { data, ok } = response;
 
         if (ok) {
-            setViewes(data);
+            setViews(data);
+           //handleViewsNotification()
         }
     };
 
@@ -33,6 +38,20 @@ const Viewbutton = ({ url, arrOfViewes, onLoadView = false, elementRef }: Props)
                 handleView(url, sessionId);
             }, 1000);
         }
+    };
+
+    const handleViewsNotification = async (views: number) => {
+        const url = '/api/notification/' + loginUserName;
+        const body = {
+            typeOfNotification: 'view',
+            msg: `${views} people viewed ${notificationTitle}`,
+            url: notificationUrl,
+            notifyFrom: 'blogger',
+        };
+
+        setTimeout(async () => {
+            await notify(url, body);
+        }, 1000);
     };
 
     useEffect(() => {
@@ -56,7 +75,7 @@ const Viewbutton = ({ url, arrOfViewes, onLoadView = false, elementRef }: Props)
 
     }, []);
 
-    return <span id="views" className="cursor-none">View: {viewes ? viewes.length : 0}</span>
+    return <span id="views" className="cursor-none">View: {views ? views.length : 0}</span>
 };
 
 export default Viewbutton;

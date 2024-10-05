@@ -5,7 +5,7 @@ const commentsData = new mongoose.Schema({
     blogpostId: { type: mongoose.Schema.Types.ObjectId, require: true },
     parentId: { type: mongoose.Schema.Types.ObjectId, ref: "Comments", default: null },
     children: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comments", }],
-    url: String,
+    parentUrl: String,
     body: { _html: { type: String, require: true }, text: { type: String, require: true } },
     commentIsAReplyTo: [String],
     mentions: String,

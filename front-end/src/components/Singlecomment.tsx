@@ -7,51 +7,46 @@ import Button from "./Button";
 import { Commentprops } from "../entities";
 import Likebutton from "./Likebutton";
 
-
 type Props = {
   comment: Commentprops
   index?: number
   type?: string
   allowNested: boolean
-  blogpostId?: string
-  setParentId?: React.Dispatch<React.SetStateAction<string | null>>
-  setReplying?: React.Dispatch<React.SetStateAction<string[] | null>>
   handleDeleteComment: (comment: Commentprops) => void
   deletingLoading: boolean
-};
 
+  setParentId?: React.Dispatch<React.SetStateAction<string | null>>
+  setReplying?: React.Dispatch<React.SetStateAction<string[] | null>>
+  setParentComment?: React.Dispatch<React.SetStateAction<Commentprops | null>>
+
+  autoOpenTargetComment: { autoOpen: boolean, commentId: string, commentAddress: string, targetLike: { autoOpen: boolean, commentId: string, like: string } }
+};
 
 const Singlecomment = ({
   comment,
   type = 'text',
-  setReplying = () => null,
-  handleDeleteComment = (comment) => null,
   deletingLoading,
   allowNested = true,
-  blogpostId,
-  setParentId = () => null,
-}: Props) => {
 
-  const { _id, body, authorUserName, url, likes, children, commentIsAReplyTo } = comment;
+  setParentId = () => null,
+  setReplying = () => null,
+  setParentComment = () => null,
+  handleDeleteComment = (comment: Commentprops) => null,
+
+  autoOpenTargetComment = { autoOpen: false, commentId: '', commentAddress: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
+}: Props) => {
+  const { _id, body, authorUserName, parentUrl, likes, children, commentIsAReplyTo } = comment;
 
   const { loginStatus: { loginUserName } } = useUserIsLogin();
   const isAccountOwner = loginUserName === authorUserName;
   const sanitizeHTML = useSanitize();
   const [toggleSideMenu, setToggleSideMenu] = useState('');
-  const { copied, handleCopyLink } = useCopyLink(url);
-  const [seeMoreReplies, setSeeMoreReplies] = useState(0);
+  const { copied, handleCopyLink } = useCopyLink(parentUrl + '/' + _id);
+
+  const [seeMore, setSeeMore] = useState(0);
+  const [targetComment, setCommentTarget] = useState(' ');
 
   const generalMenuForComment = [
-    {
-      name: 'share',
-      to: '',
-      content: <Button
-        id="share-blogpost-link"
-        children={'share'}
-        buttonClass="border-b"
-        handleClick={() => handleShareComment('', '')}
-      />
-    },
     {
       name: 'copy link',
       to: '',
@@ -81,23 +76,59 @@ const Singlecomment = ({
 
   ];
 
-  const handleShareComment = (whatToShare: string, PlaceToShareDataTo: string) => {
-    console.log('shared');
+  const handeCreateReply = () => {
+    setParentId(_id);
+    setReplying(
+      commentIsAReplyTo.includes(authorUserName) ?
+        commentIsAReplyTo :
+        [...commentIsAReplyTo, authorUserName]
+    );
+    setParentComment(comment);
+    
+    handleSeeMoreComment([_id], children?.length);
   };
 
-  const handleSeeReplies = () => {
-    const totalChildrenComment = children.length;
-
-    if (seeMoreReplies >= totalChildrenComment) return;
-    if (totalChildrenComment < 2) {
-      setSeeMoreReplies(totalChildrenComment);
+  const handleSeeMoreComment = (commentId: string[], seeMore: number) => {
+    if (commentId.includes(_id)) {
+      setSeeMore(seeMore);
+    } else {
+      setSeeMore(0);
     };
-
-    setSeeMoreReplies((pre) => pre += 2);
   };
 
+  useEffect(() => {
+    if (autoOpenTargetComment?.autoOpen &&
+      autoOpenTargetComment?.commentAddress
+    ) {
+      const getCommentAddress: string[] = [];
+      const commentAddress = autoOpenTargetComment.commentAddress.split('&');
+      commentAddress.map((item, index) => {
+        getCommentAddress.push(item);
+        handleSeeMoreComment(getCommentAddress, children?.length);
 
-  return <div className={`relative w-full min-w-[280px] sm:min-w-[320px] md:min-w-[480px] max-w-[480xp] rounded-md px-3 py-4 space-y-2`}>
+        if (index === (commentAddress.length - 1)) {
+          setTimeout(() => {
+            setCommentTarget(' ');
+          }, 2000);
+        };
+      });
+    }
+
+    setCommentTarget(
+      autoOpenTargetComment?.autoOpen ?
+        autoOpenTargetComment?.commentId :
+        '');
+
+  }, [
+    autoOpenTargetComment?.autoOpen,
+    autoOpenTargetComment?.commentAddress
+  ]);
+
+  return <div
+    id={'blogpost-comment-' + _id}
+    className={`relative w-full min-w-[280px] sm:min-w-[320px] md:min-w-[480px] max-w-[480xp] rounded-md px-3 py-4 space-y- 2 
+      ${_id === targetComment ? 'bg-red-50' : ''}
+    `}>
     <Dotnav
       id="commentsNav"
       name={_id}
@@ -121,25 +152,24 @@ const Singlecomment = ({
       <span className="block  text-base font-text first-letter:capitalize">{body?.text}</span> :
       <div dangerouslySetInnerHTML={sanitizeHTML(body?._html)} ></div>}
     <div id="comment-statistics" className="flex justify-center items-center gap-4">
-      <span className="cursor-pointer" onClick={() => {
-        setParentId(_id); setReplying(
-          commentIsAReplyTo.includes(authorUserName) ?
-            commentIsAReplyTo :
-            [...commentIsAReplyTo, authorUserName]
-        )
-      }} >
+      <span
+        id="reply-comment"
+        className="cursor-pointer"
+        onClick={handeCreateReply} >
         reply : {children ? children.length : 0}
       </span>
       <Likebutton
+        parentId={_id}
         arrOfLikes={likes}
         apiForLike={'/api/likecomment/' + _id}
         apiForUnlike={'/api/unlikecomment/' + _id}
-      />
-      <Button
-        id="share-comment-btn"
-        children={'Share: 4'}
-        buttonClass="border-b"
-        handleClick={() => handleShareComment(_id, 'facebook')}
+
+        autoOpenTargetLike={autoOpenTargetComment.targetLike}
+
+        notificationTitle={body.text}
+        userNameToNotify={authorUserName}
+        notificationUrl={parentUrl + '&' + _id}
+        liking="commentLike"
       />
     </div>
 
@@ -148,34 +178,39 @@ const Singlecomment = ({
       {allowNested &&
         children &&
         children.length ?
-        <div className=" ml-2 border-l">
-          {children.map((item, index) => {
-            if (index < seeMoreReplies) {
-              return <Singlecomment
-                key={item._id || index}
-                type="text"
-                comment={item}
-                index={index}
-                setParentId={setParentId}
-                setReplying={setReplying}
-                blogpostId={blogpostId}
-                handleDeleteComment={handleDeleteComment}
-                deletingLoading={deletingLoading}
-                allowNested={allowNested}
-              />
-            } else {
-              return;
-            }
+        <div id={_id}>
+          <div className="ml-1 border-l">
+            {
+              children.map((item, index) => {
+                if (index === seeMore) {
+                  return;
+                } else {
+                  return <Singlecomment
+                    key={item._id || index}
+                    type="text"
+                    comment={item}
+                    index={index}
+                    allowNested={allowNested}
+                    setParentId={setParentId}
+                    setReplying={setReplying}
+                    setParentComment={setParentComment}
+                    handleDeleteComment={handleDeleteComment}
+                    deletingLoading={deletingLoading}
 
-          }
-          )}
+                    autoOpenTargetComment={autoOpenTargetComment}
+                  />
+                }
+              })
+            }
+          </div>
+
           <div className="flex items-center justify-center">
-            {(children.length - seeMoreReplies) > 0 ?
-              <span className="cursor-pointer" onClick={handleSeeReplies}>{
-                'View' + ' ' + (children.length - seeMoreReplies) + ' ' + 'replies'
+            {(children.length - seeMore) > 0 ?
+              <span className="cursor-pointer" onClick={() => handleSeeMoreComment([_id], children.length)}>{
+                'View' + ' ' + (children.length) + ' ' + 'replies'
               }</span> :
 
-              <span className="cursor-pointer" onClick={() => setSeeMoreReplies(0)}>close replies</span>
+              <span className="cursor-pointer" onClick={() => setSeeMore(0)}>close replies</span>
             }
           </div>
         </div> :

@@ -3,7 +3,7 @@ import Trythistexteditor from '../custom-text-editor/Trythistexteditor'
 import { Button, Dialog, Displayimage, Fileinput, Input, Menu } from '../components';
 import displayImagePlaceHolder from '../assert/imageplaceholder.png'
 import { useDeleteData, useGetLocalMedia, usePatchData, usePostData } from '../hooks';
-import { useDispatch} from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { createBlogpost, deleteBlogposts, editBlogposts } from '../redux/slices/userBlogpostSlices';
 import { Blogpostprops } from '../entities';
 import { deleteAllText } from '../custom-text-editor/text-area/Config';
@@ -30,7 +30,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
     const [getBodyContent, setGetBodyContent] = useState<{ _html: string, text: string }>();
     const [blogpostImageUrl, setBlogpostImageUrl] = useState((blogpostToEdit?.displayImage && '/api/image/' + blogpostToEdit?.displayImage) || ' ');
     const [catigory, setCatigory] = useState(blogpostToEdit?.catigory || '');
-    const [tags, setTags] = useState(blogpostToEdit?.tags || '');
     const [blogSlug, setBlogSlug] = useState('');
     const [blogpostStatus, setBlogpostStatus] = useState(blogpostToEdit?.status.trim().toLocaleLowerCase() || 'publish');
     const [getImageFile, setGetImageFile] = useState<Blob | string>('');
@@ -164,7 +163,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             body: getBodyContent?.text,
             _html: { title: getTitleContent?._html, body: getBodyContent?._html },
             catigory: catigory,
-            tags: tags,
             slug: handleBlogSlug(blogSlug || '', {
                 slugStatus: blogpostStatus,
                 preSlug: blogpostToEdit?.slug || blogSlug,
@@ -184,8 +182,8 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
 
         if (response.ok) {
             dispatch(createBlogpost(response.data));
-            setGetBlogpostId(response.data._id);
-            setBlogSlug(response.data.slug);
+            setGetBlogpostId(response?.data?._id);
+            setBlogSlug(response?.data?.slug);
             setBlogpostStatus('published');
             setAllInputStatus('empty');
         } else {
@@ -219,7 +217,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             body: getBodyContent?.text,
             _html: { title: getTitleContent?._html, body: getBodyContent?._html },
             catigory: catigory,
-            tags: tags,
             slug: handleBlogSlug(blogSlug || '', {
                 slugStatus: blogpostStatus,
                 preSlug: blogpostToEdit?.slug || blogSlug,
@@ -240,7 +237,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             body: getBodyContent?.text,
             _html: { title: getTitleContent?._html, body: getBodyContent?._html },
             catigory: catigory,
-            tags: tags,
             slug: handleBlogSlug(blogSlug || '', {
                 slugStatus: blogpostStatus,
                 preSlug: blogpostToEdit?.slug || blogSlug,
@@ -262,7 +258,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             body: getBodyContent?.text,
             _html: { title: getTitleContent?._html, body: getBodyContent?._html },
             catigory: catigory,
-            tags: tags,
             slug: handleBlogSlug(blogSlug || '', {
                 slugStatus: blogpostStatus,
                 preSlug: blogpostToEdit?.slug || blogSlug,
@@ -289,7 +284,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             setGetBodyContent({ _html: '', text: '' });
             setDisplayBlogpostImageDialog('');
             setCatigory('');
-            setTags('');
             setGetImageFile('');
             setBlogSlug('');
 
@@ -310,7 +304,6 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             !getBodyContent?.text.trim() &&
             !blogpostImageUrl.trim() &&
             !catigory.trim() &&
-            !tags.trim() &&
             !blogSlug.trim()
         ) {
             setAllInputStatus('empty');
@@ -324,171 +317,150 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
         getBodyContent,
         blogpostImageUrl,
         catigory,
-        tags,
         blogSlug,
     ]);
 
 
-    return <div className='flex justify-center w-full font-text '>
-        <div className='space-y-10'>
-            <div>
-                {/* blog post menus */}
-                <Menu
-                    arrOfMenu={postMenu.reverse()}
-                    parentClass="flex justify-end items-center gap-3 w-full"
-                    childClass=""
-                    id=""
-                />
-            </div>
-            <div className='w-full min-w-[280px] md:min-w-[768px] max-w-[768px]'>
-                {/* title */}
-                <Trythistexteditor
-                    editorParentWrapperStyle="w-full"
-                    textAreaStyle="text-base mt-3 p-2 border-2 rounded"
-                    placeHolder="Title..."
-                    setGetContent={setGetTitleContent}
-                    textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.title || '' }}
-                    toolBarConfig={{
-                        useToolBar: false,
-                    }}
-                />
-            </div>
-            <div className='w-full'>
-                {/* body */}
-                <Trythistexteditor
-                    editorParentWrapperStyle="w-full"
-                    textAreaStyle="min-h-[380px] md:min-h-[500px] mt-3 p-2 border-2 rounded"
-                    placeHolder="Start typing..."
-                    setGetContent={setGetBodyContent}
-                    textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.body || '' }}
-                    toolBarConfig={{
-                        useToolBar: true,
-                        toolBarStyle: 'flex flex-wrap items-center gap-3',
-                        inline: {
-                            useInlineStyle: true,
-                        },
-                        anchorLink: {
-                            useAnchorLink: true,
-                        },
-                        list: {
-                            useList: true
-                        },
-                        alignment: {
-                            useAlignment: true,
-                        },
-                        emojis: {
-                            useEmojis: true
-                        },
-                        media: {
-                            useMedia: true
-                        },
-                        embedCode: {
-                            useEmbedCode: true
-                        },
-                        deleteAllText: {
-                            useDeleteAllText: true
-                        },
-                        history: {
-                            useHistory: true
-                        },
-                    }}
-                />
-            </div>
-            <div className='space-y-4'>
-                {/* img */}
-                <span className='text-base'>Display image</span>
-                <Displayimage
-                    id='blogpostdisplayimage'
-                    imageUrl={blogpostImageUrl || ''}
-                    parentClass='h-[140px] w-[140px]'
-                    imageClass='object-fit border-2 rounded cursor-pointer'
-                    placeHolder={displayImagePlaceHolder}
-                    onClick={() => setDisplayBlogpostImageDialog('displayBlogpostImageDialog')}
-                />
-            </div>
-            <div className='flex flex-wrap justify-between gap-3 '>
-                {/* post more datail */}
-                <div className=''>
-                    {/* catigory */}
-                    <Input
-                        labelClass='text-base'
-                        inputClass='text-sm border-2 p-2 rounded-md mt-3 min-w-[180px] outline-blue-700'
-                        type='test'
-                        inputName='Catigory'
-                        setValue={(value) => setCatigory(value as string)}
-                        value={catigory}
-                        error={{ isTrue: false, errorClass: '', errorMsg: '' }}
-                    />
-                </div>
-                <div>
-                    {/* tags */}
-                    <Input
-                        labelClass='text-base'
-                        inputClass='text-sm border-2 p-2 rounded-md mt-3 min-w-[180px] outline-blue-700'
-                        type='test'
-                        inputName='Tags'
-                        setValue={(value) => setTags(value as string)}
-                        value={tags}
-                        error={{ isTrue: false, errorClass: '', errorMsg: '' }}
-                    />
-                </div>
-                <div>
-                    {/* parmalink */}
-                    <Input
-                        labelClass='text-base'
-                        inputClass='text-sm border-2 p-2 rounded-md mt-3 min-w-[280px] outline-blue-700'
-                        type='test'
-                        inputName='Blog slug'
-                        setValue={(value) => setBlogSlug(value as string)}
-                        value={handleBlogSlug(blogSlug || '', {
-                            slugStatus: blogpostStatus,
-                            preSlug: blogpostToEdit?.slug || blogSlug,
-                            useTitleAsSlugAlt: true,
-                            title: getTitleContent?.text,
-                            slugPertern: '-',
-                        })
-                        }
-                        error={{ isTrue: false, errorClass: '', errorMsg: '' }}
-                    />
-                </div>
-            </div>
-        </div>
-        <div>
-            {/* run display blog post image dialog */}
-            <Dialog
-                children={
-                    <div className='flex justify-around items-center gap-4 min-w-[280px] md:min-w-[480px] min-h-[140px] border-2 shadow rounded-md'>
-                        <Button
-                            children="Form library"
-                            buttonClass=""
-                            id=""
-                            handleClick={() => ''}
-                        />
-                        <Fileinput
-                            placeHolder='From computer'
-                            setValue={(value) => {
-                                getMedia({
-                                    files: value,
-                                    fileType: 'image',
-                                    getValue: ({ url, file }) => {
-                                        setBlogpostImageUrl(url.toString());
-                                        setGetImageFile(file)
-                                    },
-                                });
-                                setDisplayBlogpostImageDialog('');
-                            }}
-                            id="fromComputer"
-                        />
-                    </div>
-                }
-                id=""
-                parentClass="flex justify-center items-center"
-                childClass=""
-                currentDialog={'displayBlogpostImageDialog'}
-                dialog={displayBlogpostImageDialog}
-                setDialog={setDisplayBlogpostImageDialog}
+    return <div className='font-text space-y-6'>
+        {/* blog post menus */}
+        <Menu
+            arrOfMenu={postMenu.reverse()}
+            parentClass="flex justify-end items-center gap-3 w-full"
+            childClass=""
+            id=""
+        />
+        <div id='title-textarea' className='w-full'>
+            {/* title */}
+            <Trythistexteditor
+                editorParentWrapperStyle="w-full"
+                textAreaStyle="text-base mt-3 p-2 border-2 rounded"
+                placeHolder="Title..."
+                setGetContent={setGetTitleContent}
+                textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.title || '' }}
+                toolBarConfig={{
+                    useToolBar: false,
+                }}
             />
         </div>
+        <div id='blogpost-features' className='flex flex-wrap items-center gap-4'>
+            {/* img */}
+            <Displayimage
+                id='blogpost-display-img'
+                imageUrl={blogpostImageUrl || ''}
+                parentClass='h-[60px] w-[60px]'
+                imageClass='object-fit border-2 rounded cursor-pointer'
+                placeHolder={displayImagePlaceHolder}
+                onClick={() => setDisplayBlogpostImageDialog('displayBlogpostImageDialog')}
+            />
+            <div id='catigory-perlink' className='flex justify-between gap-3 '>
+                {/* catigory */}
+                <Input
+                    labelClass='text-base'
+                    inputClass='text-sm min-w-[120px] border-2 p-1 rounded-md outline-blue-700'
+                    type='test'
+                    id='catigory'
+                    setValue={(value) => setCatigory(value as string)}
+                    value={catigory}
+                    error={{ isTrue: false, errorClass: '', errorMsg: '' }}
+                    placeHolder='Blogpost catigory'
+                />
+
+                {/* parmalink */}
+                <Input
+                    labelClass='text-base'
+                    inputClass='text-sm min-w-[120px] border-2 p-1 rounded-md outline-blue-700'
+                    type='test'
+                    id='blogpost-slug'
+                    setValue={(value) => setBlogSlug(value as string)}
+                    value={handleBlogSlug(blogSlug || '', {
+                        slugStatus: blogpostStatus,
+                        preSlug: blogpostToEdit?.slug || blogSlug,
+                        useTitleAsSlugAlt: true,
+                        title: getTitleContent?.text,
+                        slugPertern: '-',
+                    })
+                    }
+                    error={{ isTrue: false, errorClass: '', errorMsg: '' }}
+                    placeHolder='Blogpost slug'
+                />
+
+            </div>
+        </div>
+        <div id='body-textarea' className='w-full'>
+            {/* body */}
+            <Trythistexteditor
+                editorParentWrapperStyle="w-full"
+                textAreaStyle="min-h-[380px] md:min-h-[500px] mt-3 p-2 border-2 rounded"
+                placeHolder="Start typing..."
+                setGetContent={setGetBodyContent}
+                textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.body || '' }}
+                toolBarConfig={{
+                    useToolBar: true,
+                    toolBarStyle: 'flex flex-wrap items-center gap-3',
+                    inline: {
+                        useInlineStyle: true,
+                    },
+                    anchorLink: {
+                        useAnchorLink: true,
+                    },
+                    list: {
+                        useList: true
+                    },
+                    alignment: {
+                        useAlignment: true,
+                    },
+                    emojis: {
+                        useEmojis: true
+                    },
+                    media: {
+                        useMedia: true
+                    },
+                    embedCode: {
+                        useEmbedCode: true
+                    },
+                    deleteAllText: {
+                        useDeleteAllText: true
+                    },
+                    history: {
+                        useHistory: true
+                    },
+                }}
+            />
+        </div>
+        {/* run display blog post image dialog */}
+        <Dialog
+            id='textarea-dialog'
+            parentClass="flex justify-center items-center"
+            childClass=""
+            currentDialog={'displayBlogpostImageDialog'}
+            dialog={displayBlogpostImageDialog}
+            setDialog={setDisplayBlogpostImageDialog}
+            children={
+                <div className='flex justify-around items-center gap-4 min-w-[280px] md:min-w-[480px] min-h-[140px] border-2 shadow rounded-md'>
+                    <Button
+                        children="Form library"
+                        buttonClass=""
+                        id=""
+                        handleClick={() => ''}
+                    />
+                    <Fileinput
+                        placeHolder='From computer'
+                        setValue={(value) => {
+                            getMedia({
+                                files: value,
+                                fileType: 'image',
+                                getValue: ({ url, file }) => {
+                                    setBlogpostImageUrl(url.toString());
+                                    setGetImageFile(file)
+                                },
+                            });
+                            setDisplayBlogpostImageDialog('');
+                        }}
+                        id="fromComputer"
+                    />
+                </div>
+            }
+        />
     </div>
 }
 

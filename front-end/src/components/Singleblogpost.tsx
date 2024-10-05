@@ -7,29 +7,36 @@ import Menu from "./Menu";
 import Button from "./Button";
 import { useRef, useState } from "react";
 import Dotnav from "./Dotnav";
-import { useCopyLink, useDeleteData, useFetchData, usePatchData, usePostData, useSanitize, useTrimWords, useUserIsLogin } from "../hooks";
+import { useCopyLink, useDeleteData, useFetchData, usePatchData, useSanitize, useTrimWords, useUserIsLogin } from "../hooks";
 import { deleteBlogposts, editBlogposts } from "../redux/slices/userBlogpostSlices";
 import { useAppDispatch } from "../redux/slices";
 import Likebutton from "./Likebutton";
-import Blogpostcommentbutton from "./Blogpostcommentbutton";
+import Commentbutton from "./Commentbutton";
 import Viewbutton from "./Viewbutton";
 
 type Props = {
     blogpost: Blogpostprops
     type: string
     index?: number
-}
+    autoOpenTargetComment?: { autoOpen: boolean, commentId: string, commentAddress: string, comment: Commentprops | null, blogpostId: string, targetLike: { autoOpen: boolean, commentId: string, like: string } }
+    autoOpenTargetBlogpostLike?: { autoOpen: boolean, blogpostId: string, like: string }
+};
 
-
-const Singleblogpost = ({ blogpost, type, index = 0 }: Props) => {
+const Singleblogpost = ({
+    blogpost,
+    type,
+    index = 0,
+    autoOpenTargetComment = { autoOpen: false, commentId: '', commentAddress: '', comment: null, blogpostId: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
+    autoOpenTargetBlogpostLike = { autoOpen: false, blogpostId: '', like: ' ', }
+}: Props) => {
+    
     const { loginStatus: { loginUserName } } = useUserIsLogin();
     const { patchData, loading: editingLoading } = usePatchData();
     const { deleteData: deleteBlogpostData, loading: deletingBlogpostLoading, error: deletingError } = useDeleteData();
     const navigate = useNavigate();
     const {
         _id, displayImage, authorUserName,
-        title, body, _html, catigory,
-        tags, url, likes, views,
+        title, body, _html, catigory, url, likes, views,
         updatedAt, createdAt, shares,
     } = blogpost;
     const [toggleSideMenu, setToggleSideMenu] = useState('');
@@ -43,13 +50,8 @@ const Singleblogpost = ({ blogpost, type, index = 0 }: Props) => {
     const sanitizeHTML = useSanitize();
     const blogpostRef = useRef<HTMLElement | null>(null);
 
-    // api to get total number of blog post comment
-    const { fetchData: fetchBlogpostTotalCommentsData, data: blogpostTotalComments } = useFetchData<Commentprops[]>(`/api/blogpostcomments/${_id}`, [_id]);
-
     // api for blog post comments and their nested children comments
-    const { data: getCommentData, loading: loadingComment } = useFetchData<Commentprops[]>(`/api/blogpostcommentsandnestedcomments/${_id}?skip=0&limit=2`, [_id]);
-
-
+    const { data: getCommentData, loading: loadingComment } = useFetchData<Commentprops[] | null>(`/api/blogpostcomments/${_id}?skip=0&limit=5`, [_id]);
 
     const generalMenuForBlogpost = [
         {
@@ -155,7 +157,6 @@ const Singleblogpost = ({ blogpost, type, index = 0 }: Props) => {
     };
 
 
-
     return <article ref={blogpostRef} className={`
         flex flex-col items-start gap-4 font-text w-full 
         ${type === 'text' ? 'min-w-[280px] sm:min-[480px]  max-w-[480px] xl:min-w-[768px] xl:max-w-[768px]' : ' '} 
@@ -199,17 +200,8 @@ const Singleblogpost = ({ blogpost, type, index = 0 }: Props) => {
                     <span id="Published" className="block"> Published: {createdAt}</span>
                     <span id="Last published">Last published: {updatedAt}</span>
                 </span>
-                <span className="block">
-                    <span id="catigory" className="block">catigory: {catigory}</span>
-                    <span id="tags">tags: {
-                        tags &&
-                            tags.length ?
-                            tags.split('').map((item, index) =>
-                                <span key={item + index} className="text-blue-300">{item}</span>
-                            ) :
-                            null
-                    }</span>
-                </span>
+                <span id="catigory" className="block">catigory: {catigory}</span>
+
             </span>
             <span id="display-image" className="flex justify-center" >
                 {displayImage ?
@@ -244,18 +236,35 @@ const Singleblogpost = ({ blogpost, type, index = 0 }: Props) => {
                 <span id="_html" className="block w-full border-y py-3" dangerouslySetInnerHTML={sanitizeHTML(_html.body)}></span>
             }
         </span>
-        <span id="blogpost-statistics" className="flex justify-around gap-4 w-full">
-            <Blogpostcommentbutton
+        <span id="blogpost-statisties" className="flex justify-around gap-4 w-full">
+            <Commentbutton
                 loadingComment={loadingComment}
-                arrOfcomment={getCommentData as Commentprops[]}
+                arrOfcomment={
+                    (getCommentData || [])
+                    .sort((a, b) => {
+                    if(a.authorUserName === authorUserName) return -1;
+                    if(a.authorUserName === authorUserName) return 1;
+                    return 0
+                })}
                 blogpostAuthorUserName={authorUserName}
                 blogpostId={_id}
                 blogpostUrl={url}
+                blogpostTitle={title}
+
+                autoOpenTargetComment={autoOpenTargetComment}
             />
             <Likebutton
+                parentId={_id}
                 arrOfLikes={likes}
                 apiForLike={'/api/likeblogpost/' + _id}
                 apiForUnlike={'/api/unlikeblogpost/' + _id}
+
+                autoOpenTargetLike={{ ...autoOpenTargetBlogpostLike, commentId: autoOpenTargetBlogpostLike.blogpostId }}
+
+                notificationTitle={title}
+                notificationUrl={url}
+                userNameToNotify={authorUserName}
+                liking="blogpostLike"
             />
             <Button
                 id="shares"
@@ -266,8 +275,11 @@ const Singleblogpost = ({ blogpost, type, index = 0 }: Props) => {
             <Viewbutton
                 url={'/api/viewblogpost/' + _id}
                 elementRef={blogpostRef}
-                arrOfViewes={views}
+                arrOfViews={views}
                 onLoadView={type?.trim() !== 'text' ? true : false}
+
+                notificationUrl={url + '/#blogpost-statistics'}
+                notificationTitle={title}
             />
         </span>
     </article>

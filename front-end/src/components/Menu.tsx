@@ -53,7 +53,7 @@ const Toggledropdownnav = ({ name, displayParentNav, setDisplayParentNav }: Togg
   };
 
   return <span
-    className=" text-xl font-bold cursor-pointer "
+    className="text-xl font-bold cursor-pointer"
     onClick={() => handleToggleParentNav(name)}
   >
     {
@@ -68,11 +68,9 @@ const List = ({ childClass, item, nestedChildParentClass }: Listprops) => {
   const [displayParentNav, setDisplayParentNav] = useState<Record<string, string>>({});
   if (!item) return;
 
-  return <li id={item.name}
-    className={childClass}
-  >
+  return <li id={item.name} className={childClass}>
     {item.to ?
-      <Link className="px-1 border-b" to={'/' + item.to}>
+      <Link className="px-1 border-b" to={item.to}>
         {item.name}
         {item.child &&
           item.child.length ?
@@ -84,7 +82,7 @@ const List = ({ childClass, item, nestedChildParentClass }: Listprops) => {
           null
         }
       </Link> :
-      <span className=" block">
+      <span>
         {item.content}
         {item.child &&
           item.child.length ?
@@ -116,23 +114,23 @@ const List = ({ childClass, item, nestedChildParentClass }: Listprops) => {
 
 const Menu = ({ arrOfMenu, parentClass, childClass, id = "menu", nestedChildParentClass }: Menuprops) => {
 
-  return <ul id={id}
-    className={parentClass}
-  >
-    {arrOfMenu &&
-      arrOfMenu.length ?
-      arrOfMenu.map((item) =>
-        <List
-          key={item.name}
-          item={item}
-          parentClass={parentClass}
-          childClass={childClass}
-          nestedChildParentClass={nestedChildParentClass}
-        />
-      ) :
-      null
-    }
-  </ul>
+  return <menu id={id}>
+    <ul className={parentClass}>
+      {arrOfMenu &&
+        arrOfMenu.length ?
+        arrOfMenu.map((item) =>
+          <List
+            key={item.name}
+            item={item}
+            parentClass={parentClass}
+            childClass={childClass}
+            nestedChildParentClass={nestedChildParentClass}
+          />
+        ) :
+        null
+      }
+    </ul>
+  </menu>
 }
 
 export default Menu

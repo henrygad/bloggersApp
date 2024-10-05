@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
-const useFetchData = <T,>(url?: string | null, dependences: any[] = []) => {
+const useFetchData = <T,>(url: string | null = '', dependences: any[] = []) => {
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -15,7 +15,8 @@ const useFetchData = <T,>(url?: string | null, dependences: any[] = []) => {
             const data: T = await response.data;
 
             if (data ||
-                (data && Object.keys(data))) {
+                (data && Object.keys(data))
+            ) {
 
                 setData(data);
                 setError(' ');
@@ -46,12 +47,12 @@ const useFetchData = <T,>(url?: string | null, dependences: any[] = []) => {
     };
 
     useEffect(() => {
-        url?.trim() ?
-            url.trim() !== '' && fetchData(url) :
-            null;
+       if(url){
+        fetchData(url);
+       }
     }, dependences);
 
-    return { fetchData, data, error, loading};
+    return { fetchData, data, error, loading };
 };
 
 export default useFetchData
