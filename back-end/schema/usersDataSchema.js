@@ -20,9 +20,13 @@ const usersData = new mongoose.Schema({
         msg: { type: String, match: /[a-z]/ },
         url: String,
         notifyFrom: String,
-        checked: {type: Boolean, default: false},
+        checked: { type: Boolean, default: false },
     }],
-    chatIds: { type: [] },
+    saves: { type: [String] },
+    archived: { type: [String] },
+    groupsIn: { type: [String] },
+    yourGroup: { type: [String] },
+    chat: { type: [String] },
 },
     {
         timestamps: true

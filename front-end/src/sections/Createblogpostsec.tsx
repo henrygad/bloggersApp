@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import Trythistexteditor from '../custom-text-editor/Trythistexteditor'
+import Trythistexteditor from '../custom-text-editor/App'
 import { Button, Dialog, Displayimage, Fileinput, Input, Menu } from '../components';
 import displayImagePlaceHolder from '../assert/imageplaceholder.png'
 import { useDeleteData, useGetLocalMedia, usePatchData, usePostData } from '../hooks';
 import { useDispatch } from 'react-redux';
 import { createBlogpost, deleteBlogposts, editBlogposts } from '../redux/slices/userBlogpostSlices';
 import { Blogpostprops } from '../entities';
-import { deleteAllText } from '../custom-text-editor/text-area/Config';
+import { deleteAllText } from '../custom-text-editor/settings';
 
 type Props = {
     toEdit?: boolean
@@ -338,7 +338,11 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
                 setGetContent={setGetTitleContent}
                 textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.title || '' }}
                 toolBarConfig={{
-                    useToolBar: false,
+                    useToolBar: true,
+                    inline: {
+                        useInlineStyle: true,
+                        
+                    }
                 }}
             />
         </div>

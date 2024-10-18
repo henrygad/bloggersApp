@@ -3,14 +3,20 @@ import userProfileSlices from "./userProfileSlices";
 import userBlogpostSlices from "./userBlogpostSlices";
 import userCommentsSlices from "./userCommentsSlices";
 import userAdvatersSlices from "./userAdvatersSlices";
+import userTimelineFeedSlices from './userTimelineFeedSlices';
+import treadingfeedsSlices from './treadingFeedsSlices';
+import userSavesSlices from './userSavesSlices';
 import { useDispatch, useSelector } from "react-redux";
 
 const store = configureStore({
     reducer: {
+        userSavesSlices,
         userProfileSlices,
         userBlogpostSlices,
         userCommentsSlices,
         userAdvatersSlices,
+        userTimelineFeedSlices,
+        treadingfeedsSlices,
     },
 });
 

@@ -7,15 +7,17 @@ type Props = {
     inputName?: string
     value: string | number | readonly string[] | undefined
     setValue: (value: string | number | Date | undefined) => void
-    inputClass: string
-    labelClass: string
+    inputClass?: string
+    labelClass?: string
     placeHolder?: string
     callBack?: (target: HTMLInputElement | null) => void
-    error: {
+    error?: {
         isTrue: boolean
         errorMsg: string
         errorClass: string
     }
+    checked?: boolean
+    onClick?: ()=> void
 };
 
 const Input = ({
@@ -24,11 +26,17 @@ const Input = ({
     inputName = '',
     value,
     setValue,
-    inputClass,
-    labelClass,
-    error,
+    inputClass = '',
+    labelClass = '',
+    error= {
+        isTrue: false,
+        errorMsg: '',
+        errorClass: '',
+    },
     placeHolder = '',
     callBack = () => null,
+    checked= false,
+    onClick= ()=> null,
 }: Props) => {
     const [passWordIsVisible, setPassWordVisibility] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +69,8 @@ const Input = ({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 ref={inputRef}
+                checked={checked}
+                onClick={onClick}
             />
             {type === 'password' &&
                 <span

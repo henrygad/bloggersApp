@@ -4,7 +4,6 @@ const { customError } = require('../middlewares/error')
 const usersData = require('../schema/usersDataSchema')
 const router = require('express').Router()
 
-
 router.patch('/notification/:userToNotify', authorization, async (req, res, next) => {
     const { params: { userToNotify }, body } = req
 
@@ -44,7 +43,7 @@ router.patch('/editnotification/:_id', authorization, async (req, res, next) => 
         // verify blogpost id
         if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: empty field!')
 
-        // delete notification
+       // edit notification
         const updataNotification = await usersData.findOneAndUpdate(
             { userName: authorizeUser, "notifications._id": _id },
             { $set: { "notifications.$.checked": true } },

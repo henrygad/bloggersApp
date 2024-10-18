@@ -16,7 +16,7 @@ const Singleblogpostpage = () => {
   if (!blogpostUrl) return;
 
   // get single blogpost
-  const { data: singleBlogpostData, loading: loaidngSinglgeBlogpost } = useFetchData<Blogpostprops>('/api/blogposts/' + blogpostUrl, [blogpostUrl]);
+  const { data: singleBlogpostData, loading: loaidngSinglgeBlogpost } = useFetchData<Blogpostprops>('/api/blogpost/' + blogpostUrl, [blogpostUrl]);
 
   // for targeting a specific comment / comment like or blogpost like data
   const { data: notificationComment, loading: loadingNotificationComment } = useFetchData<Commentprops>(commentNotification?.autoOpenComment ? '/api/comments/' + commentNotification?.parentCommentId : null, [commentNotification?.parentCommentId]);

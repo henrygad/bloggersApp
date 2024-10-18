@@ -1,14 +1,10 @@
 
-export type Userauthentication = {
-    token: string
-    userName: string
-};
-
 export type Userstatusprops = {
     isLogin: boolean
     loginUserName: string
     greetings?: string
     sessionId?: string
+    searchHistory: {_id: string, searched: string}[]
 }
 
 export type Login = {
@@ -26,7 +22,6 @@ export type Signup = {
 export type UsershortInforprops = {
     userName: string,
     name: string,
-    image: string,
     displayImage: string
 };
 
@@ -47,7 +42,11 @@ export type Userprops = {
     following: string[]
     interests: string[]
     notifications: Notificationsprops[]
-    chatIds: string[]
+    saves: string[]
+    archived: Blogpostprops[]
+    groupsIn: string[]
+    yourGroup: string[]
+    chat: string[]
 };
 
 export type Notificationsprops = {
@@ -95,7 +94,7 @@ export type Commentprops = {
     createdAt: string
 };
 
-export type Advaterprops = {
+export type Imageprops = {
     _id: string
     fileName: string,
     size: number,

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react'
 
-const useDeleteData = () => {
+const useDeleteData = <T,>() => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -11,11 +11,9 @@ const useDeleteData = () => {
             setError('');
 
             const response = await axios.delete(url);
-            const data = await response.data;
+            const data: T | null = await response.data;
 
-            if (data &&
-                (data.length || Object.keys(data))
-            ) {
+            if (data){
                 setError('');
                 setLoading(false);
                 return { data: data, ok: true };
@@ -32,7 +30,7 @@ const useDeleteData = () => {
             console.error(error);
             setError(error.response.data.message);
             setLoading(false);
-            return { data: '', ok: false };
+            return { data: null, ok: false };
         };
     };
 

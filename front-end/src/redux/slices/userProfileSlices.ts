@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Userprops } from "../../entities";
+import { Blogpostprops, Userprops } from "../../entities";
 
 type InitialState = {
     userProfile: {
@@ -31,30 +31,45 @@ const userProfile = createSlice({
         deleteProfile: (state, action) => {
             state.userProfile = action.payload
         },
-        addFollowing: (state, action) => {
+        follow: (state, action) => {
             const { data } = state.userProfile;
             state.userProfile.data = { ...data, following: [...data.following, action.payload] };
         },
-        removeFollowing: (state, action) => {
+        unFollow: (state, action) => {
             const { data } = state.userProfile;
             state.userProfile.data = {
                 ...data,
                 following: data.following.filter(item => item !== action.payload)
             };
         },
-        updateNotification: (state, action)=> {
-            const {data} = state.userProfile;
+        updateNotification: (state, action) => {
+            const { data } = state.userProfile;
             state.userProfile.data = {
                 ...data,
                 notifications: action.payload
             }
+        },
+        saveId: (state, action) => {
+            const { data } = state.userProfile;
+            state.userProfile.data = {
+                ...data,
+                saves: [action.payload, ...data.saves]
+            };
+        },
+        unSaveId: (state, action) => {
+            const { data } = state.userProfile;
+            state.userProfile.data = {
+                ...data,
+                saves: data.saves.filter(item => item !== action.payload)
+            };
         }
-
     }
 });
 
-export const { 
-    addProfile, editProfile, 
-    deleteProfile, addFollowing, 
-    removeFollowing, updateNotification } = userProfile.actions;
+export const {
+    addProfile, editProfile,
+    deleteProfile, follow,
+    unFollow, updateNotification,
+    saveId, unSaveId,
+} = userProfile.actions;
 export default userProfile.reducer;

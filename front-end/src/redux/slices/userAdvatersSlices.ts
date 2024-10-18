@@ -1,10 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Advaterprops } from "../../entities";
+import { Imageprops } from "../../entities";
 
 
 type Initialstateprops = {
     userAdvaters: {
-        data: Advaterprops[]
+        data: Imageprops[]
         loading: boolean
         error: string
     }

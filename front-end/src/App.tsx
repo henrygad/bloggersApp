@@ -3,7 +3,8 @@ import {
   Feed,
   About,
   Contact,
-  Search,
+  Searchresult,
+  Treadingfeeds,
   Profile,
   Editeprofile,
   Post,
@@ -13,31 +14,41 @@ import {
   Landingpage,
   Notification,
   Directmessage,
-  Pageloading
+  Pageloading,
+  Saves
 } from './pages';
 import { Suspense, useEffect, useState } from "react";
 import { useFetchData, useUserIsLogin } from "./hooks";
-import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser } from "./components";
+import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser, Searchform } from "./components";
 import { Homeicon, Mailicon, Notificationsicon, Penicon, Profileicon, Searchicon } from "./components/Icons";
 import tw from "tailwind-styled-components";
 import { addProfile } from "./redux/slices/userProfileSlices";
 import { addBlogposts } from "./redux/slices/userBlogpostSlices";
 import { useAppDispatch, useAppSelector } from "./redux/slices";
 import { addComments } from "./redux/slices/userCommentsSlices";
-import { Advaterprops, Blogpostprops, Commentprops, Userprops } from "./entities";
+import { Imageprops, Blogpostprops, Commentprops, Userprops } from "./entities";
 import { addAdvaters } from "./redux/slices/userAdvatersSlices";
+import { addTimelineFeeds } from "./redux/slices/userTimelineFeedSlices";
+import { addTreadingFeeds } from "./redux/slices/treadingFeedsSlices";
+import { addSaves } from "./redux/slices/userSavesSlices";
 
 const App = () => {
+  const { loginStatus: { isLogin, loginUserName } } = useUserIsLogin();
+
+  const { fetchData: fetchgProfileData } = useFetchData<Userprops>(null);
+  const { fetchData: fetchgAdvaterData } = useFetchData<Imageprops[]>(null);
+  const { fetchData: fetchgCommentData } = useFetchData<Commentprops[]>(null);
+  const { fetchData: fetchgBlogpostData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchTimelineFeedData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchTreadingFeedData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchSavesBlogpostsData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchDisplayBlogpostImagesData } = useFetchData<Imageprops[]>(null);
+
+  const { userProfile: { data: getProfileData } } = useAppSelector((state) => state.userProfileSlices);
+  const appDispatch = useAppDispatch();
 
   const [authenticationDialog, setAuthenticationDialog] = useState('');
   const [authenticationCurrentTabOn, setAuthenticationCurrentTabOn] = useState('login');
-  const { loginStatus: { isLogin, loginUserName } } = useUserIsLogin();
-  const { data: getProfileData, error: profileError, loading: profileLoading } = useFetchData<Userprops>(isLogin ? '/api/authorizeduser' : null, [isLogin]);
-  const { data: getBlogpostData, error: blogpostError, loading: blogpostLoading } = useFetchData<Blogpostprops[]>(isLogin ? `/api/blogposts/${loginUserName}?skip=0&limit=5` : null, [isLogin]);
-  const { data: getCommentData, error: commentError, loading: commentLoading } = useFetchData<Commentprops[]>(isLogin ? '/api/usercomments/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
-  const { data: getAdvaterData, error: advaterError, loading: advaterLoading } = useFetchData<Advaterprops[]>(isLogin ? '/api/images/' + loginUserName + '?skip=0&limit=5' : null, [isLogin]);
-  const { userProfile: { data: profileData } } = useAppSelector((state) => state.userProfileSlices);
-  const appDispatch = useAppDispatch();
 
   const handleDisplayValidationPage = (item: string) => {
     setAuthenticationDialog('authenticationDialog');
@@ -69,10 +80,10 @@ const App = () => {
       to: '',
       content: <Link to='/notifications' className="relative block">
         {
-          profileData && profileData.notifications ?
-            profileData.notifications.filter((item) => item.checked === false).length ?
+          getProfileData && getProfileData.notifications ?
+            getProfileData.notifications.filter((item) => item.checked === false).length ?
               <span className="absolute flex justify-center items-center text-[.6rem] w-4 h-4 font-bold text-white rounded-full bg-red-400">{
-                profileData.notifications.filter((item) => item.checked === false).length
+                getProfileData.notifications.filter((item) => item.checked === false).length
               }</span> :
               null
             :
@@ -96,16 +107,16 @@ const App = () => {
 
   const loginFooterMenu = [
     {
-      name: 'home',
+      name: 'feeds',
       to: '',
-      content: <Link to='/home'>
+      content: <Link to='/feeds'>
         <Homeicon width="30px" height="30px" />
       </Link>
     },
     {
-      name: 'search',
+      name: 'treading',
       to: '',
-      content: <Link to='/search' >
+      content: <Link to='/treading' >
         <Searchicon width="30px" height="30px" />
       </Link>
     },
@@ -144,65 +155,155 @@ const App = () => {
     }
   ];
 
-  const handleFetchUserProfileData = () => {
-    appDispatch(addProfile({
-      data: getProfileData,
-      loading: profileLoading,
-      error: profileError,
-    }));
+  const handleFetchProfileData = async () => {
+    if (isLogin) {
+      appDispatch(addProfile({
+        loading: true,
+      }));
 
-    appDispatch(addBlogposts({
-      data: getBlogpostData || [],
-      loading: blogpostLoading,
-      error: blogpostError
-    }));
+      appDispatch(addBlogposts({
+        loading: true,
+      }));
 
-    appDispatch(addComments({
-      data: getCommentData || [],
-      loading: commentLoading,
-      error: commentError
-    }));
+      appDispatch(addComments({
+        loading: true,
+      }));
 
-    appDispatch(addAdvaters({
-      data: getAdvaterData || [],
-      loading: advaterLoading,
-      error: advaterError
-    }));
+      appDispatch(addAdvaters({
+        loading: true,
+      }));
 
+      appDispatch(addSaves({
+        loading: true,
+      }));
+
+      appDispatch(addTimelineFeeds({
+        loading: true,
+      }));
+
+      appDispatch(addTreadingFeeds({
+        loading: true
+      }));
+
+      await fetchgProfileData('/api/authorizeduser').then((response) => {
+        const { data, loading } = response;
+
+        appDispatch(addProfile({
+          data,
+          loading,
+          error: '',
+        }));
+
+        const handleFetchSavesBlogpost = async () => {
+          if (data?.saves.length) {
+
+            await fetchSavesBlogpostsData('/api/blogposts/saves/' + data.saves.join('&'))
+              .then((response) => {
+                const { data, loading } = response;
+                appDispatch(addSaves({
+                  data,
+                  loading: false,
+                  error: '',
+                }));
+              });
+
+          } else {
+
+            appDispatch(addSaves({
+              loading: false,
+            }));
+          };
+
+        };
+
+        const handleFetchTimelineFeeds = async () => {
+          if (!data?.timeline.length) return;
+
+          await fetchTimelineFeedData(`/api/blogposts/timeline/${data.timeline.join('&')}?skip=0&limit=5`).then((response) => {
+            const { data, loading } = response;
+
+            appDispatch(addTimelineFeeds({
+              data,
+              loading,
+              error: '',
+            }));
+          });
+
+        };
+
+        handleFetchSavesBlogpost();
+        handleFetchTimelineFeeds();
+
+      });
+
+      await fetchgBlogpostData('/api/blogposts/' + loginUserName + '?skip=0&limit=5').then((response) => {
+        const { data, loading } = response;
+
+        appDispatch(addBlogposts({
+          data,
+          loading,
+          error: '',
+        }));
+      });
+
+      await fetchgCommentData('/api/usercomments/' + loginUserName + '?skip=0&limit=5').then((response) => {
+        const { data, loading } = response;
+
+        appDispatch(addComments({
+          data,
+          loading,
+          error: '',
+        }));
+      });
+
+      await fetchgAdvaterData('/api/images/' + loginUserName + '?skip=0&limit=5').then((response) => {
+        const { data, loading } = response;
+
+        appDispatch(addAdvaters({
+          data,
+          loading,
+          error: '',
+        }));
+      });
+
+      await fetchTreadingFeedData('/api/blogposts').then((response) => {
+        const { data, loading } = response;
+
+        appDispatch(addTreadingFeeds({
+          data,
+          loading,
+          error: ''
+        }));
+      });
+    };
   };
 
+
   useEffect(() => {
-    isLogin && handleFetchUserProfileData();
-  }, [
-    isLogin,
-    getProfileData, profileLoading, profileError,
-    getBlogpostData, blogpostLoading, blogpostError,
-    getCommentData, commentLoading, commentError,
-    getAdvaterData, advaterLoading, advaterError,
-  ]);
+    handleFetchProfileData();
+  }, [isLogin === true]);
 
   return <Appwrapper>
     <header className="container w-full">
-      <div className="py-2">
+      <nav id="header-nav" className="relative h-[50px] flex items-center gap-5 justify-between">
+        <Conpanylogo />
+        <Searchform />
         {isLogin ?
-          <nav id="login-header-nav" className="flex items-center gap-5 justify-between">
-            <Conpanylogo />
+          <>
             <Menu
               arrOfMenu={loginHeaderMenu}
               parentClass="flex item-center gap-4 text-sm"
               childClass="hover:text-green-400 active:bg-green-400"
             />
-          </nav> :
-          <nav id="logout-header-nav" className="flex items-center gap-5 justify-between">
-            <Conpanylogo />
+          </> :
+          <>
             <Menu
               arrOfMenu={logOutHeaderMenu}
               parentClass="flex item-center gap-4 text-sm"
               childClass="hover:text-green-400 active:bg-green-400"
             />
-          </nav>
-        }
-      </div>
+          </>}
+      </nav>
     </header>
     <main className="container w-full pb-20">
       <Suspense fallback={<Pageloading />}>
@@ -210,16 +311,18 @@ const App = () => {
           <Route path="*" element={<Page404 />} />
           <Route path="/about-us" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/searchresult" element={<Searchresult />} />
           <Route path="/:authorUserName/:slug" element={<Singleblogpostpage />} />
           <Route path="/" element={isLogin ? <Navigate to={`/${loginUserName}`} /> : <Landingpage />} />
-          <Route path="/home" element={isLogin ? <Feed /> : <Navigate to="/" />} />
+          <Route path="/feeds" element={isLogin ? <Feed /> : <Navigate to="/" />} />
           <Route path="/:userName" element={isLogin ? <Profile /> : <Navigate to={'/'} />} />
-          <Route path="/createpost" element={isLogin ? <Post /> : <Navigate to={'/'} />} />
+          <Route path="/createpost" element={true ? <Post /> : <Navigate to={'/'} />} />
           <Route path="/notifications" element={isLogin ? <Notification /> : <Navigate to={'/'} />} />
+          <Route path="/treading" element={isLogin ? <Treadingfeeds /> : <Navigate to={'/'} />} />
           <Route path="/editprofile" element={isLogin ? <Editeprofile /> : <Navigate to={'/'} />} />
-          <Route path="/search" element={isLogin ? <Search /> : <Navigate to={'/'} />} />
           <Route path="/settings" element={isLogin ? <Settings /> : <Navigate to={'/'} />} />
           <Route path="/directmessages" element={isLogin ? <Directmessage /> : <Navigate to={'/'} />} />
+          <Route path="/saves" element={isLogin ? <Saves /> : <Navigate to={'/'} />} />
         </Routes>
       </Suspense>
     </main>

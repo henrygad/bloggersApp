@@ -27,12 +27,14 @@ const Blogpostsec = ({
           profileBlogposts.length ?
           <>
             {profileBlogposts.map((item, index) =>
+             item.status === 'published' ?
               < Singleblogpost
                 key={item._id}
                 blogpost={item}
                 type='text'
                 index={index}
-              />
+              /> : 
+              null
             )}
             {!moreBlogpostsError.trim() &&
               <button onClick={handleServerLoadMoreBlogposts}>

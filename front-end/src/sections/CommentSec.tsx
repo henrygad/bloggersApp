@@ -23,7 +23,7 @@ const CommentSec = ({
   moreCommentsLoading,
   moreCommentsError,
 }: Props) => {
-  
+
   const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
   const appDispatch = useAppDispatch();
 
@@ -44,19 +44,20 @@ const CommentSec = ({
             profileCommentsData &&
               profileCommentsData.length ?
               <>{
-                profileCommentsData.map((item, index) => <Singlecomment
-                  key={item._id}
-                  comment={item}
-                  type={'_html'}
-                  index={index}
-                  handleDeleteComment={()=>handleDeleteComment(item._id)}
-                  deletingLoading={deleteCommentLoading}
-                  allowNested={false}
-                />
+                profileCommentsData.map((item, index) =>
+                  <Singlecomment
+                    key={item._id}
+                    comment={item}
+                    type={'_html'}
+                    index={index}
+                    handleDeleteComment={() => handleDeleteComment(item._id)}
+                    deletingLoading={deleteCommentLoading}
+                    allowNested={false}
+                  />
                 )
               }
                 <Button
-                
+
                   id="loading-more-comment"
                   buttonClass=""
                   children={!moreCommentsLoading ? 'load more' : 'loading more...'}

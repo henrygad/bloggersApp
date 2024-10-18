@@ -12,19 +12,20 @@ type Props = {
 
 const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificationTitle, notificationUrl }: Props) => {
     const { loginStatus: { loginUserName, sessionId } } = useUserIsLogin();
-    const [views, setViews] = useState(arrOfViews);
-    const { patchData } = usePatchData();
+    const [views, setViews] = useState<string[]>(arrOfViews);
+    const { patchData } = usePatchData<string[]>();
 
     const notify = useNotification();
 
     const handleView = async (url: string, sessionId: string) => {
 
         if (views.includes(sessionId)) return;
+
         const body = null;
         const response = await patchData(url, body);
         const { data, ok } = response;
 
-        if (ok) {
+        if (ok && data) {
             setViews(data);
            //handleViewsNotification()
         }
@@ -35,7 +36,7 @@ const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificat
             elementRef.current.contains(e.target as Node)
         ) {
             setTimeout(() => {
-                handleView(url, sessionId);
+                handleView(url, sessionId || '');
             }, 1000);
         }
     };
@@ -69,7 +70,7 @@ const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificat
     useEffect(() => {
         if (onLoadView) {
             setTimeout(() => {
-                handleView(url, sessionId);
+                handleView(url, sessionId || '');
             }, 1000);
         };
 

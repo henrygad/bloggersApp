@@ -3,7 +3,7 @@ import Pageloading from "./Pageloading";
 const Feed = lazy(()=> import('./Feed'));
 const About = lazy(()=> import('./About'));
 const Contact = lazy(()=> import('./Contact'));
-const Search = lazy(()=> import('./Search'));
+const Searchresult = lazy(()=> import('./Searchresult'));
 const Profile = lazy(()=> import('./Profile'));
 const Editeprofile = lazy(()=> import('./Editeprofile'));
 const Post = lazy(()=> import('./Post'));
@@ -13,12 +13,16 @@ const Page404 = lazy(()=> import('./Page404'));
 const Landingpage = lazy(()=> import('./Landingpage'));
 const Notification = lazy(()=> import('./Notification'));
 const Directmessage = lazy(()=> import('./Directmessage'));
+const Treadingfeeds = lazy(()=> import('./Treadingfeeds'));
+const Saves = lazy(()=> import('./Saves'));
 
 export {
+  Saves,
+  Treadingfeeds,
   Feed,
   About,
   Contact,
-  Search,
+  Searchresult,
   Profile,
   Editeprofile,
   Post,

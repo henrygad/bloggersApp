@@ -29,8 +29,14 @@ import Viewbutton from './Viewbutton';
 import Singlenotification from './Singlenotification';
 import Signoutuser from './Signoutuser';
 import Deleteuseraccount from './Deleteuseraccount';
+import Searchform from './Searchform';
+import Singlesearchhistory from './Singlesearchhistory';
+import Savesbutton from './Savesbutton';
 
 export {
+    Savesbutton,
+    Singlesearchhistory,
+    Searchform,
     Signoutuser,
     Deleteuseraccount,
     Singlenotification,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Menu, Tab } from "../components";
 import { Button } from "../components";
-import { Createblogpostsec } from "../sections";
+import { Archiveds, Createblogpostsec, Unpublisheds } from "../sections";
 import { useLocation } from "react-router-dom";
 
 
@@ -42,16 +42,12 @@ const Post = () => {
         content: <div id="articles">Articles</div>,
         child: [
           {
-            name: "Published",
-            content: <div id="articles">Published</div>,
-          },
-          {
             name: "Unpublished",
-            content: <div id="articles">Unpublished</div>,
+            content: <Unpublisheds />,
           },
           {
             name: "Archived",
-            content: <div id="articles">Archived</div>,
+            content: <Archiveds />,
           },
         ]
       }
@@ -93,6 +89,7 @@ const Post = () => {
   const handleSwitchBetweenParentTabs = (newTabName: string) => {
     setParentTabs(newTabName);
   };
+
   return <div>
     <div className="flex">
       <div className="min-w-[100px] border-r  border-stone-700">

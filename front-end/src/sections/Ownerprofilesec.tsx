@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "../redux/slices";
 import Profilesec from "./Profilesec";
 import { useFetchData } from "../hooks";
 import { addBlogposts } from "../redux/slices/userBlogpostSlices";
-import { Advaterprops, Blogpostprops, Commentprops } from "../entities";
+import { Imageprops, Blogpostprops, Commentprops } from "../entities";
 import { addComments } from "../redux/slices/userCommentsSlices";
 import { addAdvaters } from "../redux/slices/userAdvatersSlices";
 
@@ -39,7 +39,7 @@ const Ownerprofilesec = ({ loginUserName }: { loginUserName: string }) => {
   const { fetchData: fetchMoreCommentsData, loading: loadingMoreComments, error: errorMoreComments } = useFetchData<Commentprops[]>(null);
   const countLoadMoreCommentsRef = useRef(6);
 
-  const { fetchData: fetchMoreAdvaterData, loading: loadingMoreAdvater, error: errorMoreAdvater } = useFetchData<Advaterprops[]>(null);
+  const { fetchData: fetchMoreAdvaterData, loading: loadingMoreAdvater, error: errorMoreAdvater } = useFetchData<Imageprops[]>(null);
   const counLoadMoreAdvaterRef = useRef(5);
 
   const appDispatch = useAppDispatch();
@@ -47,21 +47,21 @@ const Ownerprofilesec = ({ loginUserName }: { loginUserName: string }) => {
   const handleServerLoadMoreBlogposts = async () => {
     const { data, ok } = await fetchMoreBlogpostData(`/api/blogposts/${loginUserName}?skip=${countLoadMoreBlogpostsRef.current}&limit=${countLoadMoreBlogpostsRef.current}`);
     if (!ok || !data) return;
-    appDispatch(addBlogposts({ data: [...ownerBlogposts, ...data], loading: false, error: '' }));
+    appDispatch(addBlogposts((pre: { data: Blogpostprops[] }) => pre ? { ...pre, data: [...pre.data, ...data] } : pre));
     countLoadMoreBlogpostsRef.current += countLoadMoreBlogpostsRef.current;
   };
 
   const handleServerLoadMoreComments = async () => {
     const { data, ok } = await fetchMoreCommentsData(`/api/usercomments/${loginUserName}?skip=${countLoadMoreCommentsRef.current}&limit=5`);
     if (!ok || !data) return;
-    appDispatch(addComments({ data: [...ownerComments, ...data], loading: false, error: '' }));
+    appDispatch(addComments((pre: { data: Commentprops[] }) => pre ? { ...pre, data: [...pre.data, ...data] } : pre));
     countLoadMoreCommentsRef.current += countLoadMoreCommentsRef.current;
   };
 
   const handleServerLoadMoreAdvaters = async () => {
     const { data, ok } = await fetchMoreAdvaterData(`/api/images/${loginUserName}?skip=${counLoadMoreAdvaterRef.current}&limit=${counLoadMoreAdvaterRef.current}`);
     if (!ok || !data) return;
-    appDispatch(addAdvaters({ data: [...ownerAdvaters, ...data], loading: false, error: '' }));
+    appDispatch(addAdvaters((pre: { data: Imageprops[] }) => pre ? { ...pre, data: [...pre.data, ...data] } : pre));
     counLoadMoreAdvaterRef.current += counLoadMoreAdvaterRef.current;
   };
 

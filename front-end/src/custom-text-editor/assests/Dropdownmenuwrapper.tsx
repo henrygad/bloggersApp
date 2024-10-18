@@ -1,10 +1,23 @@
-import { ReactElement} from 'react'
+import { ReactElement, useRef } from 'react'
 
-const Dropdownmenuwrapper = ({ menuName, Children , openDropDownMenu = ''}: { Children: ReactElement, menuName: string, openDropDownMenu: string }) => {
-    return <div className='relative w-full'>
-        <div id={menuName} className={` ${openDropDownMenu.toLocaleLowerCase() === menuName.toLocaleLowerCase() ? 'block' : 'hidden'}
-         absolute top-0 bg-white border shadow-md p-2 z-50`}>
-            {Children}
+type Props = {
+    Children: ReactElement
+    menuName: string
+    openDropDownMenu: string
+};
+
+const Dropdownmenuwrapper = ({
+    menuName,
+    Children,
+    openDropDownMenu,
+}: Props) => {
+
+    return <div className='relative w-full' id='looking'>
+        <div id={menuName} className="absolute top-0 shadow-md z-50 space-y-2 ">
+            {openDropDownMenu.toLocaleLowerCase() === menuName.toLocaleLowerCase() ?
+                Children :
+                null
+            }
         </div>
     </div>
 };

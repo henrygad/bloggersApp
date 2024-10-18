@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Commentprops } from "../entities"
 import Button from "./Button";
 import Dialog from "./Dialog";
-import Trythistexteditor from "../custom-text-editor/Trythistexteditor";
+import Trythistexteditor from "../custom-text-editor/App";
 import { useDeleteData, useFetchData, useNotification, usePostData, useUserIsLogin } from "../hooks";
-import { deleteAllText } from "../custom-text-editor/text-area/Config";
+import { deleteAllText } from "../custom-text-editor/settings";
 import { useAppDispatch } from "../redux/slices";
 import { createComment, deleteComments } from "../redux/slices/userCommentsSlices";
 import Singlecomment from "./Singlecomment";

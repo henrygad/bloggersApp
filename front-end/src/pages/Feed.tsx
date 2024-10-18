@@ -2,80 +2,71 @@ import { useEffect, useRef, useState } from "react";
 import { Blogpostprops } from "../entities";
 import { useFetchData } from "../hooks";
 import { Singleblogpost } from "../components";
-import { useAppSelector } from "../redux/slices";
+import { useAppDispatch, useAppSelector } from "../redux/slices";
+import { addTimelineFeeds } from "../redux/slices/userTimelineFeedSlices";
 
 const Feed = () => {
     const initialLoadingFeedAmount = 5
-    const { userProfile: { data: getProfileData } } = useAppSelector(state => state.userProfileSlices);
+    const { userProfile: { data: getProfileData } } = useAppSelector((state) => state.userProfileSlices);
+    const { userTimelineFeeds: { data: getTimelineFeed, loading: loadingTimelineFeeds } } = useAppSelector((state) => state.userTimelineFeedSlices);
+    const appDispatch = useAppDispatch();
 
-    const { data: getFeedData, loading: laodingFeeds } = useFetchData<Blogpostprops[] | null>(
-        getProfileData &&
-            getProfileData.timeline &&
-            getProfileData.timeline.length ? `/api/feed/timeline/${getProfileData.timeline.join('&')}?skip=0&limit=${initialLoadingFeedAmount}` :
-            null,
-        [getProfileData?.timeline?.length]
-    );
-    const [feeds, setFeeds] = useState<Blogpostprops[] | null>(null);
+    const { fetchData: fetchNewFeedData, loading: loadingNewFeeds } = useFetchData<Blogpostprops[] | null>(null);
 
     const { fetchData: fetchMoreFeedData, loading: loadingMoreFeeds } = useFetchData<Blogpostprops[] | null>(null);
     const skipCountRef = useRef(initialLoadingFeedAmount);
 
-    const { fetchData: fetchNewFeedData, loading: loadingNewFeeds } = useFetchData<Blogpostprops[] | null>(null);
-
     const handleLoadMoreFeeds = async () => {
         const response = await fetchMoreFeedData(
-            getProfileData &&
-                getProfileData.timeline &&
-                getProfileData.timeline.length ? `/api/feed/timeline/${getProfileData.timeline.join('&')}?skip=${skipCountRef.current}&limit=1` :
+            getProfileData.timeline &&
+                getProfileData.timeline.length ? `/api/blogposts/timeline/${getProfileData.timeline.join('&')}?skip=${skipCountRef.current}&limit=1` :
                 ' ');
 
         const { ok, data } = response;
         if (ok && data) {
-            setFeeds(pre => pre ? [...pre, ...data] : pre);
+            appDispatch(addTimelineFeeds((pre: { data: Blogpostprops[], }) => pre ? { ...pre, data: [...pre.data, data] } : pre));
             skipCountRef.current += initialLoadingFeedAmount
         };
     };
 
     const handleLoadNewFeeds = async () => {
         const response = await fetchNewFeedData(
-            getProfileData &&
-                getProfileData.timeline &&
-                getProfileData.timeline.length ? `/api/feed/timeline/${getProfileData.timeline.join('&')}?skip=0&limit=${skipCountRef.current}` :
+            getProfileData.timeline &&
+                getProfileData.timeline.length ? `/api/blogposts/timeline/${getProfileData.timeline.join('&')}?skip=0&limit=${skipCountRef.current}` :
                 ' '
         );
         const { ok, data } = response;
         if (ok && data) {
-            setFeeds(pre => pre ? [...pre, ...data] : pre);
+            appDispatch(addTimelineFeeds((pre: { data: Blogpostprops[], }) => pre ? { ...pre, data: [...pre.data, data] } : pre));
         };
     };
 
-    useEffect(() => {
-        setFeeds(getFeedData);
-    }, [getFeedData]);
-
     return <div>
         {
-            !laodingFeeds ?
+            !loadingTimelineFeeds ?
                 <>
-                    {feeds &&
-                        feeds.length ?
+                    {getTimelineFeed &&
+                        getTimelineFeed.length ?
                         <>
                             <span className="cursor-pointer" onClick={handleLoadNewFeeds}>
-                              {!loadingNewFeeds ? 'load new feeds' : 'loading...'}  
+                                {!loadingNewFeeds ? 'load new feeds' : 'loading...'}
                             </span>
                             <div>
                                 {
-                                    feeds.map((item, index) =>
-                                        <Singleblogpost
-                                            type={'text'}
-                                            index={index}
-                                            blogpost={item}
-                                        />
+                                    getTimelineFeed.map((item, index) =>
+                                        item.status === 'published' ?
+                                            <Singleblogpost
+                                                key={item._id}
+                                                type={'text'}
+                                                index={index}
+                                                blogpost={item}
+                                            /> :
+                                            null
                                     )
                                 }
                             </div>
                             <span className="cursor-pointer" onClick={handleLoadMoreFeeds}>
-                                {!loadingMoreFeeds ? 'load more feed' : 'loading...'}
+                                {!loadingMoreFeeds ? 'load more feeds' : 'loading...'}
                             </span>
                         </> :
                         <div>no blogpost found</div>

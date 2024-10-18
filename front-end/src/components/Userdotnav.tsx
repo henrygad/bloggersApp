@@ -9,7 +9,6 @@ const Userdotnav = ({ userName }: { userName: string }) => {
     const isAccountOwner = loginUserName === userName;
 
     const [toggleUserDotNav, setToggleUserDotNav] = useState('');
-
     const { copied, handleCopyLink } = useCopyLink('/localhost:500/' + userName);
 
     const generalUserDotNavs = [

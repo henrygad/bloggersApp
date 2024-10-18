@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Advaterprops, Blogpostprops, Commentprops, Userprops } from '../entities';
+import { Imageprops, Blogpostprops, Commentprops, Userprops } from '../entities';
 import { Button, Dialog, Displayimage, Followbutton, Menu, Tab, Userdotnav } from '../components';
 import Blogpostsec from './Blogpostsec';
 import CommentSec from './CommentSec';
@@ -30,7 +30,7 @@ type Props = {
   moreCommentsError: string
 
 
-  profileAdvatersData: Advaterprops[],
+  profileAdvatersData: Imageprops[],
   profileAdvatersLoading: boolean,
   profileAdvatersError: string,
   handleServerLoadMoreAdvaters: () => void,

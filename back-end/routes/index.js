@@ -7,8 +7,10 @@ const blogpostsRoute = require('./blogpostsRoute')
 const commentsRoute = require('./commentsRoute')
 const searchRoute = require('./searchRoute')
 const imagesRoute = require('./imagesRoute')
+const savesRoute = require('./savesRoute')
 
 module.exports = routers.use(
+    savesRoute,
     authenticationRoute,
     usersRoute,
     blogpostsRoute,

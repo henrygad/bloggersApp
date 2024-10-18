@@ -11,19 +11,15 @@ const multer = require('multer')
 const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
-
 router.get('/users', async (req, res, next) => {// all users
     const { query: { skip = 0, limit = 0 } } = req
 
     try {
-
-        // get the login user data
-        const users = await usersData
+        const users = await usersData // get the login user data
             .find()
             .skip(skip)
             .limit(limit)
-            .select('email userName name displayImage bio sex followers following interests _id updatedAt createdAt')
-
+            .select('userName name displayImage')
 
         if (!users) throw new Error('Not Found: no user found')
 
@@ -40,8 +36,9 @@ router.get('/users/:userName', async (req, res, next) => { // single user
 
     try {
 
-        // get the login user data
-        const users = await usersData
+        if (!userName.startsWith('@')) throw new Error('Bad Request: invalid username!')
+
+        const users = await usersData  // get the login user data
             .findOne({ userName })
             .select('email userName name bio country phoneNumber dateOfBirth website displayImage sex followers following interests updatedAt createdAt')
 
@@ -59,7 +56,6 @@ router.get('/authorizeduser', authorization, async (req, res, next) => { // sing
     const { authorizeUser } = req
 
     try {
-
         // get the login user data
         const user = await usersData.findOne({ userName: authorizeUser })
         if (!user) throw new Error('Not Found: no user found')
@@ -82,22 +78,37 @@ router.patch('/editprofile', authorization, upload.single('avater'), createimage
         if (!body) throw new Error('bad request: empty field')
 
         //sanitized body
-        const sanitizedBody = {
-            displayImage: req.image ? req.image : '',
-            name: body?.name,
-            bio: body?.bio,
-            dateOfBirth: body?.dateOfBirth,
-            email: body?.email,
-            phoneNumber: body?.phoneNumber,
-            website: body?.website,
-            country: body?.country,
-            sex: body?.sex,
+        const sanitizedBody = {}
+
+        if (req.image) {
+            sanitizedBody = {
+                displayImage: req.image,
+                name: body.name,
+                bio: body.bio,
+                dateOfBirth: body.dateOfBirth,
+                email: body.email,
+                phoneNumber: body.phoneNumber,
+                website: body.website,
+                country: body.country,
+                sex: body.sex,
+            }
+        } else {
+            sanitizedBody = {
+                name: body.name,
+                bio: body.bio,
+                dateOfBirth: body.dateOfBirth,
+                email: body.email,
+                phoneNumber: body.phoneNumber,
+                website: body.website,
+                country: body.country,
+                sex: body.sex,
+            }
         }
 
         // update other user data
-        const updateUserData = await usersData.findOneAndUpdate({ userName: authorizeUser }, 
+        const updateUserData = await usersData.findOneAndUpdate({ userName: authorizeUser },
             { ...sanitizedBody },
-            {new: true}
+            { new: true }
         )
         if (!updateUserData) throw new Error('bad request: user data was not updated')
 
@@ -115,7 +126,7 @@ router.delete('/deleteprofile', authorization, async (req, res, next) => {
 
     try {
         // logout user
-        req.session.jwtToken = null        
+        req.session.jwtToken = null
 
         // delete user authenticated data
         const deleteAuthenticatedUser = await authenticatedUser.findOneAndDelete({ userName: authorizeUser })

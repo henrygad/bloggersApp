@@ -22,7 +22,7 @@ const useFetchData = <T,>(url: string | null = '', dependences: any[] = []) => {
                 setError(' ');
                 setLoading(false);
 
-                return { ok: true, data };
+                return { ok: true, data, loading: false, error: ''};
 
             } else throw new Error('this is new error');
 
@@ -41,7 +41,7 @@ const useFetchData = <T,>(url: string | null = '', dependences: any[] = []) => {
             setLoading(false);
             console.error(error);
 
-            return { ok: true, data: null };
+            return { ok: true, data: null, loading: false, error: error.response.data.message };
         };
 
     };

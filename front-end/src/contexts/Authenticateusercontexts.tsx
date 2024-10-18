@@ -13,6 +13,7 @@ const userStatus = {
   loginUserName: '',
   greetings: '',
   sessionId: '',
+  searchHistory: []
 };
 
 export const Context = createContext<Contextprops>({
@@ -26,22 +27,17 @@ const Authenticateusercontexts = ({ Children }: { Children: ReactElement }) => {
   const [loginStatus, setLoginStatus] = useState<Userstatusprops>(userStatus);
 
   const handleClientStatus = async () => {
-      const { data: client } = await fetchData('/api/');
+     await fetchData('/api/status').then((response)=> {
+      const {data} = response;
+      if(!data) return
+      setLoginStatus({...data})
+     });
 
-      if(client){
-        setLoginStatus({
-          isLogin: false ,
-          loginUserName: '',
-          greetings: client.greetings,
-          sessionId: client.greetings,
-        });
-      };
-
-      const {data: user} = await fetchData('/api/status');
-
-      if(user){
-        setLoginStatus((pre)=> pre ? {...pre, ...user} : pre);
-      };
+      await fetchData('/api/').then((response)=> {
+        const {data} = response;
+        if(!data) return;
+        setLoginStatus((pre)=> pre? {...pre, ...data}: pre);
+      });
   };
 
   useEffect(() => {

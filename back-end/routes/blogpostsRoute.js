@@ -13,39 +13,14 @@ router.get('/blogposts', async (req, res, next) => {
     const { query: { skip = 0, limit = 0 } } = req
 
     try {
-
-        // get all blogposts
-        const blogposts = await blogpostsData
+        const blogposts = await blogpostsData // get all blogposts
             .find()
-            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-
         if (!blogposts.length) throw new Error('Not Found: no blogposts found')
 
-        res.json(blogposts)
+        res.json(blogposts.sort((a, b) => b.views.length - a.views.length))
 
-    } catch (error) {
-
-        next(new customError(error, 404))
-    }
-})
-
-router.get('/blogposts/:authorUserName/:slug', async (req, res, next) => {
-    const { params: { authorUserName, slug } } = req
-
-    try {
-
-        if (!authorUserName.startsWith('@') ||
-            slug.trim() === ' '
-        ) throw new Error('Bad Request: invalid username!')
-
-        const url = authorUserName + '/' + slug;
-        const blogpost = await blogpostsData.findOne({ url })
-
-        if (!blogpost) throw new Error('Not Found: no blogpost found')
-
-        res.json(blogpost);
     } catch (error) {
 
         next(new customError(error, 404))
@@ -76,26 +51,72 @@ router.get('/blogposts/:authorUserName', authorization, async (req, res, next) =
     }
 })
 
-router.get('/feed/timeline/:timeline', authorization, async (req, res, next) => {
+router.get('/blogpost/:authorUserName/:slug', async (req, res, next) => {
+    const { params: { authorUserName, slug } } = req
+    const url = authorUserName + '/' + slug
+
+    try {
+
+        if (!url) throw new Error('Bad Request: invalid url!')
+
+        const blogpost = await blogpostsData.findOne({ url })
+
+        if (!blogpost) throw new Error('Not Found: no blogpost found')
+
+        res.json(blogpost);
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+})
+
+router.get('/blogposts/timeline/:timeline', authorization, async (req, res, next) => {
     const { params: { timeline }, query: { skip = 0, limit = 0 } } = req
 
     try {
 
         if (timeline.trim() === '') throw new Error('Bad Request: empty field!')
 
-        const getArrOfTimeline = timeline.split('&');
-        getArrOfTimeline.map(item => {
+        const getArrOfUserNames = timeline.split('&');
+        getArrOfUserNames.map(item => {
             if (!item.startsWith('@')) throw new Error('Bad Request: invalid username!')
         })
 
         const getFeeds = await blogpostsData
-            .find({ authorUserName: { $in: getArrOfTimeline } })
+            .find({ authorUserName: { $in: getArrOfUserNames } })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
         if (!getFeeds.length) throw new Error('Bad Request: no blogpost found!')
 
         res.json(getFeeds)
+
+    } catch (error) {
+
+        next(new customError(error, 404))
+    }
+})
+
+router.get('/blogposts/saves/:_ids', authorization, async (req, res, next) => {
+    const { params: { _ids }, query: { skip = 0, limit = 0 } } = req
+
+    try {
+
+        if (_ids.trim() === '') throw new Error('Bad Request: empty field!')
+
+        const getArrOfBlogpostIds = _ids.split('&');
+        getArrOfBlogpostIds.map(_id => {
+            if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: invalid blogpost id!') // verify blogpost id
+        })
+
+        const getSavedBlogpost = await blogpostsData
+            .find({ _id: { $in: getArrOfBlogpostIds } })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+        if (!getSavedBlogpost.length) throw new Error('Bad Request: no blogpost found!')
+
+        res.json(getSavedBlogpost)
 
     } catch (error) {
 
@@ -111,17 +132,15 @@ router.post('/addblogpost', authorization, upload.single('blogpostimage'), creat
 
         if (!body.slug) throw new Error('Bad Request: empty field!')
 
-        if (body.authorUserName) throw new Error('Bad Request: reject!')
-
         //check for duplication
         let validataSlug = '';
 
-        const getAllBlogpost = await blogpostsData.findOne({ slug: body.slug })
-        if (getAllBlogpost) {
-            validataSlug = body.slug + Date.now(); // for duplicated slugs
+        const blogpostSlugExist = await blogpostsData.findOne({ slug: body.slug }) // check if blogpost exist with is new blogpost slug
+        if (blogpostSlugExist) {
+            validataSlug = body.slug + Date.now(); // change the new blogpost slug
         } else {
-            validataSlug = body.slug
-        } //throw new Error('Bad Request: duplicated blogpost with the same slug not allowed!')
+            validataSlug = body.slug // else continue with the new blogpost slug
+        }
 
         const validatedBody = {
             displayImage: req.image ? req.image : '',
@@ -133,7 +152,7 @@ router.post('/addblogpost', authorization, upload.single('blogpostimage'), creat
             mentions: !body.mentions,
             slug: validataSlug,
             url: `${authorizeUser}/${validataSlug}`,
-            status: 'published',
+            status: body.status || 'archived',
         }
 
         // create blogpost
@@ -155,22 +174,33 @@ router.patch('/editblogpost/:_id', authorization, upload.single('image'), create
 
     try {
 
-        // verify blogpost id
-        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: invalid blogpost id!')
+        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: invalid blogpost id!') // verify blogpost id
 
-        // validate body
+        let sanitizedBody = {};
 
-        // update this blogpost
-        const updateBlogpost = await blogpostsData.findByIdAndUpdate({ _id },
-            {
-                displayImage: req.image ? req.image : '',
-                title: body?.title,
-                body: body?.body,
-                _html: body?._html,
-                catigories: body?.catigories,
-                mentions: body?.mentions,
-                status: body?.status
-            },
+        if (req.image) {
+            sanitizedBody = {
+                displayImage: req.image,
+                title: body.title,
+                body: body.body,
+                _html: body._html,
+                catigories: body.catigories,
+                mentions: body.mentions,
+                status: body.status
+            };
+        } else {
+            sanitizedBody = {
+                title: body.title,
+                body: body.body,
+                _html: body._html,
+                catigories: body.catigories,
+                mentions: body.mentions,
+                status: body.status
+            };
+        }
+
+        const updateBlogpost = await blogpostsData.findByIdAndUpdate({ _id },  // update this blogpost
+            { ...sanitizedBody },
             { new: true }
         )
         if (!updateBlogpost) throw new Error('Bad Request: blogpost was not updated!')
@@ -247,7 +277,7 @@ router.patch('/unlikeblogpost/:_id', authorization, async (req, res, next) => {
     }
 })
 
-router.patch('/shareblogpost/:_id', async (req, res, next) => {
+router.patch('/blogposts/shares/:_id', async (req, res, next) => {
     const { params: { _id }, session } = req
 
     try {

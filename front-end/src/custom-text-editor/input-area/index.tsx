@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import DOMPurify from 'dompurify';
-import { Config1, Config2, Config3 } from './Config';
+import { Config1, Config2, Config3 } from '../settings';
 
 
 //  get all the texts from the paste clipbored and paste it to the textarea
@@ -20,7 +20,7 @@ type Props = {
 
 const Index = ({
   className,
-  textAreaConfig = { addNew: true, body: '' },
+  textAreaConfig = { addNew: true, body: ' ' },
   textAreaRef,
   displayPlaceHolder,
   mouseLeaveTextAreaRef,
@@ -74,7 +74,7 @@ const Index = ({
   };
 
 
-  return <div className={`relative flex flex-col border ${className}`} >
+  return <div id='inputarea-wrapper' className={`relative flex flex-col border ${className}`} >
     {displayPlaceHolder ? <span className=' text-base first-letter:capitalize opacity-50 absolute'>{placeHolder}</span> : null}
     <div
       className='flex-1 outline-none'
@@ -82,7 +82,7 @@ const Index = ({
       contentEditable
       onInput={handleInput}
       onMouseLeave={handleMouseLeave}
-      dangerouslySetInnerHTML={sanitizeHTML(!textAreaConfig.addNew ? textAreaConfig?.body || '' : '')}
+      dangerouslySetInnerHTML={sanitizeHTML(textAreaConfig.addNew)}
     >
     </div>
   </div>

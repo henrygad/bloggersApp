@@ -7,8 +7,12 @@ import Advatersec from "./Advatersec";
 import Followerssec from "./Followerssec";
 import Followingsec from "./Followingsec";
 import Interentssec from "./Interentssec";
+import Archiveds from "./Archiveds";
+import Unpublisheds from "./Unpublisheds";
 
 export {
+    Archiveds,
+    Unpublisheds,
     Followerssec,
     Followingsec,
     Interentssec,

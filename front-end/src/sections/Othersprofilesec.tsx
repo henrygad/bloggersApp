@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Advaterprops, Blogpostprops, Commentprops, Userprops } from "../entities";
+import {Imageprops, Blogpostprops, Commentprops, Userprops } from "../entities";
 import { useFetchData } from "../hooks";
 import Profilesec from "./Profilesec";
 
@@ -28,7 +28,7 @@ const Othersprofilesec = ({ userName }: { userName: string }) => {
     data: getOthersAdvaters,
     loading: getOthersAdvatersLoading,
     error: getOthersAdvatersError,
-  } = useFetchData<Advaterprops[]>(`/api/images/${userName}?skip=0&limit=5`, [userName])
+  } = useFetchData<Imageprops[]>(`/api/images/${userName}?skip=0&limit=5`, [userName])
 
   const [othersBlogposts, setOthersBlogposts] = useState<Blogpostprops[] | null>(null);
   const countLoadMoreBlogpostsRef = useRef(5);
@@ -36,7 +36,7 @@ const Othersprofilesec = ({ userName }: { userName: string }) => {
   const [othersComments, setOthersComments] = useState<Commentprops[] | null>(null);
   const countLoadMoreCommentsRef = useRef(6);
 
-  const [othersAdvaters, setOthersAdvaters] = useState<Advaterprops[] | null>(null);
+  const [othersAdvaters, setOthersAdvaters] = useState<Imageprops[] | null>(null);
   const countLoadMoreAdvatersRef = useRef(5);
 
   const { fetchData: fetchMoreBlogpostsData, loading: loadingMoreBlogposts, error: errorMoreBlogposts } = useFetchData(null)
@@ -87,7 +87,7 @@ const Othersprofilesec = ({ userName }: { userName: string }) => {
     moreCommentsLoading={loadingMoreComments}
     moreCommentsError={errorMoreComments}
 
-    profileAdvatersData={othersAdvaters as Advaterprops[]}
+    profileAdvatersData={othersAdvaters as Imageprops[]}
     profileAdvatersLoading={getOthersAdvatersLoading}
     profileAdvatersError={getOthersAdvatersError}
     handleServerLoadMoreAdvaters={handleServerLoadMoreAdvaters}

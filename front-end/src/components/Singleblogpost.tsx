@@ -9,10 +9,12 @@ import { useRef, useState } from "react";
 import Dotnav from "./Dotnav";
 import { useCopyLink, useDeleteData, useFetchData, usePatchData, useSanitize, useTrimWords, useUserIsLogin } from "../hooks";
 import { deleteBlogposts, editBlogposts } from "../redux/slices/userBlogpostSlices";
-import { useAppDispatch } from "../redux/slices";
+import { useAppDispatch, useAppSelector } from "../redux/slices";
 import Likebutton from "./Likebutton";
 import Commentbutton from "./Commentbutton";
 import Viewbutton from "./Viewbutton";
+import Savesbutton from "./Savesbutton";
+import Sharebutton from "./Sharebutton";
 
 type Props = {
     blogpost: Blogpostprops
@@ -29,8 +31,8 @@ const Singleblogpost = ({
     autoOpenTargetComment = { autoOpen: false, commentId: '', commentAddress: '', comment: null, blogpostId: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
     autoOpenTargetBlogpostLike = { autoOpen: false, blogpostId: '', like: ' ', }
 }: Props) => {
-    
-    const { loginStatus: { loginUserName } } = useUserIsLogin();
+    const { userProfile: { data: profileData } } = useAppSelector((state) => state.userProfileSlices);
+
     const { patchData, loading: editingLoading } = usePatchData();
     const { deleteData: deleteBlogpostData, loading: deletingBlogpostLoading, error: deletingError } = useDeleteData();
     const navigate = useNavigate();
@@ -40,7 +42,7 @@ const Singleblogpost = ({
         updatedAt, createdAt, shares,
     } = blogpost;
     const [toggleSideMenu, setToggleSideMenu] = useState('');
-    const isAccountOwner = authorUserName === loginUserName
+    const isAccountOwner = authorUserName === profileData?.userName
     const { handleCopyLink, copied } = useCopyLink(url);
     const appDispatch = useAppDispatch();
 
@@ -74,11 +76,9 @@ const Singleblogpost = ({
         {
             name: 'save',
             to: '',
-            content: <Button
-                id="save-blogpost"
-                children={'Save'}
-                buttonClass="border-b"
-                handleClick={() => handleBlogpostSave(_id)}
+            content: <Savesbutton
+                saves={profileData?.saves}
+                blogpost={blogpost}
             />
         },
     ];
@@ -117,14 +117,6 @@ const Singleblogpost = ({
         },
 
     ];
-
-    const handleShareBlogpost = () => {
-        console.log('shared')
-    };
-
-    const handleBlogpostSave = (_id: string) => {
-        console.log(_id);
-    }
 
     const handleEditBlogpost = (blogpost: Blogpostprops) => {
         navigate('/createpost', { state: { toEdit: true, data: blogpost } });
@@ -241,11 +233,11 @@ const Singleblogpost = ({
                 loadingComment={loadingComment}
                 arrOfcomment={
                     (getCommentData || [])
-                    .sort((a, b) => {
-                    if(a.authorUserName === authorUserName) return -1;
-                    if(a.authorUserName === authorUserName) return 1;
-                    return 0
-                })}
+                        .sort((a, b) => {
+                            if (a.authorUserName === authorUserName) return -1;
+                            if (a.authorUserName === authorUserName) return 1;
+                            return 0
+                        })}
                 blogpostAuthorUserName={authorUserName}
                 blogpostId={_id}
                 blogpostUrl={url}
@@ -257,7 +249,7 @@ const Singleblogpost = ({
                 parentId={_id}
                 arrOfLikes={likes}
                 apiForLike={'/api/likeblogpost/' + _id}
-                apiForUnlike={'/api/unlikeblogpost/' + _id}
+                apiForUnlike={'/api/blogposts/shares/' + _id}
 
                 autoOpenTargetLike={{ ...autoOpenTargetBlogpostLike, commentId: autoOpenTargetBlogpostLike.blogpostId }}
 
@@ -266,11 +258,12 @@ const Singleblogpost = ({
                 userNameToNotify={authorUserName}
                 liking="blogpostLike"
             />
-            <Button
-                id="shares"
-                children={`Share 2`}
-                buttonClass="border-b"
-                handleClick={() => handleShareBlogpost()}
+            <Sharebutton
+                shares={blogpost.shares}
+                url={'/api/blogposts/shares/' + _id}
+
+                notificationUrl={url + '/#blogpost-statistics'}
+                notificationTitle={title}
             />
             <Viewbutton
                 url={'/api/viewblogpost/' + _id}

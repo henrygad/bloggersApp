@@ -46,13 +46,16 @@ Mongoose.connect(DBURI)
         app.get('/api', (req, res) => {
             const { session } = req
             session.visited = true // modified session
-
-            if (session.searchHistory) {
-                session.searchHistory = [...session.searchHistory]
-            } else {
+            
+            if(!session?.searchHistory?.length){// add a search history property to the session for the first time
                 session.searchHistory = []
-            }
-            res.json({ greetings: 'Wellcome! friend', sessionId: session.id })
+            } 
+
+            res.json({ 
+                greetings: 'Wellcome! friend', 
+                sessionId: session.id ,
+                searchHistory: session.searchHistory,
+            })
         })
 
         app.use('/api', routes)

@@ -53,20 +53,20 @@ router.patch('/unfollow/:userToUnfollow', authorization, async (req, res, next) 
         if (!getUser) throw new Error('Bad request: this user was not found')
 
         // unfollow user
-        const unFollowd = await usersData.findOneAndUpdate({ userName: getUser.userName },
+        const unFollowed = await usersData.findOneAndUpdate({ userName: getUser.userName },
             { $pull: { followers: authorizeUser } },
             { new: true }
         )
-        if (!unFollowd.followers) throw new Error('Bad request: user not followed')
+        if (!unFollowed.followers) throw new Error('Bad request: user not followed')
 
         // delete the user to unfollow from the login user following 
         const removeFollowing = await usersData.findOneAndUpdate({ userName: authorizeUser },
-            { $pull: { following: unFollowd.userName, timeline: unFollowd.userName } },
+            { $pull: { following: unFollowed.userName, timeline: unFollowed.userName } },
             {new: true}
         )
         if (!removeFollowing.following) throw new Error('Bad request: user was not remove from login user following')
 
-        res.json({ unFollowd: unFollowd.userName })
+        res.json({ unFollowed: unFollowed.userName })
     } catch (error) {
 
         next(new customError(error, 400))

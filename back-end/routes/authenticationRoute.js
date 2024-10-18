@@ -13,13 +13,19 @@ const SECRETE = process.env.SECRETE
 
 router.get('/status', authorization, (req, res, next) => {
     const { authorizeUser, session } = req
+
     try {
+
+        if (!session?.searchHistory?.length) {// add a search history property to the session for the first time
+            session.searchHistory = []
+        }
 
         res.json({
             greetings: `Hi! ${authorizeUser}`,
             isLogin: true,
             loginUserName: authorizeUser,
-            sessionId: session.id
+            sessionId: session.id,
+            searchHistory: session.searchHistory,
         })
 
     } catch (error) {
@@ -145,7 +151,7 @@ router.post('/logout', authorization, async (req, res, next) => {
             loginUserName: '',
             greetings: `Hi! ${authorizeUser} you loged out `,
         })
-        
+
     } catch (error) {
         next(new customError(error, 400))
     }
