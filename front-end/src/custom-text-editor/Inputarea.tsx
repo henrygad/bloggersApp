@@ -31,9 +31,9 @@ const Inputarea = (
     const getText = text.split('');
     const getLastValue = getText[getText.length - 1];
 
-    if (getLastValue.includes('@')) {
+    if (getLastValue?.includes('@')) {
       handleSpacialCharacters(['font-bold']);
-    } else if (getLastValue.includes('#')) {
+    } else if (getLastValue?.includes('#')) {
       handleSpacialCharacters(['text-blue-600']);
     };
   };
@@ -57,7 +57,7 @@ const Inputarea = (
 
   const handleInput = () => {
     onInputAreaChange(inputAreaRef);
-    handleSpecialCharactersIsAvailable(inputAreaRef.current?.textContent || '');
+    handleSpecialCharactersIsAvailable(inputAreaRef.current?.textContent?.trim() || '');
   };
 
   return <div id='inputarea-wrapper' className="relative border p-3 " >
@@ -77,10 +77,8 @@ const Inputarea = (
         <span class="parent-span block min-h-[220px]">
         ${!createNewText.IsNew ? createNewText.body : `
           <span class="childSpan editable block">
-            <span class="childSpan editable">
-              <span class="childSpan editable">
+            <span class="editable">
                 <br>
-              </span>
             </span>
           </span>`
         }

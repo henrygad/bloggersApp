@@ -94,7 +94,8 @@ export const deleteUnacceptedHtmlTag = () => {
             (!element.className.includes('editable') &&
                 !element.className.includes('special-characters') &&
                 !element.className.includes('parent-span') &&
-                !element.className.includes('link'))) { // if element not an accepted arrOfHtmltags
+                !element.className.includes('link') &&
+                !element.className.includes('code-mode'))) { // if element not an accepted arrOfHtmltags
             const span = createNewSpan(); // create a new span 
             handleReplaceElement(span, selection); // replace unaccepted  html tag with new span
         };

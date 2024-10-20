@@ -1,7 +1,7 @@
 type Props = {
     files: FileList | null
     fileType: string
-    getValue: ({url, file}: {url: string | ArrayBuffer, file: Blob}) => void
+    getValue: ({ url, file }: { url: string | ArrayBuffer, file: Blob }) => void
 };
 
 const useGetLocalMedia = () => {
@@ -15,7 +15,7 @@ const useGetLocalMedia = () => {
                 const readFile = new FileReader();
                 readFile.readAsDataURL(file); // To read the file data in a base64-encoded string that represents the file data
                 //const imageUrl = URL.createObjectURL(file); // To creata a url for a file
-                //readFile.readAsArrayBuffer(file); // To read the file as Blob i a binary format
+                //readFile.readAsArrayBuffer(file); // To read the file as Blob in a binary format
 
                 readFile.onload = function (e) {
                     if (e.target?.result) {
@@ -34,7 +34,7 @@ const useGetLocalMedia = () => {
         promise
             .then((value) => {
                 if (fileType === 'image') getValue({ url: value, file });
-                else if (fileType === 'video') getValue({url: URL.createObjectURL(file), file});
+                else if (fileType === 'video') getValue({ url: URL.createObjectURL(file), file });
             })
             .catch((error) => console.error(error));
     };

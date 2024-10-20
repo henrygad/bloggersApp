@@ -1,7 +1,13 @@
+import { useClickOutSide } from '../hooks';
+import Embed from './action-buttons/Embedcode';
+import Emojis from './action-buttons/Emojis';
+import Image from './action-buttons/Image';
 import Textalignment from './action-buttons/Textalignment';
 import Textanchorlink from './action-buttons/Textanchorlink';
 import Textformat from './action-buttons/Textformat';
 import Textlisting from './action-buttons/Textlisting';
+import Video from './action-buttons/Video';
+import Writecode from './action-buttons/Writecode';
 import Inputarea from './Inputarea';
 import { deleteUnacceptedHtmlTag, focusCaretOnInputArea } from './settings';
 
@@ -67,6 +73,10 @@ const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaCon
     const caretPostionsRef = useRef<number[]>([]);
     const typingTimeOutRef = useRef<number>();
 
+    const reftest = useRef(null);
+    const [openDropDownMenu, setOpenDropDownMenu] = useState('');
+    useClickOutSide(reftest, () => { setOpenDropDownMenu('') });
+
     const handleHistory = () => {
         clearTimeout(typingTimeOutRef.current);
         typingTimeOutRef.current = setTimeout(() => {
@@ -125,6 +135,7 @@ const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaCon
         if (inputAreaRef.current?.textContent?.trim()) {
             deleteUnacceptedHtmlTag();
         };
+        setOpenDropDownMenu('')
     };
 
     useEffect(() => {
@@ -132,6 +143,7 @@ const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaCon
         onInputAreaChange();
     }, []);
 
+    const arrOfEmojis = ['🙂', '😉', '😗', '😀', '😊', '😃', '😇', '😚', '😄', '😎', '😙', '😁', '🤓', '😅', '🧐', '😋', '😛', '😜', '🤪', '😝', '🤑', '😆', '🥳', '🤣', '🥰', '😂', '😍', '🙃', '🤩', '😘', '☺', '🥲', '©️',];
     const arrOfFontColors = ['text-gray-900', 'text-white', 'text-blue-800', 'text-green-700', 'text-red-600', 'text-purple-700', 'text-teal-700', 'text-yellow-600', 'text-gray-400', 'text-indigo-900', 'text-black', 'text-pink-800'];
     const arrOfBgColors = ['bg-gray-900', 'bg-white', 'bg-blue-800', 'bg-green-700', 'bg-red-600', 'bg-purple-700', 'bg-teal-700', 'bg-yellow-600', 'bg-gray-400', 'bg-indigo-900', 'bg-black', 'bg-pink-800'];
     const arrOfFontSizes = [
@@ -166,9 +178,11 @@ const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaCon
         { name: 'H6', value: ['text-lg',] },
     ];
 
+
     return <div
         id={''}
-        className={`${editorParentWrapperStyle}  `}
+        className={`${editorParentWrapperStyle} `}
+        ref={reftest}
     >
         <div className='flex flex-wrap gap-2'>
             <Textformat
@@ -178,6 +192,8 @@ const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaCon
                 arrOfFontSizes={arrOfFontSizes}
                 arrOfFontFamily={arrOfFontFamily}
                 onInputAreaChange={onInputAreaChange}
+                openDropDownMenu={openDropDownMenu}
+                setOpenDropDownMenu={setOpenDropDownMenu}
             />
             <Textalignment
                 onInputAreaChange={onInputAreaChange}
@@ -185,8 +201,34 @@ const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaCon
             <Textlisting
                 onInputAreaChange={onInputAreaChange}
             />
-            <Textanchorlink 
+            <Textanchorlink
                 onInputAreaChange={onInputAreaChange}
+                openDropDownMenu={openDropDownMenu}
+                setOpenDropDownMenu={setOpenDropDownMenu}
+            />
+            <Emojis
+                arrOfEmojis={arrOfEmojis}
+                onInputAreaChange={onInputAreaChange}
+                openDropDownMenu={openDropDownMenu}
+                setOpenDropDownMenu={setOpenDropDownMenu}
+            />
+            <Writecode
+                onInputAreaChange={onInputAreaChange}
+            />
+            <Image
+                onInputAreaChange={onInputAreaChange}
+                openDropDownMenu={openDropDownMenu}
+                setOpenDropDownMenu={setOpenDropDownMenu}
+            />
+            <Video
+                onInputAreaChange={onInputAreaChange}
+                openDropDownMenu={openDropDownMenu}
+                setOpenDropDownMenu={setOpenDropDownMenu}
+            />
+            <Embed
+                onInputAreaChange={onInputAreaChange}
+                openDropDownMenu={openDropDownMenu}
+                setOpenDropDownMenu={setOpenDropDownMenu}
             />
         </div>
         <Inputarea

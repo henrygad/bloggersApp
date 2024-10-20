@@ -12,6 +12,8 @@ const Dropdownmenuwrapper = ({
     openDropDownMenu,
 }: Props) => {
 
+    console.log(openDropDownMenu)
+
     return <div className='relative w-full' id='looking'>
         <div id={menuName} className="absolute top-0 shadow-md z-50 space-y-2 ">
             {openDropDownMenu.toLocaleLowerCase() === menuName.toLocaleLowerCase() ?

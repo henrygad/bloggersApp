@@ -1,7 +1,6 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { textFormatCmd } from "../cmds";
 import Dropdownmenuwrapper from "../assests/Dropdownmenuwrapper";
-import { useClickOutSide } from "../../hooks";
 
 type Props = {
     arrOfFontColors: string[]
@@ -10,6 +9,8 @@ type Props = {
     arrOfFontSizes: { name: string, value: string[] }[]
     arrOfFontFamily: { name: string, value: string[] }[]
     onInputAreaChange: () => void
+    openDropDownMenu: string
+    setOpenDropDownMenu: React.Dispatch<React.SetStateAction<string>>
 };
 
 const Textformat = ({
@@ -18,15 +19,13 @@ const Textformat = ({
     arrOfHeadings,
     arrOfFontSizes,
     arrOfFontFamily,
-    onInputAreaChange
+    onInputAreaChange,
+    openDropDownMenu, 
+    setOpenDropDownMenu,
 }: Props) => {
-
-    const [openDropDownMenu, setOpenDropDownMenu] = useState('');
     const [currentFontFamily, setCurrentFontFamily] = useState(arrOfFontFamily?.[0].name);
     const [currentHeadings, setCurrentHeading] = useState(arrOfHeadings?.[0].name);
     const [currentFontSizes, setCurrentFontSize] = useState(arrOfFontSizes?.[2].name);
-    const openDropDownMenuRef = useRef(null);
-    useClickOutSide(openDropDownMenuRef, () => setOpenDropDownMenu(''));
 
     const handleTextFormat = (cmd: string, value?: string[]) => {
         textFormatCmd(cmd, value ? value : []);
@@ -34,10 +33,7 @@ const Textformat = ({
         setOpenDropDownMenu('')
     };
 
-    return <div id='inlineStyling'
-        className="flex flex-wrap items-center justify-between gap-2"
-        ref={openDropDownMenuRef}
-    >
+    return <div id='inlineStyling' className="flex flex-wrap items-center justify-between gap-2">
         <div id="text-normal">
             <button onClick={() => handleTextFormat('normal', ['inline-block', 'font-normal', 'no-underline', 'not-italic'])} >
                 Normal
@@ -98,7 +94,7 @@ const Textformat = ({
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
                 menuName={'fontsize'}
-                Children={<div className="w-full min-w-[100px] bg-white p-1 space-y-2 border shadow-sm" >
+                Children={<div className="w-full min-w-[60px] bg-white p-1 space-y-2 border shadow-sm" >
                     {
                         arrOfFontSizes &&
                             arrOfFontSizes.length ?

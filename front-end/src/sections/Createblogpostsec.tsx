@@ -460,12 +460,12 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
                             });
                             setDisplayBlogpostImageDialog('');
                         }}
-                        id="fromComputer"
+                        id="computer"
                     />
                 </div>
             }
         />
     </div>
-}
+};
 
-export default Createblogpostsec
+export default Createblogpostsec;
