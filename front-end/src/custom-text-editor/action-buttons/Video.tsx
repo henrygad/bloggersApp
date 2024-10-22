@@ -3,6 +3,7 @@ import Dropdownmenuwrapper from "../assests/Dropdownmenuwrapper";
 import { useGetLocalMedia } from "../../hooks";
 import { Fileinput, Input } from "../../components";
 import { videoCmd } from "../cmds";
+import { RiFolderVideoLine } from "react-icons/ri";
 
 type Props = {
     onInputAreaChange: () => void
@@ -10,11 +11,11 @@ type Props = {
     setOpenDropDownMenu: React.Dispatch<React.SetStateAction<string>>
 };
 
-const Video = ({ 
+const Video = ({
     onInputAreaChange,
-    openDropDownMenu, 
+    openDropDownMenu,
     setOpenDropDownMenu,
- }: Props) => {
+}: Props) => {
     const [videoName, setVideoName] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
     const [videoFileUrl, setVideoFileUrl] = useState('');
@@ -30,8 +31,8 @@ const Video = ({
     };
 
     return <div id='texteditor-add-video'>
-        <button className='border p-1 cursor-pointer' onClick={() => setOpenDropDownMenu( 'video')}>
-            video
+        <button className='block cursor-pointer' onClick={() => setOpenDropDownMenu(openDropDownMenu === 'video' ? '' :'video')}>
+            <RiFolderVideoLine size={25}/>
         </button>
         <Dropdownmenuwrapper
             openDropDownMenu={openDropDownMenu}
@@ -50,9 +51,9 @@ const Video = ({
                             placeHolder={'https://www.example.com'}
                         />
                         <span className="block">
-                            <span className="block mb-1">Choose from computer</span>
                             <Fileinput
                                 id="computer"
+                                type='video'
                                 height="40px"
                                 width="40px"
                                 accept="video/*"
@@ -62,7 +63,8 @@ const Video = ({
                                         files: value,
                                         fileType: 'video',
                                         getValue: ({ url, file }) => {
-                                            setVideoName(file.name.split('.')[0]);
+                                            const fileObj = file as Blob & { name: string };
+                                            setVideoName(fileObj.name);
                                             setVideoUrl('');
                                             setVideoFileUrl(url.toString());
                                         },
@@ -100,7 +102,7 @@ const Video = ({
                         </button>
                         <button className='px-2 py-[.2rem] bg-green-800 text-white rounded '
                             onClick={() => handleInsertVideo(videoFileUrl || videoUrl, ['h-[' + videoHeight + 'px]', 'w-[' + videoWight + 'px]', 'inline'])} >
-                            Add video
+                            Add
                         </button>
                     </div>
                 </div>

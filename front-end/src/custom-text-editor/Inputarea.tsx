@@ -1,23 +1,30 @@
 import DOMPurify from "dompurify";
-import { deleteUnacceptedHtmlTag, handleSpacialCharacters, selectedElement } from "./settings";
+import { addSpanToInputAreaIfEmpty, handleSpacialCharacters, handleWhenPasteIntoInputArea, selectedElement } from "./settings";
+import { textFormatCmd } from "./cmds";
 
 type Props = {
   placeHolder: string,
   displayPlaceHolder: boolean
   inputAreaIsEmpty: boolean
-  createNewText: { IsNew: boolean, body: string }
+  InputWrapperClassName: string
+  InputClassName: string
+  createNewText: { IsNew: boolean, body?: string }
   inputAreaRef: React.RefObject<HTMLDivElement>,
-  onInputAreaChange: (content: React.RefObject<HTMLElement>) => void,
+  onInputAreaChange: () => void,
+  handleDisplayHistory: (direction: string) => void
 };
 
 const Inputarea = (
   {
-    placeHolder = 'Start type ...',
+    placeHolder = 'Start type...',
     displayPlaceHolder,
     inputAreaIsEmpty,
+    InputWrapperClassName,
+    InputClassName,
     createNewText,
     inputAreaRef,
     onInputAreaChange,
+    handleDisplayHistory,
   }: Props
 ) => {
 
@@ -53,36 +60,38 @@ const Inputarea = (
       if (e.key === 'Backspace') e.preventDefault();
     };
     handleInsideSpecialCharacterElement(e);
+    if (e.ctrlKey && e.key === 'z') {
+      e.preventDefault();
+      handleDisplayHistory('undo');
+    } else if (e.ctrlKey && e.key === 'y') {
+      e.preventDefault();
+      handleDisplayHistory('redo');
+    } else if (e.ctrlKey && e.key === 'b') {
+      e.preventDefault();
+      textFormatCmd('font-bold', []);
+    };
   };
 
   const handleInput = () => {
-    onInputAreaChange(inputAreaRef);
+    addSpanToInputAreaIfEmpty(inputAreaRef, InputClassName);
+    onInputAreaChange();
     handleSpecialCharactersIsAvailable(inputAreaRef.current?.textContent?.trim() || '');
   };
 
-  return <div id='inputarea-wrapper' className="relative border p-3 " >
+  return <div className={`relative border ${InputWrapperClassName}`}>
     {displayPlaceHolder ?
       <span className='text-base first-letter:capitalize opacity-50 absolute'>
         {placeHolder}
       </span> :
       null}
     <div
-      id={'inputarea-for-text'}
       ref={inputAreaRef}
       className='outline-none'
       contentEditable
       onInput={handleInput}
       onKeyDown={handleKeyDown}
-      dangerouslySetInnerHTML={sanitizeHTML(`
-        <span class="parent-span block min-h-[220px]">
-        ${!createNewText.IsNew ? createNewText.body : `
-          <span class="childSpan editable block">
-            <span class="editable">
-                <br>
-            </span>
-          </span>`
-        }
-        </span>`)}
+      onPaste={(e) => { handleWhenPasteIntoInputArea(e); onInputAreaChange() }}
+      dangerouslySetInnerHTML={sanitizeHTML(`<span class="parent-span block ${InputClassName}" >${!createNewText.IsNew ? createNewText.body : `<span class="child-span editable block"><span class="editable block"><br></span></span>`}</span>`)}
     >
     </div>
   </div>

@@ -1,4 +1,4 @@
-import { insertSingleElementToTheDOM } from "./cmds";
+import { getSelection, insertSingleElementToTheDOM } from "./cmds";
 
 export const createNewSpan = (): HTMLSpanElement => {
     const span = document.createElement('span');
@@ -6,20 +6,21 @@ export const createNewSpan = (): HTMLSpanElement => {
     return span;
 };
 
-export const addSpanToInputWhenEmpty = (inputAreaRef: React.RefObject<HTMLDivElement>) => {
-    const parentSpan = inputAreaRef.current?.firstElementChild;
-    const parentSpanHtml = parentSpan?.innerHTML;
-    const test = parentSpan?.textContent
+export const addSpanToInputAreaIfEmpty = (inputAreaRef: React.RefObject<HTMLDivElement>, value: string) => {
+    const inputAreaHtmlEmpty = !inputAreaRef.current?.innerHTML.trim()
 
-    if (parentSpanHtml?.replace("<br>", "") === "") {
-        const getBr = inputAreaRef.current?.firstChild?.firstChild
-        if (!getBr) return;
-        const span = createNewSpan();
-        span.classList.add('childSpan', 'block');
-        span.innerHTML = '<br>';
+    if (inputAreaHtmlEmpty) {
+        const parentSpan = createNewSpan();
+        parentSpan.className = `parent-span block ${value}`;
+        const childSpan = createNewSpan();
+        childSpan.classList.add('child-span', 'editable', 'block');
+        const initialEditableSpan = createNewSpan();
+        initialEditableSpan.classList.add('editable', 'block');
+        initialEditableSpan.innerHTML = "<br>";
 
-        inputAreaRef.current?.firstChild?.removeChild(getBr)
-        inputAreaRef.current?.firstChild?.appendChild(span);
+        childSpan.append(initialEditableSpan);
+        parentSpan.append(childSpan)
+        inputAreaRef.current?.append(parentSpan);
     };
 };
 
@@ -38,12 +39,11 @@ export const selectedElement = () => {
 };
 
 export const handleSpacialCharacters = (value: string[]) => {
-    const selection = window.getSelection();
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const node: Node = range.startContainer;
+    if (selectedNode) {
+        const { selection, range, node } = selectedNode;
+
         const startOffSet = range.endOffset;
         const endOffSet = startOffSet - 1;
 
@@ -57,7 +57,6 @@ export const handleSpacialCharacters = (value: string[]) => {
         anchor.appendChild(extactContent);
         insertSingleElementToTheDOM(anchor, newRange, selection);
     };
-
 };
 
 export const handleReplaceElement = (newElement: HTMLElement, selection: Selection | null) => {
@@ -66,10 +65,8 @@ export const handleReplaceElement = (newElement: HTMLElement, selection: Selecti
     if (selection.rangeCount > 0) {
         const range = selection.getRangeAt(0); // get the selected range object
         const oldElement = range.startContainer.parentElement; // get the first element
-        const classNames = oldElement?.className // get all class names
-        const text = oldElement?.innerText; //get element text
 
-        newElement.innerText = text || '<br>'; // add the selected element text to the new element
+        newElement.innerText = oldElement?.innerText || '<br>'; // add the selected element text to the new element
         newElement.classList.add('editable'); // add the selected element class names to the new element
 
         oldElement?.replaceWith(newElement); // replace unaccepted  html tag with new span
@@ -79,16 +76,13 @@ export const handleReplaceElement = (newElement: HTMLElement, selection: Selecti
 };
 
 export const deleteUnacceptedHtmlTag = () => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
-
+    const selectedNode = getSelection(); // get the selected node properties
     const arrOfHmlTags: string[] = ['span', 'ul', 'ol', 'li', 'a', 'code', 'vidoe', 'source', 'img'];
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
-        const element = range.startContainer.parentElement; // get the selected element
+    if (selectedNode) {
+        const { selection, element } = selectedNode;
         if (!element) return;
-        const elementName = element?.nodeName.toLowerCase(); // get the element name
+        const elementName = element.nodeName.toLowerCase(); // get the element name
 
         if (!arrOfHmlTags.includes(elementName) ||
             (!element.className.includes('editable') &&
@@ -106,42 +100,31 @@ export const focusCaretOnInputArea = (inputAreaRef: React.RefObject<HTMLDivEleme
     inputAreaRef.current?.focus();
 };
 
-export const Config3 = (e: ClipboardEvent) => { // filter a text pasted into the text area
+export const handleWhenPasteIntoInputArea = (e: React.ClipboardEvent<HTMLDivElement>) => { // filter a text pasted into the text area
     e.preventDefault();
-    const selection = document.getSelection(); // get the selection api
-    if (!selection?.rangeCount) return; // return if nothing is selection
-    const range = selection.getRangeAt(0); // get range
-    if (!range) return;
-    const span = document.createElement('span');
-    span.classList.add('editable');
+    const selectedNode = getSelection(); // get the selected node properties
 
-    const clipboardData = e.clipboardData;  // Get the clipboard data
-    const pastedData = clipboardData?.getData('text/plain'); // or 'text/plain'
+    if (selectedNode) {
+        const { selection, range } = selectedNode;
+        const clipboardData = e.clipboardData;  // Get the clipboard data
+        const pastedData = clipboardData?.getData('text/plain'); // or 'text/plain'
 
-    span.innerHTML = pastedData || ''
-
-    range.insertNode(span); // insert the new node (span) into the selected DOM
-    selection.removeAllRanges(); // remove all selection
-    range.setEndAfter(span); // reset the caret position in the DOM  
-    selection.addRange(range); // add back the range to the selection
-    selection.collapseToEnd(); // move the caret to the ending of the selected tex
+        const span = createNewSpan();
+        span.classList.add('editable', 'pasted');
+        span.innerHTML = pastedData || '<br>';
+        insertSingleElementToTheDOM(span, range, selection);
+    };
 };
 
-export const deleteAllText = (editorDiv: HTMLDivElement | null) => {
-    if (!editorDiv) return;
+export const deleteAll = (inputAreaRef: React.RefObject<HTMLDivElement>) => {
+    const parentSpan = inputAreaRef.current?.firstElementChild;
+    const childSpan = createNewSpan();
+    childSpan.classList.add('child-span', 'editable', 'block');
+    const initialEditableSpan = createNewSpan();
+    initialEditableSpan.classList.add('editable', 'block');
+    initialEditableSpan.innerHTML = "<br>";
 
-    const span1 = document.createElement('span');
-    span1.classList.add('editable');
-    span1.style.display = 'block';
-    span1.style.position = 'relative';
-    span1.id = 'initialSpan';
-    span1.style.textWrap = 'wrap';
-
-    const span2 = document.createElement('span');
-    span2.style.display = 'block';
-    span2.classList.add('editable');
-    span2.innerHTML = `<br>`;
-
-    span1.appendChild(span2);
-    editorDiv.replaceChildren(span1);
+    childSpan?.appendChild(initialEditableSpan);
+    parentSpan?.replaceChildren(childSpan); // replace all chidspan children with  a new initialEditablespan
+    focusCaretOnInputArea(inputAreaRef); // place focus on input area
 };

@@ -1,24 +1,32 @@
-import { Addphotoicon } from "./Icons";
+import { RiVideoAddLine, RiImageAddLine } from "react-icons/ri";
 
 type Props = {
-    name?: string
     id: string
+    type: string
+    name?: string
     height?: string
     width?: string
     accept: string
     placeHolder?: string
     setValue: (value: FileList | null) => void
 };
-const Fileinput = ({ id, name, setValue, height, width, accept, placeHolder }: Props) => {
+const Fileinput = ({ id, type, name, setValue, height, width, accept, placeHolder }: Props) => {
+
+    const Showfileicon = () => {
+        if (type === 'video') {
+            return <RiVideoAddLine size={30} />
+        };
+
+        return <RiImageAddLine size={30}/>;
+    };
 
     return <label className='text-base' htmlFor={id}>
         {name}
         <span className='relative'>
-            <span id="file-placeHolder">
+            <span id="file-placeHolder" className="cursor-pointer">
                 {placeHolder ?
                     placeHolder :
-                    <Addphotoicon height={height || ''}
-                        width={width || ''} />
+                    <Showfileicon />
                 }
             </span>
             <input
@@ -27,7 +35,7 @@ const Fileinput = ({ id, name, setValue, height, width, accept, placeHolder }: P
                 name={name || 'file'}
                 accept={accept}
                 onChange={(e) => setValue(e.target.files)}
-                className="absolute top-0 right-0 left-0 bottom-0 opacity-0 cursor-pointer"
+                className="absolute top-0 right-0 left-0 bottom-0 opacity-0 cursor-pointer -z-10"
             />
         </span>
     </label>

@@ -1,9 +1,10 @@
-import {useState } from "react";
+import { useState } from "react";
 import Dropdownmenuwrapper from "../assests/Dropdownmenuwrapper";
 import { imageCmd } from "../cmds";
 import { Button, Dialog, Displayimage, Fileinput, Input } from "../../components";
-import displayImagePlaceHolder from '../../assert/imageplaceholder.png';
 import { useGetLocalMedia } from "../../hooks";
+import { RiFolderImageLine} from "react-icons/ri";
+import addImagIcon from  '../assests/add-image.svg';
 
 type Props = {
     onInputAreaChange: () => void
@@ -11,11 +12,11 @@ type Props = {
     setOpenDropDownMenu: React.Dispatch<React.SetStateAction<string>>
 };
 
-const Image = ({ 
+const Image = ({
     onInputAreaChange,
-    openDropDownMenu, 
+    openDropDownMenu,
     setOpenDropDownMenu,
- }: Props) => {
+}: Props) => {
     const [displayTextEditorImageDialog, setDisplayTextEditorImageDialog] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [imageFileUrl, setImageFileUrl] = useState('');
@@ -33,8 +34,8 @@ const Image = ({
     };
 
     return <div id='texteditor-add-image'>
-        <button className='border p-1 cursor-pointer' onClick={() => setOpenDropDownMenu('image')}>
-            img
+        <button className='block cursor-pointer' onClick={() => setOpenDropDownMenu(openDropDownMenu === 'image' ? '' :'image')}>
+           < RiFolderImageLine size={25} />
         </button>
         <Dropdownmenuwrapper
             openDropDownMenu={openDropDownMenu}
@@ -53,13 +54,12 @@ const Image = ({
                             placeHolder={'https://www.example.com'}
                         />
                         <span className="block">
-                            <span>Choose from computer</span>
                             <Displayimage
                                 id='blogpost-display-img'
                                 imageUrl={imageUrl || imageFileUrl}
-                                parentClass='h-[50px] w-[50px] mt-1'
+                                parentClass='h-[40px] w-[40px] mt-1'
                                 imageClass={`border-2 rounded cursor-pointer ${imagePosition}`}
-                                placeHolder={displayImagePlaceHolder}
+                                placeHolder={addImagIcon}
                                 onClick={() => setDisplayTextEditorImageDialog('texteditorimage')}
                             />
                         </span>
@@ -135,7 +135,7 @@ const Image = ({
                             Close
                         </button>
                         <button className='px-2 py-[.2rem] bg-green-800 text-white rounded shadow-sm'
-                            onClick={() => handleInsertImage(imageUrl || imageFileUrl, imageAlt, ['h-[' + imageHeight + 'px]', 'w-[' + imageWight + 'px]', imagePosition, 'inline'])} >
+                            onClick={() => handleInsertImage(imageUrl || imageFileUrl, imageAlt, [`h-[${imageHeight}px]`, `w-[${imageWight}px]`, imagePosition, 'inline'])} >
                             Add image
                         </button>
                     </div>
@@ -158,6 +158,7 @@ const Image = ({
                                     />
                                     <Fileinput
                                         id="computer"
+                                        type="image"
                                         placeHolder='From computer'
                                         accept="image/png, image/gif, image/jpeg"
                                         setValue={(value) => {

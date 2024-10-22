@@ -9,263 +9,264 @@ import Textlisting from './action-buttons/Textlisting';
 import Video from './action-buttons/Video';
 import Writecode from './action-buttons/Writecode';
 import Inputarea from './Inputarea';
-import { deleteUnacceptedHtmlTag, focusCaretOnInputArea } from './settings';
+import { deleteAll, deleteUnacceptedHtmlTag, focusCaretOnInputArea } from './settings';
+import { arrOfBgColors, arrOfEmojis, arrOfFontColors, arrOfFontFamily, arrOfFontSizes, arrOfHeadings } from './assests/data';
 
 import React, { useEffect, useRef, useState } from 'react';
+import History from './action-buttons/History';
+import Deleteall from './action-buttons/Deleteall';
+import { getSelection } from './cmds';
 
 type Prop = {
-    editorParentWrapperStyle: string,
-    textAreaStyle: string,
+    id?: string
     placeHolder: string
-    setGetContent?: React.Dispatch<React.SetStateAction<{
+    InputWrapperClassName: string
+    InputClassName: string
+    textEditorWrapperClassName?: string
+    createNewText: { IsNew: boolean, body?: string }
+    useTextEditors: boolean
+    inputTextAreaFocus?: boolean
+    setGetContent: React.Dispatch<React.SetStateAction<{
         _html: string;
         text: string;
-    } | undefined>>
-    textAreaConfig: { addNew: boolean, body: string }
-    toolBarConfig?: {
-        useToolBar: boolean,
-        toolBarStyle?: string,
-        inline?: {
-            useInlineStyle: boolean,
-            inlineStyle?: string,
-        }
-        anchorLink?: {
-            useAnchorLink: boolean,
-            anchorLinkStyle?: string
-        }
-        list?: {
-            useList: boolean
-            listStyle?: string
-        }
-        alignment?: {
-            useAlignment: boolean,
-            alignmentStyle?: string
-        }
-        emojis?: {
-            useEmojis: boolean
-            emojisStyle?: string
-        }
-        media?: {
-            useMedia: boolean
-            mediaStyle?: string
-        }
-        embedCode?: {
-            useEmbedCode: boolean
-            embedCodeStyle?: string
-        }
-        deleteAllText?: {
-            useDeleteAllText: boolean
-            useDeleteAllTextStyle?: string
-        }
-        history?: {
-            useHistory: boolean
-            historyStyle?: string
-        }
-    },
+    } | null>>
 };
 
-const App = ({ editorParentWrapperStyle, textAreaStyle, placeHolder, textAreaConfig, toolBarConfig, setGetContent = () => null }: Prop) => {
-    const [displayPlaceHolder, setDisplayPlaceHolder] = useState(true);
-    const [inputAreaIsEmpty, setInputAreaIsEmpty] = useState(true);
+const App = ({
+    id = 'text-editor',
+    placeHolder,
+    InputWrapperClassName,
+    InputClassName,
+    textEditorWrapperClassName,
+    createNewText,
+    useTextEditors = false,
+    inputTextAreaFocus = false,
+    setGetContent = () => null
+}: Prop) => {
+
+    const [displayPlaceHolder, setDisplayPlaceHolder] = useState(false);
+    const [inputAreaIsEmpty, setInputAreaIsEmpty] = useState(false);
     const inputAreaRef = useRef<HTMLDivElement | null>(null);
     const historyRef = useRef<string[]>([]);
     const historyMomoryIndexRef = useRef(0);
     const caretPostionsRef = useRef<number[]>([]);
     const typingTimeOutRef = useRef<number>();
-
-    const reftest = useRef(null);
+    const textEdictorRef = useRef(null);
     const [openDropDownMenu, setOpenDropDownMenu] = useState('');
-    useClickOutSide(reftest, () => { setOpenDropDownMenu('') });
+    useTextEditors && useClickOutSide(textEdictorRef, () => { setOpenDropDownMenu('') });
 
-    const handleHistory = () => {
-        clearTimeout(typingTimeOutRef.current);
-        typingTimeOutRef.current = setTimeout(() => {
-            if (!inputAreaRef.current) return;
-            historyRef.current.push(inputAreaRef.current?.innerHTML);
-            historyMomoryIndexRef.current = historyRef.current.length - 1;
-            caretPostionsRef.current.push(getCaretPosition(inputAreaRef.current));
-        }, 400);
-    };
-
-    const filterText = (text: string) => {
+    const handleFilterInnerText = (text: string) => {
         return text.split('').map((word) => word === '\n' ? ' ' : word).join('');
     };
 
     const getCaretPosition = (element: Node) => {
-        const selection = document.getSelection();
+        const selection = document.getSelection(); // get selected element or node
         if (!selection) return 0;
 
         if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            // Clone the range
-            const preCaretRange = range.cloneRange();
-            // Select the entire content of the element
-            preCaretRange.selectNodeContents(element);
-            // Set the end to the caret position
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            const caretOffset = preCaretRange.toString().length;
+            const range = selection.getRangeAt(0); // get the selected range object 
 
-            return caretOffset;
+            const preCaretRange = range.cloneRange(); // clone range
+            preCaretRange.selectNodeContents(element); // select the entire content of the element
+            preCaretRange.setEnd(range.endContainer, range.endOffset); // set the end to the caret position
+            return preCaretRange.toString().length; // return the position number of caret in the input text editor area
         };
-
         return 0;
     };
 
-    const handleInputAreaIsEmpty = () => {
-        const parentSpan = inputAreaRef.current?.firstElementChild;
-        const parentSpanChildren = parentSpan?.childNodes;
-        const parentSpanTextContentIsEmpty = parentSpan?.textContent?.trim() === "";
-        const parentSpanHtmlIsEmpty = parentSpan?.innerHTML.replace("<br>", "") === "";
-        const parentSpanFirstElemntHtmlIsEmpty = parentSpan?.lastElementChild?.innerHTML.replace("<br>", "") === "";
-        let isInputAreaEmpty = true;
+    const setCaretPosition = (position: number) => {
+        const selection = window.getSelection();
+        const range = document.createRange();
 
-        if (parentSpanTextContentIsEmpty &&
-            (parentSpanHtmlIsEmpty || parentSpanFirstElemntHtmlIsEmpty)) {
-            isInputAreaEmpty = true;
-        } else {
-            isInputAreaEmpty = false;
+        let charCount = 0;
+        let found = false;
+
+        (function traverseNodes(node: Node | null) { // traverse the element's child nodes to find the text node and set the caret position end of the node
+            if (found || !node || !node.textContent) return;
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const nextCharCount = charCount + node.textContent?.length;
+                if (position <= nextCharCount) {
+                    range.setStart(node, position - charCount);
+                    range.collapse(true);
+                    found = true;
+                }
+                charCount = nextCharCount;
+            } else {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    traverseNodes(node.childNodes[i]);
+                };
+            }
+        })(inputAreaRef.current);
+
+        if (found) {
+            selection?.removeAllRanges();
+            selection?.addRange(range);
         };
+    };
 
-        setDisplayPlaceHolder(isInputAreaEmpty);
-        setInputAreaIsEmpty(isInputAreaEmpty && parentSpanChildren?.length === 1);
+    const handleCreateHistory = () => {
+        const parentSpan = inputAreaRef.current?.firstElementChild;
+        if (!parentSpan) return;
+
+        clearTimeout(typingTimeOutRef.current);
+        typingTimeOutRef.current = setTimeout(() => {
+            historyRef.current.push(parentSpan.innerHTML);
+            historyMomoryIndexRef.current = historyRef.current.length - 1;
+            if (!inputAreaRef.current) return;
+            caretPostionsRef.current.push(getCaretPosition(inputAreaRef.current));
+        }, 400);
+    };
+
+    const handleDisplayHistory = (direction: string) => {
+        const parentSpan = inputAreaRef.current?.firstElementChild;
+        if (!parentSpan) return;
+
+        if (direction === 'undo') {
+            if (historyMomoryIndexRef.current <= 0) return;
+            historyMomoryIndexRef.current -= 1;
+            parentSpan.innerHTML = historyRef.current[historyMomoryIndexRef.current];
+            setCaretPosition(caretPostionsRef.current[historyMomoryIndexRef.current]);
+        } else {
+            if (historyMomoryIndexRef.current >= historyRef.current.length - 1) return;
+            historyMomoryIndexRef.current += 1;
+            parentSpan.innerHTML = historyRef.current[historyMomoryIndexRef.current];
+            setCaretPosition(caretPostionsRef.current[historyMomoryIndexRef.current]);
+        };
+    };
+
+    const handleDisplayInputPlaceHolder = () => {
+        const parentSpan = inputAreaRef.current?.firstElementChild;
+        const childSpan = parentSpan?.firstElementChild;
+        const editables = childSpan?.children;
+        if (!editables) return;
+
+        for (const element of editables) {
+            const htlmIsAvailable = element.innerHTML.replace("<br>", "").trim() !== "";
+
+            if (htlmIsAvailable) {
+                setDisplayPlaceHolder(false);
+                return;
+            };
+            setDisplayPlaceHolder(true);
+        };
+    };
+
+    const handleWhenInputAreaIsEmpty = () => {
+        const selectedNode = getSelection(); // get the selected node properties
+
+        if (selectedNode) {
+            const { node } = selectedNode;
+            const parentSpan = inputAreaRef.current?.firstElementChild;
+            const childSpan = parentSpan?.firstElementChild;
+            const initialEditableSpan = childSpan?.firstElementChild;
+            if (!initialEditableSpan) return;
+
+            const initialEditableSpanCaretStartOffset = getCaretPosition(initialEditableSpan);
+
+            if ((node === initialEditableSpan || initialEditableSpan.contains(node)) &&
+                initialEditableSpanCaretStartOffset <= 0 &&
+                initialEditableSpan.innerHTML.replace("<br>", "") === ""
+            ) {
+                setInputAreaIsEmpty(true);
+            } else {
+                setInputAreaIsEmpty(false);
+            };
+        };
     };
 
     const onInputAreaChange = () => {
-        handleInputAreaIsEmpty();
         if (inputAreaRef.current?.textContent?.trim()) {
             deleteUnacceptedHtmlTag();
         };
-        setOpenDropDownMenu('')
+        setOpenDropDownMenu('');
+        handleCreateHistory();
+        handleDisplayInputPlaceHolder();
+        handleWhenInputAreaIsEmpty();
+
+        const parentSpan = inputAreaRef.current?.firstElementChild;
+        setGetContent({ // get html and text inputs
+            _html: parentSpan?.innerHTML || '',
+            text: parentSpan?.textContent || ''
+        });
     };
 
     useEffect(() => {
-        focusCaretOnInputArea(inputAreaRef);
+        inputTextAreaFocus && focusCaretOnInputArea(inputAreaRef);
         onInputAreaChange();
     }, []);
 
-    const arrOfEmojis = ['🙂', '😉', '😗', '😀', '😊', '😃', '😇', '😚', '😄', '😎', '😙', '😁', '🤓', '😅', '🧐', '😋', '😛', '😜', '🤪', '😝', '🤑', '😆', '🥳', '🤣', '🥰', '😂', '😍', '🙃', '🤩', '😘', '☺', '🥲', '©️',];
-    const arrOfFontColors = ['text-gray-900', 'text-white', 'text-blue-800', 'text-green-700', 'text-red-600', 'text-purple-700', 'text-teal-700', 'text-yellow-600', 'text-gray-400', 'text-indigo-900', 'text-black', 'text-pink-800'];
-    const arrOfBgColors = ['bg-gray-900', 'bg-white', 'bg-blue-800', 'bg-green-700', 'bg-red-600', 'bg-purple-700', 'bg-teal-700', 'bg-yellow-600', 'bg-gray-400', 'bg-indigo-900', 'bg-black', 'bg-pink-800'];
-    const arrOfFontSizes = [
-        { name: '12', value: ['text-xs'] },
-        { name: '14', value: ['text-sm'] },
-        { name: '16', value: ['text-base'] },
-        { name: '18', value: ['text-lg'] },
-        { name: '20', value: ['text-xl'] },
-        { name: '24', value: ['text-2xl'] },
-        { name: '30', value: ['text-3x1'] },
-        { name: '36', value: ['text-4xl'] },
-        { name: '48', value: ['text-5x1'] },
-        { name: '69', value: ['text-6xl'] },
-    ];
-    const arrOfFontFamily = [
-        { name: 'Arial', value: ['font-[Arial]'] },
-        { name: 'Sans', value: ['font-sans'] },
-        { name: 'Serif', value: ['font-serif'] },
-        { name: 'Mono', value: ['font-mono'] },
-        { name: 'Georgia', value: ['font-[Georgia]'] },
-        { name: 'Cambria', value: ['font-[Cambria]'] },
-        { name: 'Monospace', value: ['font-[monospace]'] },
-        { name: 'Sans Serif', value: ['font-[sans-serif]'] },
-    ];
-    const arrOfHeadings = [
-        { name: 'Paragraph', value: ['text-base',] },
-        { name: 'H1', value: ['text-5xl',] },
-        { name: 'H2', value: ['text-4xl',] },
-        { name: 'H3', value: ['text-3xl',] },
-        { name: 'H4', value: ['text-2xl',] },
-        { name: 'H5', value: ['text-xl',] },
-        { name: 'H6', value: ['text-lg',] },
-    ];
-
-
     return <div
-        id={''}
-        className={`${editorParentWrapperStyle} `}
-        ref={reftest}
+        id={id}
+        ref={textEdictorRef}
     >
-        <div className='flex flex-wrap gap-2'>
-            <Textformat
-                arrOfFontColors={arrOfFontColors}
-                arrOfBgColors={arrOfBgColors}
-                arrOfHeadings={arrOfHeadings}
-                arrOfFontSizes={arrOfFontSizes}
-                arrOfFontFamily={arrOfFontFamily}
-                onInputAreaChange={onInputAreaChange}
-                openDropDownMenu={openDropDownMenu}
-                setOpenDropDownMenu={setOpenDropDownMenu}
-            />
-            <Textalignment
-                onInputAreaChange={onInputAreaChange}
-            />
-            <Textlisting
-                onInputAreaChange={onInputAreaChange}
-            />
-            <Textanchorlink
-                onInputAreaChange={onInputAreaChange}
-                openDropDownMenu={openDropDownMenu}
-                setOpenDropDownMenu={setOpenDropDownMenu}
-            />
-            <Emojis
-                arrOfEmojis={arrOfEmojis}
-                onInputAreaChange={onInputAreaChange}
-                openDropDownMenu={openDropDownMenu}
-                setOpenDropDownMenu={setOpenDropDownMenu}
-            />
-            <Writecode
-                onInputAreaChange={onInputAreaChange}
-            />
-            <Image
-                onInputAreaChange={onInputAreaChange}
-                openDropDownMenu={openDropDownMenu}
-                setOpenDropDownMenu={setOpenDropDownMenu}
-            />
-            <Video
-                onInputAreaChange={onInputAreaChange}
-                openDropDownMenu={openDropDownMenu}
-                setOpenDropDownMenu={setOpenDropDownMenu}
-            />
-            <Embed
-                onInputAreaChange={onInputAreaChange}
-                openDropDownMenu={openDropDownMenu}
-                setOpenDropDownMenu={setOpenDropDownMenu}
-            />
-        </div>
+        {useTextEditors ?
+            <div id='text-editor-action-btn-wrapper'
+                className={`flex flex-wrap items-center gap-x-4 gap-y-2 bg-gray-50 shadow-inner ${textEditorWrapperClassName}`}>
+                <Textformat
+                    arrOfFontColors={arrOfFontColors}
+                    arrOfBgColors={arrOfBgColors}
+                    arrOfHeadings={arrOfHeadings}
+                    arrOfFontSizes={arrOfFontSizes}
+                    arrOfFontFamily={arrOfFontFamily}
+                    onInputAreaChange={onInputAreaChange}
+                    openDropDownMenu={openDropDownMenu}
+                    setOpenDropDownMenu={setOpenDropDownMenu}
+                />
+                <Textlisting
+                    onInputAreaChange={onInputAreaChange}
+                />
+                <Textanchorlink
+                    onInputAreaChange={onInputAreaChange}
+                    openDropDownMenu={openDropDownMenu}
+                    setOpenDropDownMenu={setOpenDropDownMenu}
+                />
+                <Emojis
+                    arrOfEmojis={arrOfEmojis}
+                    onInputAreaChange={onInputAreaChange}
+                    openDropDownMenu={openDropDownMenu}
+                    setOpenDropDownMenu={setOpenDropDownMenu}
+                />
+                <Textalignment
+                    onInputAreaChange={onInputAreaChange}
+                />
+                <Writecode
+                    onInputAreaChange={onInputAreaChange}
+                />
+                <Image
+                    onInputAreaChange={onInputAreaChange}
+                    openDropDownMenu={openDropDownMenu}
+                    setOpenDropDownMenu={setOpenDropDownMenu}
+                />
+                <Video
+                    onInputAreaChange={onInputAreaChange}
+                    openDropDownMenu={openDropDownMenu}
+                    setOpenDropDownMenu={setOpenDropDownMenu}
+                />
+                <Embed
+                    onInputAreaChange={onInputAreaChange}
+                    openDropDownMenu={openDropDownMenu}
+                    setOpenDropDownMenu={setOpenDropDownMenu}
+                />
+                <History
+                    handleDisplayHistory={handleDisplayHistory}
+                />
+                <Deleteall handleDeleteAlll={() => { deleteAll(inputAreaRef); onInputAreaChange() }} />
+            </div> :
+            null
+        }
         <Inputarea
             displayPlaceHolder={displayPlaceHolder}
             inputAreaIsEmpty={inputAreaIsEmpty}
-            placeHolder="Start  typing..."
-            createNewText={{ IsNew: true, body: '' }}
+            placeHolder={placeHolder}
+            InputWrapperClassName={InputWrapperClassName}
+            InputClassName={InputClassName}
+            createNewText={createNewText}
             inputAreaRef={inputAreaRef}
             onInputAreaChange={onInputAreaChange}
+            handleDisplayHistory={handleDisplayHistory}
         />
     </div>
 };
 
 export default App;
-
-
-
-/* 
- const parentSpan = inputAreaRef.current?.firstElementChild; // get input area parent span
-        const parentSpanTextContent = parentSpan?.textContent
-        const parentSpanChildren = parentSpan?.children // get span children
-        const textContentIsNotEmpty = parentSpanTextContent?.trim() !== "";
-
-        console.log(textContentIsNotEmpty)
-
-        if (!parentSpanChildren) return;
-
-        for (const element of parentSpanChildren) {
-            const htlmIsNotEmpty = element.innerHTML.replace("<br>", "") !== "" &&
-                element.lastElementChild?.innerHTML.replace("<br>", "") !== ""; // find atleast one element that is truly not empty   
-
-            if (textContentIsNotEmpty && htlmIsNotEmpty) { // if one element is not empty
-                setDisplayPlaceHolder(false); // don't display placeholder 
-                return; // return if one element is found to be not empty
-            };
-
-            setDisplayPlaceHolder(true); // display placeholder if all available element is empty
-        };
-
-*/

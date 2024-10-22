@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import avaterPlaceHolder from  '../assert/avaterplaceholder.svg';
 
 type Props = {
     id: string
@@ -7,9 +6,8 @@ type Props = {
     onClick?: (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => void
     parentClass: string
     imageClass: string
-    placeHolder?: string
+    placeHolder: string
 };
-
 
 const Displayimage = ({
     id,
@@ -25,11 +23,11 @@ const Displayimage = ({
         <img
             id={id}
             src={imageUrl}
-            className={imageClass || placeHolder}
+            className={imageClass}
             style={{ width: '100%', height: '100%' }}
             onError={(e) => {
                 if (e.target instanceof HTMLImageElement) {
-                    e.target.src = placeHolder || avaterPlaceHolder
+                    e.target.src = placeHolder;
                 };
             }}
             onLoadStart={(e) => {

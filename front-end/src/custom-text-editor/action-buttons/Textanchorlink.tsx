@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import Dropdownmenuwrapper from "../assests/Dropdownmenuwrapper";
 import { textFormatCmd } from "../cmds";
 import { Input } from "../../components";
+import { GoLink, GoUnlink} from "react-icons/go";
 
 type Props = {
     onInputAreaChange: () => void
@@ -23,9 +24,11 @@ const Textanchorlink = ({
         setOpenDropDownMenu('');
     };
 
-    return <div id='text-link' className='flex flex-wrap items-center justify-between gap-2'>
+    return <div id='text-link' className='flex flex-wrap items-center justify-between gap-x-3 gap-y-2'>
         <div id='link' ref={openDropDownMenuRef}>
-            <button className='border p-1 cursor-pointer' onClick={() => setOpenDropDownMenu('link')}>A</button>
+            <button className='block cursor-pointer' onClick={() => setOpenDropDownMenu(openDropDownMenu === 'link' ? '' :'link')}>
+               <GoLink size={18} />
+            </button>
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
                 menuName='link'
@@ -54,7 +57,9 @@ const Textanchorlink = ({
                     </div>
                 } />
         </div>
-        <button id='unlink' className='' onClick={() => handleTextLink('unlink')}> <span className="overline">A</span> </button>
+        <button id='unlink' className='' onClick={() => handleTextLink('unlink')}> 
+            <GoUnlink size={18} />
+        </button>
     </div>
 };
 

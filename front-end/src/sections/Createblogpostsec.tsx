@@ -6,7 +6,7 @@ import { useDeleteData, useGetLocalMedia, usePatchData, usePostData } from '../h
 import { useDispatch } from 'react-redux';
 import { createBlogpost, deleteBlogposts, editBlogposts } from '../redux/slices/userBlogpostSlices';
 import { Blogpostprops } from '../entities';
-import { deleteAllText } from '../custom-text-editor/settings';
+import { deleteAll } from '../custom-text-editor/settings';
 
 type Props = {
     toEdit?: boolean
@@ -26,8 +26,8 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
     const [displayBlogpostImageDialog, setDisplayBlogpostImageDialog] = useState('');
     const [allInputStatus, setAllInputStatus] = useState('empty');
 
-    const [getTitleContent, setGetTitleContent] = useState<{ _html: string, text: string }>();
-    const [getBodyContent, setGetBodyContent] = useState<{ _html: string, text: string }>();
+    const [getTitleContent, setGetTitleContent] = useState<{ _html: string, text: string } | null>(null);
+    const [getBodyContent, setGetBodyContent] = useState<{ _html: string, text: string } | null>(null);
     const [blogpostImageUrl, setBlogpostImageUrl] = useState((blogpostToEdit?.displayImage && '/api/image/' + blogpostToEdit?.displayImage) || ' ');
     const [catigory, setCatigory] = useState(blogpostToEdit?.catigory || '');
     const [blogSlug, setBlogSlug] = useState('');
@@ -288,8 +288,9 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
             setBlogSlug('');
 
             const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div
-            contentEditAbleELe.forEach((element) =>
-                deleteAllText(element as HTMLDivElement)
+            contentEditAbleELe.forEach((element) => {
+                //deleteAll(element as HTMLDivElement)
+            }
             );
             setBlogpostStatus('publish');
             setAllInputStatus('empty');
@@ -321,6 +322,7 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
     ]);
 
 
+    console.log(getBodyContent)
     return <div className='font-text space-y-6'>
         {/* blog post menus */}
         <Menu
@@ -332,18 +334,14 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
         <div id='title-textarea' className='w-full'>
             {/* title */}
             <Trythistexteditor
-                editorParentWrapperStyle="w-full"
-                textAreaStyle="text-base mt-3 p-2 border-2 rounded"
+                id='blogpost-title-text-editor'
                 placeHolder="Title..."
+                InputWrapperClassName="border-2 p-3 rounded-md max-w-[768px]"
+                InputClassName="max-w-[768px]"
+                createNewText={{ IsNew: true }}
+                useTextEditors={false}
+                inputTextAreaFocus={true}
                 setGetContent={setGetTitleContent}
-                textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.title || '' }}
-                toolBarConfig={{
-                    useToolBar: true,
-                    inline: {
-                        useInlineStyle: true,
-                        
-                    }
-                }}
             />
         </div>
         <div id='blogpost-features' className='flex flex-wrap items-center gap-4'>
@@ -393,42 +391,14 @@ const Createblogpostsec = ({ toEdit, blogpostToEdit }: Props) => {
         <div id='body-textarea' className='w-full'>
             {/* body */}
             <Trythistexteditor
-                editorParentWrapperStyle="w-full"
-                textAreaStyle="min-h-[380px] md:min-h-[500px] mt-3 p-2 border-2 rounded"
+                id='blogpost-body-text-editor'
                 placeHolder="Start typing..."
+                InputWrapperClassName="border-2 p-3 max-w-[768px]"
+                InputClassName="min-h-[480px] max-w-[768px]"
+                textEditorWrapperClassName="p-3 border-2 max-w-[768px]"
+                createNewText={{ IsNew: true }}
+                useTextEditors={true}
                 setGetContent={setGetBodyContent}
-                textAreaConfig={{ addNew: !toEdit, body: blogpostToEdit?._html?.body || '' }}
-                toolBarConfig={{
-                    useToolBar: true,
-                    toolBarStyle: 'flex flex-wrap items-center gap-3',
-                    inline: {
-                        useInlineStyle: true,
-                    },
-                    anchorLink: {
-                        useAnchorLink: true,
-                    },
-                    list: {
-                        useList: true
-                    },
-                    alignment: {
-                        useAlignment: true,
-                    },
-                    emojis: {
-                        useEmojis: true
-                    },
-                    media: {
-                        useMedia: true
-                    },
-                    embedCode: {
-                        useEmbedCode: true
-                    },
-                    deleteAllText: {
-                        useDeleteAllText: true
-                    },
-                    history: {
-                        useHistory: true
-                    },
-                }}
             />
         </div>
         {/* run display blog post image dialog */}

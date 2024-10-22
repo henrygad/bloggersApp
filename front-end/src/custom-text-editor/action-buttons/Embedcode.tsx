@@ -8,13 +8,13 @@ type Props = {
     onInputAreaChange: () => void
 };
 
-const Embed = ({ 
+const Embed = ({
     onInputAreaChange,
-    openDropDownMenu, 
+    openDropDownMenu,
     setOpenDropDownMenu,
 }: Props) => {
     const [embed, setEmbed] = useState('');
-    
+
     const handleEmbedExternal = (embed: string, value: string[]) => {
         if (!embed) return;
         embedCmd(embed, value || [])
@@ -23,24 +23,23 @@ const Embed = ({
     };
 
     return <div id='embedCode' >
-        <button className='border p-1 cursor-pointer' onClick={() => setOpenDropDownMenu('embed')}>Embed</button>
+        <button className='cursor-pointer' onClick={() => setOpenDropDownMenu('embed')}>
+            {"</>"}
+        </button>
         <Dropdownmenuwrapper
             openDropDownMenu={openDropDownMenu}
             menuName='embed'
             Children={
                 <div className='space-y-5 p-3 bg-gray-100 border shadow-sm'>
                     <div>
-                        <label htmlFor="embedCode" className='text-base'>
-                            {`Embed </>`}
-                            <textarea
-                                className='text-sm min-h-[180px] min-w-[180px]  mt-1 p-1 border border-blue-900 outline-none rounded'
-                                placeholder='embed...'
-                                id='embedCode'
-                                name='embedCode'
-                                value={embed}
-                                onChange={(e) => setEmbed(e.target.value)}
-                            />
-                        </label>
+                        <textarea
+                            className='text-sm min-h-[180px] min-w-[180px]  mt-1 p-1 border border-blue-900 outline-none rounded'
+                            placeholder='embed...'
+                            id='embedCode'
+                            name='embedCode'
+                            value={embed}
+                            onChange={(e) => setEmbed(e.target.value)}
+                        />
                     </div>
                     <div className='flex justify-end items-center gap-3 '>
                         <button className='px-2 py-[.2rem] bg-red-800 text-white rounded ' onClick={() => setOpenDropDownMenu('')}>Close</button>

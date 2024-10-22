@@ -4,11 +4,11 @@ import Button from "./Button";
 import Dialog from "./Dialog";
 import Trythistexteditor from "../custom-text-editor/App";
 import { useDeleteData, useFetchData, useNotification, usePostData, useUserIsLogin } from "../hooks";
-import { deleteAllText } from "../custom-text-editor/settings";
 import { useAppDispatch } from "../redux/slices";
 import { createComment, deleteComments } from "../redux/slices/userCommentsSlices";
 import Singlecomment from "./Singlecomment";
 import { current } from "@reduxjs/toolkit";
+import { deleteAll } from "../custom-text-editor/settings";
 
 type Props = {
     arrOfcomment: Commentprops[]
@@ -40,7 +40,7 @@ const Commentbutton = ({
     const seeMoreCommentRef = useRef(5);
     const [displayCommentData, setDisplayCommentData] = useState<Commentprops[] | null>(null);
 
-    const [getCommentContent, setGetCommentContent] = useState<{ _html: string, text: string } | undefined>(undefined);
+    const [getCommentContent, setGetCommentContent] = useState<{ _html: string, text: string } | null>(null);
     const [parentComment, setParentCpmment] = useState<Commentprops | null>(null);
     const [replying, setReplying] = useState<string[] | null>(null);
     const [parentId, setParentId] = useState<string | null>(null);
@@ -71,8 +71,9 @@ const Commentbutton = ({
 
         if (ok && data) {
             const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div
-            contentEditAbleELe.forEach((element) =>
-                deleteAllText(element as HTMLDivElement)
+            contentEditAbleELe.forEach((element) =>{
+                // deleteAll(element as HTMLDivElement)
+            }
             );
 
             if (parentId) {
@@ -289,14 +290,14 @@ const Commentbutton = ({
                                     </span>
                                 }
                                 <Trythistexteditor
-                                    editorParentWrapperStyle="w-full"
-                                    textAreaStyle="text-base py-3 pl-5 pr-3 border-2 rounded-3xl"
-                                    placeHolder="Comment..."
+                                     id='comment-text-editor'
+                                     placeHolder="Reply..."
+                                     InputWrapperClassName="border-2 p-3 rounded-full"
+                                     InputClassName=""
+                                     createNewText={{ IsNew: true }}
+                                     useTextEditors={false}
+                                     inputTextAreaFocus={true}
                                     setGetContent={setGetCommentContent}
-                                    textAreaConfig={{ addNew: true, body: '' }}
-                                    toolBarConfig={{
-                                        useToolBar: false,
-                                    }}
                                 />
                             </div>
                             <div className="flex justify-center">

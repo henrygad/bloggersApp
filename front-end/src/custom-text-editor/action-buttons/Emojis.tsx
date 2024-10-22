@@ -25,8 +25,8 @@ const Emojis = ({
     };
 
     return <div id="emojis" >
-        <button className='border p-1 cursor-pointer'
-            onClick={() => { setOpenDropDownMenu('emojis') }}>
+        <button className='cursor-pointer'
+            onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'emojis' ? '' :'emojis') }}>
             {currentEmoji}
         </button>
         <Dropdownmenuwrapper

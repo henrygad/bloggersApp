@@ -11,7 +11,9 @@ const Writecode = ({onInputAreaChange}: Props) => {
     };
 
   return <div id="embed-code">
-     <button className="border p-1" onClick={() => handleInsertCodeTag()}>Code</button>
+     <button className="p-1" onClick={() => handleInsertCodeTag()}>
+        {"{ }"}
+    </button>
   </div>
 };
 

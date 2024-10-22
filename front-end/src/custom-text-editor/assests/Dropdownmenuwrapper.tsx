@@ -1,4 +1,4 @@
-import { ReactElement, useRef } from 'react'
+import { ReactElement} from 'react';
 
 type Props = {
     Children: ReactElement
@@ -11,8 +11,6 @@ const Dropdownmenuwrapper = ({
     Children,
     openDropDownMenu,
 }: Props) => {
-
-    console.log(openDropDownMenu)
 
     return <div className='relative w-full' id='looking'>
         <div id={menuName} className="absolute top-0 shadow-md z-50 space-y-2 ">

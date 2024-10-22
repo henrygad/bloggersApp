@@ -1,11 +1,35 @@
 import { createNewSpan, handleReplaceElement } from "./settings";
 
-export const resetSelections = (selection: Selection, range: Range, element: HTMLElement | Text, setType:  string = 'start') => {
+export const getSelection = () => {
+    type Selec = {
+        selection: Selection
+        range: Range
+        node: Node
+        element: HTMLElement | null
+    } | null;
+
+    const selection = window.getSelection(); // get the selected element or text
+    let selectedNode: Selec = null;
+
+    if (selection) {  // when a selection is made
+        if (selection.rangeCount > 0) { // check whether a node or element was selected
+            const range = selection.getRangeAt(0); // get the selected nodee range object
+            const node = range.startContainer; // get node
+            const element = node.parentElement; // get node parent element
+            selectedNode = { selection, range, node, element };
+            return selectedNode;
+        };
+        return selectedNode;
+    };
+    return selectedNode
+};
+
+export const resetSelections = (selection: Selection, range: Range, element: HTMLElement | Text, setType: string = 'start') => {
     selection.removeAllRanges(); // remove selectionif
-    if(setType === 'end'){
-        range.setEndBefore(element);
-    }else {
-        range.setStart(element, 0);// set caret position inside the element
+    if (setType === 'end') {
+        range.setEndBefore(element); // set position of caret just before the end of the element
+    } else {
+        range.setStart(element, 0); // set position of caret inside the element
     };
     selection.addRange(range); // add the range object to the selection
     selection.collapseToEnd(); // remove the selection highlight 
@@ -51,11 +75,10 @@ const getMultipleSelectedNodes = (range: Range) => {
 };
 
 export const textFormatCmd = (command: string, value: string[]) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
+    if (selectedNode) {
+        const { selection, range, element: selectedElement } = selectedNode;
         const nodes = getMultipleSelectedNodes(range) // get all the selected nodes
 
         if (command.toLowerCase() === 'unlink') { // if cmd is to remove existing link
@@ -81,8 +104,8 @@ export const textFormatCmd = (command: string, value: string[]) => {
 
         if (nodes.length) { // if multipes or a single element was selected and has text, loop through all nodes
             nodes.forEach(node => {
-                const selecedElement = node.parentElement
-                if (!selecedElement?.classList.contains('editable')) return;  // return if selected node is not an editable node
+                const selectedElement = node.parentElement
+                if (!selectedElement?.classList.contains('editable')) return;  // return if selected node is not an editable node
 
                 const element = textFormat(); // create a new html element 
 
@@ -100,54 +123,40 @@ export const textFormatCmd = (command: string, value: string[]) => {
                 };
 
             });
-        } else { // if selected element has not text
-            const node = range.startContainer; /// get the selected node
-            const selecedElement = node.parentElement; //  get the parent element
-
+        } else { // if selected element has not text            
             const element = textFormat(); // create a new html element 
-            element.innerHTML = "&nbsp;" //'<br>';
+            element.innerHTML = '&nbsp;';
 
-            if (!selecedElement?.classList.contains('editable')) return; // return if selected node is not an editable node
+            if (!selectedElement?.classList.contains('editable')) return; // return if selected node is not an editable node
             insertSingleElementToTheDOM(element, range, selection); // insert the hmtl lisiting style tag to the dom
         };
     };
 };
 
 export const alignTextCmd = (value: string[]) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return; // return if no element is selected
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected range object
-        const node = range.startContainer; // get node
-        const element = node.parentElement; // get node parent element
-
+    if (selectedNode) {
+        const { element } = selectedNode;
         if (element?.classList.contains('editable')) { // element must be editable
-            const classNames = element.className || ''; // get element class names
-            element.classList.remove('text-left', 'text-center', 'text-right')
-            if (classNames.includes('block')) { // check if element contains display block class name alread
-                element.classList.add(...value); // only add other class name
-            } else {
-                element.classList.add('block', ...value); // add display block class names and other class name
-            };
+            element.classList.remove('block', 'text-left', 'text-center', 'text-right')
+            element.classList.add(...value); // add display block class names and other class name
         };
     };
 };
 
 export const listingCmd = (type: string, value: string[]) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    const list: HTMLElement = document.createElement(type || 'ul'); // create html listing style
-    list.classList.add('editable', type, ...value); // add editable class name and other class from the value array
-
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
+    if (selectedNode) {
+        const { selection, range, element: selectedElement } = selectedNode;
+        const list: HTMLElement = document.createElement(type || 'ul'); // create html listing style
+        list.classList.add('editable', type, ...value); // add editable class name and other class from the value array
         const nodes = getMultipleSelectedNodes(range) // get all the selected nodes
 
         if (nodes.length) { // if multipes or a single element was selected and has text, loop through all nodes
             nodes.forEach((node, index) => {
-                if (node.parentElement?.classList.contains('editable')) {
+                if (selectedElement?.classList.contains('editable')) {
                     let li = document.createElement('li'); //  create a html li tag for each node
                     li.classList.add('editable'); // add a editable class name to each li tag
                     li.appendChild(node); // insert each node into it own hmtl li tag
@@ -159,15 +168,11 @@ export const listingCmd = (type: string, value: string[]) => {
                 };
             });
         } else { // if selected element has not text
-            const node = range.startContainer; /// get the selected node
-            const element = node.parentElement; //  get the parent 
-            const br = document.createElement('br');
-            const elementChild = element?.firstElementChild || br
 
-            if (element?.classList.contains('editable')) {
+            if (selectedElement?.classList.contains('editable')) {
                 let li = document.createElement('li'); //  create a html li tag
                 li.classList.add('editable'); // add a editable class name to each li tag
-                li.appendChild(elementChild);
+                li.innerHTML = '<br>';
 
                 list.append(li); // insert li tag to the hmtl lisiting style tag
                 insertSingleElementToTheDOM(list, range, selection, 'end'); // insert the hmtl lisiting style tag to the dom
@@ -177,14 +182,10 @@ export const listingCmd = (type: string, value: string[]) => {
 };
 
 export const emojiCmd = (emoji: string) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
-        const node = range.startContainer; /// get the selected node
-        const element = node.parentElement; //  get the parent element
-
+    if (selectedNode) {
+        const { selection, range, element } = selectedNode;
         if (element?.classList.contains('editable') ||
             element?.classList.contains('codeChild')) {
 
@@ -195,37 +196,28 @@ export const emojiCmd = (emoji: string) => {
 };
 
 export const writeCodeCmd = () => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
-        const node = range.startContainer; /// get the selected node
-        const element = node.parentElement; //  get the parent element
-
+    if (selectedNode) {
+        const { selection, range, element } = selectedNode;
         if (element?.classList.contains('editable')) { // check if the selected element is editable
-            const span = createNewSpan();
-            span.classList.add('editable', 'block', 'bg-gray-300', 'p-2');
-
+            const span = createNewSpan() // create new span
+            span.classList.add('editable', 'inline-block', 'text-left', 'text-black', 'bg-gray-50', 'p-3', 'border', 'shadow-inner');
             const code = document.createElement('code'); // create a html code tag
             code.classList.add('code-mode', 'block'); // add class name to code tag
             code.innerHTML = '<br>';
 
-            span.appendChild(code); // append the anchor tag to code tag
+            span.appendChild(code);
             insertSingleElementToTheDOM(span, range, selection, 'end'); // insert html code tag to the dom
         };
     };
 };
 
 export const imageCmd = (src: string, alt: string, value: string[]) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
-        const node = range.startContainer; /// get the selected node
-        const element = node.parentElement; //  get the parent element
-
+    if (selectedNode) {
+        const { selection, range, element } = selectedNode;
         if (element?.classList.contains('editable')) { // check if the selected element is editable
             const img = document.createElement('img'); // create a html img tag
             img.classList.add(...value); // add class name to the html img tag 
@@ -237,14 +229,11 @@ export const imageCmd = (src: string, alt: string, value: string[]) => {
 };
 
 export const videoCmd = (src: string, value: string[]) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
-        const node = range.startContainer; /// get the selected node
-
-        if (node.parentElement?.classList.contains('editable')) { // check if the selected element is editable
+    if (selectedNode) {
+        const { selection, range, element } = selectedNode;
+        if (element?.classList.contains('editable')) { // check if the selected element is editable
             const video = document.createElement('video'); // create a htlm video tag
             video.classList.add(...value); // add class name to the html video tag
             video.controls = true; // allow the html video tag to have control
@@ -256,24 +245,19 @@ export const videoCmd = (src: string, value: string[]) => {
             insertSingleElementToTheDOM(video, range, selection); // insert html vidoe tag to the dom
         };
     };
-
 };
 
 export const embedCmd = (embed: string, value: string[]) => {
-    const selection = window.getSelection(); // get the selected element or text
-    if (!selection) return;
+    const selectedNode = getSelection(); // get the selected node properties
 
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0); // get the selected element range object
-        const node = range.startContainer; /// get the selected node
-        const element = node.parentElement; //  get the parent element
-
+    if (selectedNode) {
+        const { selection, range, element } = selectedNode;
         if (element?.classList.contains('editable')) {
             const span = document.createElement('span'); // create a new html span  tag
             span.classList.add('editable', 'embeded-code', ...value); // add editable class name to the htlm span
             span.innerHTML = embed; // embed string to htlm span tag
+
             insertSingleElementToTheDOM(span, range, selection); // insert embed string to the DOM
         };
     };
-
 };

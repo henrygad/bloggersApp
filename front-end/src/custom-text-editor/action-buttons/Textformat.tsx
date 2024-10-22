@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { textFormatCmd } from "../cmds";
 import Dropdownmenuwrapper from "../assests/Dropdownmenuwrapper";
+import { CgColorBucket, CgColorPicker} from "react-icons/cg";
+import { IoIosArrowDown } from "react-icons/io";
 
 type Props = {
     arrOfFontColors: string[]
@@ -20,7 +22,7 @@ const Textformat = ({
     arrOfFontSizes,
     arrOfFontFamily,
     onInputAreaChange,
-    openDropDownMenu, 
+    openDropDownMenu,
     setOpenDropDownMenu,
 }: Props) => {
     const [currentFontFamily, setCurrentFontFamily] = useState(arrOfFontFamily?.[0].name);
@@ -33,15 +35,15 @@ const Textformat = ({
         setOpenDropDownMenu('')
     };
 
-    return <div id='inlineStyling' className="flex flex-wrap items-center justify-between gap-2">
+    return <div id='inlineStyling' className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-text">
         <div id="text-normal">
-            <button onClick={() => handleTextFormat('normal', ['inline-block', 'font-normal', 'no-underline', 'not-italic'])} >
+            <button className="font-semibold" onClick={() => handleTextFormat('normal', ['inline-block', 'font-normal', 'no-underline', 'not-italic'])} >
                 Normal
             </button>
         </div>
         <div id="text-fontfamily">
-            <button className='capitalize p-1  border cursor-pointer' onClick={() => { setOpenDropDownMenu('fontfamily') }}>
-                {currentFontFamily}
+            <button className='flex items-center justify-between font-semibold px-1 border-2 cursor-pointer' onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'fontfamily' ? '' :'fontfamily') }}>
+                {currentFontFamily} <IoIosArrowDown scale={10}/>
             </button>
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
@@ -64,8 +66,8 @@ const Textformat = ({
             />
         </div>
         <div id="text-headers" className=''>
-            <button className='capitalize p-1  border cursor-pointer' onClick={() => { setOpenDropDownMenu('headings') }}>
-                {currentHeadings}
+            <button className='flex items-center justify-between font-semibold px-1 border-2 cursor-pointer' onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'headings' ? '' :'headings') }}>
+                {currentHeadings} <IoIosArrowDown scale={10}/>
             </button>
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
@@ -88,8 +90,8 @@ const Textformat = ({
             />
         </div>
         <div id="text-fontsize" className=''>
-            <button className=' capitalize border p-1 cursor-pointer' onClick={() => { setOpenDropDownMenu('fontsize') }}>
-                {currentFontSizes}
+            <button className='flex items-center justify-between font-semibold border-2 px-1 cursor-pointer' onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'fontsize' ? '' :'fontsize') }}>
+                {currentFontSizes}px <IoIosArrowDown scale={10}/>
             </button>
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
@@ -112,26 +114,34 @@ const Textformat = ({
             />
         </div>
         <div id="text-bold">
-            <button onClick={() => handleTextFormat('font-bold')}><b>B</b></button>
+            <button className="text-xl" onClick={() => handleTextFormat('font-bold')}><b>B</b></button>
         </div>
         <div id="text-italic" >
-            <button onClick={() => handleTextFormat('italic')}><i>I</i></button>
+            <button className="text-xl" onClick={() => handleTextFormat('italic')}><i>I</i></button>
         </div>
         <div id="text-underline" >
-            <button onClick={() => handleTextFormat('underline')}><u>U</u></button>
+            <button className="text-xl" onClick={() => handleTextFormat('underline')}><u>U</u></button>
         </div>
-        <div id="text-lowercase" >
-            <button onClick={() => handleTextFormat('lowercase')}>lowerCase</button>
+        <div id="text-transform">
+            <button className='flex items-center justify-between font-semibold px-1 border-2 capitalize cursor-pointer' onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'texttransform' ? '' :'texttransform') }}>
+                Aa <IoIosArrowDown scale={10}/>
+            </button>
+            <Dropdownmenuwrapper
+                openDropDownMenu={openDropDownMenu}
+                menuName={'texttransform'}
+                Children={
+                    <div className="w-full min-w-[100px] bg-white p-1 space-y-2 border shadow-sm">
+                        <button id="text-lowercase" onClick={() => handleTextFormat('lowercase')}>lowerCase</button>
+                        <button id="text-capitalize" onClick={() => handleTextFormat('capitalize')}>capitalize</button>
+                        <button id="text-uppercase" onClick={() => handleTextFormat('uppercase')}>upCase</button>
+                        <button id="normal" onClick={() => handleTextFormat('normal-case')}>normal</button>
+                    </div>
+                }
+            />
         </div>
-        <div id="text-capitalize" >
-            <button onClick={() => handleTextFormat('capitalize')}>capitalize</button>
-        </div>
-        <div id="text-uppercase" >
-            <button onClick={() => handleTextFormat('uppercase')}>upCase</button>
-        </div>
-        <div id="text-fontcolor" className='' >
-            <button className='border p-1 cursor-pointer' onClick={() => { setOpenDropDownMenu('fontcolor') }}>
-                fontColor
+        <div id="text-fontcolor">
+            <button className='block cursor-pointer' onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'fontcolor' ? '' :'fontcolor') }}>
+                <CgColorPicker  size={23} />
             </button>
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
@@ -150,9 +160,9 @@ const Textformat = ({
                 </div>}
             />
         </div>
-        <div id="text-backgroundcolor" className=''>
-            <button className='border p-1 cursor-pointer' onClick={() => { setOpenDropDownMenu('bgcolor') }}>
-                BgIcon
+        <div id="text-backgroundcolor" >
+            <button className='block cursor-pointer' onClick={() => { setOpenDropDownMenu(openDropDownMenu === 'bgcolor' ? '' :'bgcolor') }}>
+               <CgColorBucket  size={23} />
             </button>
             <Dropdownmenuwrapper
                 openDropDownMenu={openDropDownMenu}
