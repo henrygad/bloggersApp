@@ -5,9 +5,8 @@ import Dialog from "./Dialog";
 import Trythistexteditor from "../custom-text-editor/App";
 import { useDeleteData, useFetchData, useNotification, usePostData, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { createComment, deleteComments } from "../redux/slices/userCommentsSlices";
+import { addComment, decreaseTotalNumberOfUserComments, deleteComments, increaseTotalNumberOfUserComments } from "../redux/slices/userCommentsSlices";
 import Singlecomment from "./Singlecomment";
-import { current } from "@reduxjs/toolkit";
 import { deleteAll } from "../custom-text-editor/settings";
 
 type Props = {
@@ -37,12 +36,11 @@ const Commentbutton = ({
     const { loginStatus: { loginUserName } } = useUserIsLogin()
 
     const { fetchData: fetchSeeMoreCommentData, loading: loadingMoreComment } = useFetchData<Commentprops[]>(null);
-    const seeMoreCommentRef = useRef(5);
-    const [displayCommentData, setDisplayCommentData] = useState<Commentprops[] | null>(null);
+    const [displayCommentData, setDisplayCommentData] = useState<Commentprops[]>([]);
 
     const [getCommentContent, setGetCommentContent] = useState<{ _html: string, text: string } | null>(null);
     const [parentComment, setParentCpmment] = useState<Commentprops | null>(null);
-    const [replying, setReplying] = useState<string[] | null>(null);
+    const [replying, setReplying] = useState<string[] | null>([]);
     const [parentId, setParentId] = useState<string | null>(null);
 
     const { postData, loading: postCommentLoading } = usePostData();
@@ -53,6 +51,13 @@ const Commentbutton = ({
 
     const [toggleCommentDialog, setToggleCommentDialog] = useState(' ');
     const [toggleListOfComments, setToggleListOfComments] = useState(false);
+
+    const clearInputArea = () => {
+        const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div on page
+        contentEditAbleELe.forEach((element) => {
+            deleteAll(element as HTMLDivElement)
+        });
+    };
 
     const handleAddComment = async (comment: {
         blogpostId: string,
@@ -69,12 +74,7 @@ const Commentbutton = ({
         const response = await postData<Commentprops>(url, { ...body });
         const { ok, data } = response;
 
-        if (ok && data) {
-            const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div
-            contentEditAbleELe.forEach((element) =>{
-                // deleteAll(element as HTMLDivElement)
-            }
-            );
+        if (data) {
 
             if (parentId) {
                 setDisplayCommentData((pre) => pre ? displayChildrenCommentRecursively(pre, data) : pre);
@@ -84,7 +84,9 @@ const Commentbutton = ({
 
             setReplying(null)
             setParentId(null);
-            appDispatch(createComment(data));
+            appDispatch(addComment(data));
+            clearInputArea();
+            appDispatch(increaseTotalNumberOfUserComments(1));
 
             handleNotification(data?.parentId || '', data);
         };
@@ -112,7 +114,7 @@ const Commentbutton = ({
         const response = await deleteCommentData(url + "/" + comment._id);
 
         if (response.ok) {
-            appDispatch(deleteComments(comment._id));
+            appDispatch(deleteComments({ _id: comment._id }));
             setReplying(null);
             setParentId(null);
 
@@ -121,6 +123,8 @@ const Commentbutton = ({
             } else {
                 setDisplayCommentData((pre) => pre ? pre.filter((item) => item._id !== comment._id) : pre);
             };
+
+            appDispatch(decreaseTotalNumberOfUserComments(1));
         };
     };
 
@@ -141,11 +145,13 @@ const Commentbutton = ({
     };
 
     const handleLoadMoreComments = async () => {
-        const { data, ok } = await fetchSeeMoreCommentData(`/api/blogpostcommentsandnestedcomments/${blogpostId}?skip=${seeMoreCommentRef.current}&limit=2`);
-        if (ok && data) {
-            setDisplayCommentData((pre) => pre ? [...pre, ...data] : pre);
-            seeMoreCommentRef.current += seeMoreCommentRef.current;
-        };
+        await fetchSeeMoreCommentData(`/api/blogpostcommentsandnestedcomments/${blogpostId}?skip=${displayCommentData.length}&limit=5`)
+            .then((res) => {
+                const { data } = res;
+                if (data) {
+                    setDisplayCommentData((pre) => pre ? [...pre, ...data] : pre);
+                };
+            });
     };
 
     const handleNotification = async (parentId: string, comment: Commentprops) => {
@@ -211,6 +217,8 @@ const Commentbutton = ({
         autoOpenTargetComment?.autoOpen,
         autoOpenTargetComment.blogpostId,
     ]);
+   
+
 
     return <div>
         <div>
@@ -218,7 +226,9 @@ const Commentbutton = ({
                 id='comment-btn'
                 children={<>
                     Comment:
-                    <span className="bg-blue-300 p-1" onClick={(e) => { { setToggleCommentDialog(blogpostId); setToggleListOfComments(true); e.stopPropagation() } }}>
+                    <span className="bg-blue-300 p-1"
+                        onClick={(e) => { { setToggleCommentDialog(blogpostId); setToggleListOfComments(true); e.stopPropagation() } }}
+                    >
                         {displayCommentData ? displayCommentData.length : 0}
                     </span>
                 </>}
@@ -241,10 +251,12 @@ const Commentbutton = ({
                     <>
                         {toggleListOfComments ?
                             <div className="flex flex-col items-center pt-2">
-                                <span>{displayCommentData ? displayCommentData.length : 0}: comments</span>
-                                <>
+                                <span id="comment-title">
+                                    {displayCommentData ? displayCommentData.length : 0}: comments
+                                </span>
+                                <div id="display-comments-wrapper">
                                     {!loadingComment ?
-                                        <>
+                                        <div id="list-comments">
                                             {displayCommentData &&
                                                 displayCommentData.length ?
                                                 <>
@@ -270,12 +282,12 @@ const Commentbutton = ({
                                                         {!loadingMoreComment ? 'load more' : 'loading...'}
                                                     </span>
                                                 </> :
-                                                <div>be the first to comment</div>
+                                                <div id="comment-not-found">be the first to comment</div>
                                             }
-                                        </> :
-                                        <div>loading...</div>
+                                        </div> :
+                                        <div id="loaidng-comment">loading...</div>
                                     }
-                                </>
+                                </div>
                             </div> :
                             null
                         }
@@ -290,13 +302,13 @@ const Commentbutton = ({
                                     </span>
                                 }
                                 <Trythistexteditor
-                                     id='comment-text-editor'
-                                     placeHolder="Reply..."
-                                     InputWrapperClassName="border-2 p-3 rounded-full"
-                                     InputClassName=""
-                                     createNewText={{ IsNew: true }}
-                                     useTextEditors={false}
-                                     inputTextAreaFocus={true}
+                                    id='comment-text-editor'
+                                    placeHolder="Reply..."
+                                    InputWrapperClassName="border-2 p-3 rounded-full"
+                                    InputClassName=""
+                                    createNewText={{ IsNew: true }}
+                                    useTextEditors={false}
+                                    inputTextAreaFocus={true}
                                     setGetContent={setGetCommentContent}
                                 />
                             </div>

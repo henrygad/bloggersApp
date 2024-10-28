@@ -1,52 +1,64 @@
-import { useRef } from "react";
-import { useAppDispatch, useAppSelector } from "../redux/slices";
+import { useEffect, useState } from "react";
 import { useFetchData } from "../hooks";
 import { Blogpostprops } from "../entities";
-import { Singleblogpost } from "../components";
-import { addTreadingFeeds } from "../redux/slices/treadingFeedsSlices";
+import { Searchform, Singleblogpost } from "../components";
 
-const Treadingfeeds = () => {
-  const initialLoadingFeedAmount = 5
-  const { treadingFeeds: { data: getTreadingFeeds, loading: loadingTreadingFeeds } } = useAppSelector((state) => state.treadingfeedsSlices);
-  const appDispatch = useAppDispatch();
+type Props = {
+  treadingFeedsData: Blogpostprops[]
+  treadingFeedsLoading: boolean
+  treadingFeedsError: string
+};
 
-  const { fetchData: fetchNewFeedData, loading: loadingNewFeeds } = useFetchData<Blogpostprops[] | null>(null);
+const Treadingfeeds = ({
+  treadingFeedsData,
+  treadingFeedsLoading,
+  treadingFeedsError,
+}: Props) => {
 
-  const { fetchData: fetchMoreFeedData, loading: loadingMoreFeeds } = useFetchData<Blogpostprops[] | null>(null);
-  const skipCountRef = useRef(initialLoadingFeedAmount);
+  const [treading, setTreading] = useState<Blogpostprops[]>([])
 
-  const handleLoadMoreFeeds = async () => {
-    const response = await fetchMoreFeedData('/api/blogposts');
-
-    const { ok, data } = response;
-    if (ok && data) {
-      appDispatch(addTreadingFeeds((pre: { data: Blogpostprops[], }) => pre ? { ...pre, data: [...pre.data, data] } : pre));
-      skipCountRef.current += initialLoadingFeedAmount
-    };
-  };
+  const { fetchData: fetchNewFeedData, loading: loadingNewFeeds } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchMoreFeedData, loading: loadingMoreFeeds } = useFetchData<Blogpostprops[]>(null);
 
   const handleLoadNewFeeds = async () => {
-    const response = await fetchNewFeedData('/api/blogposts');
-    const { ok, data } = response;
-    if (ok && data) {
-      appDispatch(addTreadingFeeds((pre: { data: Blogpostprops[], }) => pre ? { ...pre, data: [...pre.data, data] } : pre));
-    };
+    await fetchNewFeedData('/api/blogposts?status=published')
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+        setTreading(data);
+      });
   };
+
+  const handleLoadMoreOldFeeds = async () => {
+    await fetchMoreFeedData(`/api/blogposts?status=published&skip=${treading.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+        setTreading((pre) => [...pre, ...data]);
+      });
+  };
+
+  useEffect(() => {
+    if (treadingFeedsData) setTreading(treadingFeedsData);
+  }, [treadingFeedsData,]);
 
 
   return <div>
+    <div>
+    <Searchform />
+    </div>
     {
-      !loadingTreadingFeeds ?
-        <>
-          {getTreadingFeeds &&
-            getTreadingFeeds.length ?
+      !treadingFeedsLoading ?
+        <div id="display-blogpost-wrapper">
+          {treading &&
+            treading.length ?
             <>
               <span className="cursor-pointer" onClick={handleLoadNewFeeds}>
                 {!loadingNewFeeds ? 'load new feeds' : 'loading...'}
               </span>
-              <div>
+              <div id="list-treading-blogposts">
                 {
-                  getTreadingFeeds.map((item, index) =>
+                  treading.map((item, index) =>
                     item.status === 'published' ?
                       <Singleblogpost
                         key={item._id}
@@ -59,13 +71,13 @@ const Treadingfeeds = () => {
 
                 }
               </div>
-              <span className="cursor-pointer" onClick={handleLoadMoreFeeds}>
+              <span className="cursor-pointer" onClick={handleLoadMoreOldFeeds}>
                 {!loadingMoreFeeds ? 'load more feeds' : 'loading...'}
               </span>
             </> :
             <div>no blogpost found</div>
           }
-        </> :
+        </div> :
         <div>laoding...</div>
     }
   </div>

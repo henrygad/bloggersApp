@@ -23,13 +23,10 @@ type Prop = {
     InputWrapperClassName: string
     InputClassName: string
     textEditorWrapperClassName?: string
-    createNewText: { IsNew: boolean, body?: string }
+    createNewText: { IsNew: boolean, content?: { _html: string, text: string } }
     useTextEditors: boolean
     inputTextAreaFocus?: boolean
-    setGetContent: React.Dispatch<React.SetStateAction<{
-        _html: string;
-        text: string;
-    } | null>>
+    setGetContent: ({ _html, text }: { _html: string, text: string }) => void
 };
 
 const App = ({
@@ -44,6 +41,7 @@ const App = ({
     setGetContent = () => null
 }: Prop) => {
 
+    const createNewTextRef = useRef<{ IsNew: boolean, content?: { _html: string, text: string } }>(createNewText)
     const [displayPlaceHolder, setDisplayPlaceHolder] = useState(false);
     const [inputAreaIsEmpty, setInputAreaIsEmpty] = useState(false);
     const inputAreaRef = useRef<HTMLDivElement | null>(null);
@@ -54,10 +52,6 @@ const App = ({
     const textEdictorRef = useRef(null);
     const [openDropDownMenu, setOpenDropDownMenu] = useState('');
     useTextEditors && useClickOutSide(textEdictorRef, () => { setOpenDropDownMenu('') });
-
-    const handleFilterInnerText = (text: string) => {
-        return text.split('').map((word) => word === '\n' ? ' ' : word).join('');
-    };
 
     const getCaretPosition = (element: Node) => {
         const selection = document.getSelection(); // get selected element or node
@@ -192,8 +186,10 @@ const App = ({
     };
 
     useEffect(() => {
-        inputTextAreaFocus && focusCaretOnInputArea(inputAreaRef);
-        onInputAreaChange();
+        if (inputTextAreaFocus) focusCaretOnInputArea(inputAreaRef.current);
+        handleCreateHistory();
+        handleDisplayInputPlaceHolder();
+        handleWhenInputAreaIsEmpty();
     }, []);
 
     return <div
@@ -248,10 +244,10 @@ const App = ({
                     openDropDownMenu={openDropDownMenu}
                     setOpenDropDownMenu={setOpenDropDownMenu}
                 />
+                <Deleteall handleDeleteAlll={() => { deleteAll(inputAreaRef.current); onInputAreaChange() }} />
                 <History
                     handleDisplayHistory={handleDisplayHistory}
                 />
-                <Deleteall handleDeleteAlll={() => { deleteAll(inputAreaRef); onInputAreaChange() }} />
             </div> :
             null
         }
@@ -261,7 +257,7 @@ const App = ({
             placeHolder={placeHolder}
             InputWrapperClassName={InputWrapperClassName}
             InputClassName={InputClassName}
-            createNewText={createNewText}
+            createNewText={createNewTextRef.current}
             inputAreaRef={inputAreaRef}
             onInputAreaChange={onInputAreaChange}
             handleDisplayHistory={handleDisplayHistory}

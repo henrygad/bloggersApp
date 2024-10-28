@@ -6,28 +6,25 @@ import { follow, unFollow } from "../redux/slices/userProfileSlices";
 
 
 const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
-    const { userProfile } = useAppSelector((state) => state.userProfileSlices);
-    const { data: profileData, loading: loadingUserProfileData } = userProfile;
+    const { userProfile: {
+        data: profileData, 
+        loading: loadingUserProfileData
+    } } = useAppSelector((state) => state.userProfileSlices);
     const [followed, setFollowed] = useState(false);
-    const { patchData, loading: loadingFollow } = usePatchData<{ userName: string }>();
+    const { patchData, loading: loadingFollow } = usePatchData();
     const appDispatch = useAppDispatch();
 
     const notify = useNotification();
-
-    useEffect(() => {
-        if (!profileData?.following) return;
-        setFollowed(profileData.following.includes(userNameToFollow));
-    }, [profileData?.following, loadingUserProfileData]);
 
     const handleFollow = async (userNameToFollow: string) => {
         if (followed) return;
 
         const body = null;
-        const response = await patchData('/api/follow/' + userNameToFollow, body);
+        const response = await patchData<{ userName: string }>('/api/follow/' + userNameToFollow, body);
         const { data, ok } = response;
 
         if (ok && data) {
-            appDispatch(follow(data.userName));
+            appDispatch(follow({userName: data.userName}));
             setFollowed(true);
 
             await handleNotification(userNameToFollow, 'followed you, you can follow them back', 'follow');
@@ -38,11 +35,11 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
         if (!followed) return;
 
         const body = null;
-        const response = await patchData('/api/unfollow/' + userNameToFollow, body);
+        const response = await patchData<{ userName: string }>('/api/unfollow/' + userNameToFollow, body);
         const { data, ok } = response;
 
         if (ok && data) {
-            appDispatch(unFollow(data.userName));
+            appDispatch(unFollow({userName: data.userName}));
             setFollowed(false);
 
             await handleNotification(userNameToFollow, 'unfollowed you, you can unfollow them back', 'unfollow');
@@ -50,7 +47,9 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
     };
 
     const handleNotification = async (userNameToNotify: string, msg: string, type: string) => {
-        const { userName, name } = profileData;
+        if(!profileData) return;
+        const { userName, name} = profileData;
+
         const url = '/api/notification/' + userNameToNotify;
         const body = {
             typeOfNotification: type,
@@ -61,6 +60,11 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
 
         await notify(url, body);
     };
+
+    useEffect(() => {
+        if (!profileData?.following) return;
+        setFollowed(profileData.following.includes(userNameToFollow));
+    }, [profileData?.following, loadingUserProfileData]);
 
     return <Button
         id='follow-btn'

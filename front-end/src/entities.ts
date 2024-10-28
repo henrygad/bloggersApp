@@ -99,4 +99,5 @@ export type Imageprops = {
     fileName: string,
     size: number,
     uploader: string,
+    fieldname: string,
 };

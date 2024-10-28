@@ -1,7 +1,7 @@
 import { Userstatusprops } from "../entities";
 import { usePostData, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { addProfile } from "../redux/slices/userProfileSlices";
+import { deleteProfile } from "../redux/slices/userProfileSlices";
 import Button from "./Button";
 
 const Signoutuser = () => {
@@ -16,7 +16,7 @@ const Signoutuser = () => {
 
         if (ok && data) {
             setLoginStatus((pre) => pre ? { ...pre, ...data } : pre);
-            appDispatch(addProfile({ data: null, loading: true, error: '' }));
+            appDispatch(deleteProfile({ data: null, loading: true, error: '' }));
         };
     };
 

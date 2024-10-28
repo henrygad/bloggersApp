@@ -202,9 +202,9 @@ export const writeCodeCmd = () => {
         const { selection, range, element } = selectedNode;
         if (element?.classList.contains('editable')) { // check if the selected element is editable
             const span = createNewSpan() // create new span
-            span.classList.add('editable', 'inline-block', 'text-left', 'text-black', 'bg-gray-50', 'p-3', 'border', 'shadow-inner');
+            span.classList.add('editable', 'inline-block', 'text-base', 'font-normal', 'no-underline', 'not-italic', 'lowercase', 'text-left', 'text-black', 'bg-gray-50', 'p-3', 'border', 'shadow-inner', 'rounded-md');
             const code = document.createElement('code'); // create a html code tag
-            code.classList.add('code-mode', 'block'); // add class name to code tag
+            code.classList.add('code-mode', 'block', 'bg-transparent'); // add class name to code tag
             code.innerHTML = '<br>';
 
             span.appendChild(code);
@@ -213,7 +213,7 @@ export const writeCodeCmd = () => {
     };
 };
 
-export const imageCmd = (src: string, alt: string, value: string[]) => {
+export const imageCmd = (src: string, alt: string, height: string, width: string, value: string[]) => {
     const selectedNode = getSelection(); // get the selected node properties
 
     if (selectedNode) {
@@ -221,6 +221,8 @@ export const imageCmd = (src: string, alt: string, value: string[]) => {
         if (element?.classList.contains('editable')) { // check if the selected element is editable
             const img = document.createElement('img'); // create a html img tag
             img.classList.add(...value); // add class name to the html img tag 
+            img.style.height = height; // set hieght
+            img.style.width = width; // set width
             img.alt = alt; // add alt tag to the image
             img.src = src; // add src url
             insertSingleElementToTheDOM(img, range, selection); // insert img tag to dom

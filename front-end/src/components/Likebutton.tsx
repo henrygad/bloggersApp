@@ -47,6 +47,52 @@ const Likebutton = ({
 
     const [targetLike, setTargetLike] = useState(' ');
 
+    const handlelike = async (apiForLike: string) => {
+        if (liked) return;
+        const url = apiForLike;
+        const body = null;
+
+        const response = await patchData<{likes: string[]}>(url, body);
+        const { data, ok } = response;
+
+        if (data) {
+            setLikes(data.likes);
+            setLiked(true);
+
+            handleNotification();
+        };
+
+    };
+
+    const handleUnlike = async (apiForUnlike: string) => {
+        if (!liked) return;
+        const url = apiForUnlike;
+        const body = null;
+
+        const response = await patchData<{likes: string[]}>(url, body);
+        const { data, ok } = response;
+
+        if (data) {
+            setLikes(data?.likes);
+            setLiked(false);
+        };
+    };
+
+    const handleNotification = async () => {
+        const isOwnerOfBlogpost = userNameToNotify === loginUserName;
+        if (isOwnerOfBlogpost) return;
+
+        const url = '/api/notification/' + userNameToNotify;
+        const body = {
+            typeOfNotification: liking,
+            msg: `liked your ${liking.includes('blogpost') ? 'blogpost' : 'comment'}, ${notificationTitle}`,
+            url: notificationUrl,
+            notifyFrom: loginUserName,
+        };
+
+        await notify(url, body);
+    };
+
     useEffect(() => {
         setLiked((likes).includes(loginUserName));
     }, [
@@ -68,52 +114,6 @@ const Likebutton = ({
         autoOpenTargetLike?.autoOpen,
         autoOpenTargetLike?.commentId
     ])
-
-    const handlelike = async (apiForLike: string) => {
-        if (liked) return;
-        const url = apiForLike;
-        const body = null;
-
-        const response = await patchData(url, body);
-        const { data, ok } = response;
-
-        if (ok) {
-            setLikes(data);
-            setLiked(true);
-
-            handleNotification();
-        };
-
-    };
-
-    const handleUnlike = async (apiForUnlike: string) => {
-        if (!liked) return;
-        const url = apiForUnlike;
-        const body = null;
-
-        const response = await patchData(url, body);
-        const { data, ok } = response;
-
-        if (ok) {
-            setLikes(data);
-            setLiked(false);
-        };
-    };
-
-    const handleNotification = async () => {
-        const isOwnerOfBlogpost = userNameToNotify === loginUserName;
-        if (isOwnerOfBlogpost) return;
-
-        const url = '/api/notification/' + userNameToNotify;
-        const body = {
-            typeOfNotification: liking,
-            msg: `liked your ${liking.includes('blogpost') ? 'blogpost' : 'comment'}, ${notificationTitle}`,
-            url: notificationUrl,
-            notifyFrom: loginUserName,
-        };
-
-        await notify(url, body);
-    };
 
     return <div>
         <div>

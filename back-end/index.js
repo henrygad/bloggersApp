@@ -20,11 +20,12 @@ const corsOptions = {
 }
 
 // Middlewares
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors(corsOptions))
 Mongoose.set('strictQuery', false)
 
-Mongoose.connect(DBURI)
+Mongoose.connect(DBURI, {})
     .then(() => {
 
         app.use(session({
@@ -46,14 +47,10 @@ Mongoose.connect(DBURI)
         app.get('/api', (req, res) => {
             const { session } = req
             session.visited = true // modified session
-            
-            if(!session?.searchHistory?.length){// add a search history property to the session for the first time
-                session.searchHistory = []
-            } 
 
-            res.json({ 
-                greetings: 'Wellcome! friend', 
-                sessionId: session.id ,
+            res.json({
+                greetings: `Hi!, you ${session.isLogin ? 'login' : ' loged out'}`,
+                sessionId: session.id,
                 searchHistory: session.searchHistory,
             })
         })
@@ -70,8 +67,7 @@ Mongoose.connect(DBURI)
         app.listen(PORT, () => console.log('serving running on port' + ' ' + PORT))
     })
     .catch((err) => {
-        
+
         const error = new customError('no network connected')
         console.log(error.message)
     })
-    

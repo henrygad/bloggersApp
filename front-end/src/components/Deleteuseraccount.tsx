@@ -1,6 +1,6 @@
 import { useDeleteData, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { addProfile } from "../redux/slices/userProfileSlices";
+import { deleteProfile } from "../redux/slices/userProfileSlices";
 import Button from "./Button";
 
 const Deleteuseraccount = () => {
@@ -10,13 +10,19 @@ const Deleteuseraccount = () => {
 
   const handleDeleteAccount = async () => {
     const url = '/api/deleteprofile';
-    const response = await deleteData(url);
-    const { ok, data } = response;
+    await deleteData<{ deleted: string }>(url)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
 
-    if (ok && data) {
-      setLoginStatus((pre) => pre ? { ...pre, ...data } : pre);
-      appDispatch(addProfile({ data: null, loading: true, error: '' }));
-    };
+        setLoginStatus((pre) => pre ? { 
+          ...pre, 
+          isLogin: false,
+          loginUserName: '',
+          greetings: data.deleted
+        } : pre);
+        appDispatch(deleteProfile({ data: null, loading: true, error: '' }));
+      });
   };
 
   return <Button

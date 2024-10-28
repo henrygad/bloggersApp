@@ -6,21 +6,24 @@ const usePostData = () => {
     const [error, setError] = useState('');
 
     const postData = async <T,>(url: string, body: {} | [] | string | null | undefined) => {
+        let data: T | null = null;
+        let ok = false;
+
         try {
             setLoading(true);
             setError('');
 
-            const response = await axios.post(url, body);
-            const data: T = await response.data;
+            const res = await axios.post(url, body);
 
-            if (data &&
-                (Object.keys(data))
-            ) {
+            if (res.data &&
+                Object.keys(res.data)) {
                 setError('');
                 setLoading(false);
-                return { data: data, ok: true };
-            } else throw new Error('this is new error');
-            
+
+                data = res.data;
+                ok = true
+            };
+
         } catch (_error) {
             const error = _error as {
                 response: {
@@ -32,10 +35,14 @@ const usePostData = () => {
             console.error(error);
             setError(error.response.data.message);
             setLoading(false);
-            return { data: null, ok: false };
+
+            data = null;
+            ok = true;
         };
+
+        return { data, ok, };
     };
-    
+
     return { postData, loading, error };
 };
 

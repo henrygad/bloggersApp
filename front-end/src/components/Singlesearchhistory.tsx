@@ -20,11 +20,12 @@ const Singlesearchhistory = ({
 }: Props) => {
 
     const { setLoginStatus } = useUserIsLogin();
-    const { deleteData, loading: loadingDeletSearchHistory } = useDeleteData<{ _id: string, searched: string }[]>();
+    const { deleteData, loading: loadingDeletSearchHistory } = useDeleteData();
 
     const handleDeleteSearchHistory = async (_id: string) => {
         if (!settings) return
-        await deleteData('/api/search/delete/history/' + _id).then((response) => {
+        await deleteData<{ _id: string, searched: string }[]>('/api/search/delete/history/' + _id)
+        .then((response) => {
             const { data } = response
             console.log(data)
             if (data) {

@@ -3,12 +3,12 @@ import { Imageprops, Blogpostprops, Commentprops, Userprops } from '../entities'
 import { Button, Dialog, Displayimage, Followbutton, Menu, Tab, Userdotnav } from '../components';
 import Blogpostsec from './Blogpostsec';
 import CommentSec from './CommentSec';
-import Advatersec from './Advatersec';
 import { useUserIsLogin } from '../hooks';
 import Followerssec from './Followerssec';
 import Followingsec from './Followingsec';
 import Interentssec from './Interentssec';
 import { Link } from 'react-router-dom';
+import Avatersec from './Avatersec';
 
 type Props = {
   profileLoading: boolean
@@ -21,6 +21,8 @@ type Props = {
   handleServerLoadMoreBlogposts: () => void
   moreBlogpostsLoading: boolean
   moreBlogpostsError: string
+  numberOfBlogposts: number
+  numberOfBlogpostsLoading: boolean
 
   profileCommentsData: Commentprops[]
   profileCommentsLoading: boolean
@@ -28,14 +30,18 @@ type Props = {
   handleServerLoadMoreComments: () => void
   moreCommentsLoading: boolean
   moreCommentsError: string
+  numberOfComments: number
+  numberOfCommentsLoading: boolean
 
 
-  profileAdvatersData: Imageprops[],
-  profileAdvatersLoading: boolean,
-  profileAdvatersError: string,
-  handleServerLoadMoreAdvaters: () => void,
-  moreAdvatersLoading: boolean,
-  moreAdvatersError: string,
+  profileAvatersData: Imageprops[],
+  profileAvatersLoading: boolean,
+  profileAvatersError: string,
+  handleServerLoadMoreAvaters: () => void,
+  moreAvatersLoading: boolean,
+  moreAvatersError: string,
+  numberOfAvaters: number
+  numberOfAvatersLoading: boolean
 };
 
 
@@ -49,6 +55,8 @@ const Profilesec = ({
   handleServerLoadMoreBlogposts,
   moreBlogpostsLoading,
   moreBlogpostsError,
+  numberOfBlogposts,
+  numberOfBlogpostsLoading,
 
   profileCommentsData,
   profileCommentsLoading,
@@ -56,13 +64,17 @@ const Profilesec = ({
   handleServerLoadMoreComments,
   moreCommentsLoading,
   moreCommentsError,
+  numberOfComments,
+  numberOfCommentsLoading,
 
-  profileAdvatersData,
-  profileAdvatersLoading,
-  profileAdvatersError,
-  handleServerLoadMoreAdvaters,
-  moreAdvatersLoading,
-  moreAdvatersError,
+  profileAvatersData,
+  profileAvatersLoading,
+  profileAvatersError,
+  handleServerLoadMoreAvaters,
+  moreAvatersLoading,
+  moreAvatersError,
+  numberOfAvaters,
+  numberOfAvatersLoading,
 
 }: Props) => {
   const { loginStatus: { loginUserName } } = useUserIsLogin();
@@ -77,8 +89,14 @@ const Profilesec = ({
       menu: {
         name: 'blogpostssec',
         content: <Button children={<>
-          Post <span>{profileBlogposts && profileBlogposts.length ? profileBlogposts.length : 0}</span>
-        </>} buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('blogpostssec')} />,
+          Post
+          <span>
+            {!numberOfBlogpostsLoading ?
+              numberOfBlogposts :
+              'loading...'}
+          </span>
+        </>}
+          buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('blogpostssec')} />,
       },
       tab: {
         name: 'blogpostssec',
@@ -89,6 +107,7 @@ const Profilesec = ({
           handleServerLoadMoreBlogposts={handleServerLoadMoreBlogposts}
           moreBlogpostsLoading={moreBlogpostsLoading}
           moreBlogpostsError={moreBlogpostsError}
+          numberOfBlogposts={numberOfBlogposts}
         />
       }
     },
@@ -96,8 +115,14 @@ const Profilesec = ({
       menu: {
         name: 'commentssec',
         content: <Button children={<>
-          Comment <span>{profileCommentsData && profileCommentsData.length ? profileCommentsData.length : 0}</span>
-        </>} buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('commentssec')} />,
+          Comment
+          <span>{
+            !numberOfCommentsLoading ?
+              numberOfComments :
+              'loading...'
+          }</span>
+        </>}
+          buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('commentssec')} />,
       },
       tab: {
         name: 'commentssec',
@@ -108,6 +133,7 @@ const Profilesec = ({
           handleServerLoadMoreComments={handleServerLoadMoreComments}
           moreCommentsLoading={moreCommentsLoading}
           moreCommentsError={moreCommentsError}
+          numberOfComments={numberOfComments}
         />
       },
     },
@@ -115,51 +141,45 @@ const Profilesec = ({
       menu: {
         name: 'advaterssec',
         content: <Button children={<>
-          Advater <span>{profileAdvatersData && profileAdvatersData.length ? profileAdvatersData.length : 0}</span>
+          Advater
+          <span>{
+            !numberOfAvatersLoading ?
+              numberOfAvaters :
+              'loading...'
+          }</span>
         </>} buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('advaterssec')} />,
         tab: <div>Profile images</div>,
       },
       tab: {
         name: 'advaterssec',
-        content: <Advatersec
-          profileAdvatersData={profileAdvatersData}
-          profileAdvatersLoading={profileAdvatersLoading}
-          profileAdvatersError={profileAdvatersError}
-          handleServerLoadMoreAdvaters={handleServerLoadMoreAdvaters}
-          moreAdvatersLoading={moreAdvatersLoading}
-          moreAdvatersError={moreAdvatersError}
+        content: <Avatersec
+          profileAvatersData={profileAvatersData}
+          profileAvatersLoading={profileAvatersLoading}
+          profileAvatersError={profileAvatersError}
+          handleServerLoadMoreAvaters={handleServerLoadMoreAvaters}
+          moreAvatersLoading={moreAvatersLoading}
+          moreAvatersError={moreAvatersError}
+          numberOfAvaters={numberOfAvaters}
         />
-      },
-    },
-    {
-      menu: {
-        name: 'groupssec',
-        content: <Button children={<>
-          Groups <span>{0}</span>
-        </>} buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('groupssec')} />,
-        tab: <div>Grops</div>,
-      },
-      tab: {
-        name: 'groupssec',
-        content: <div>Groups</div>
       },
     },
   ];
 
-  return <>
+  return <div>
     {
       !profileLoading ?
-        <>
+        <div>
           {
             (profileData) &&
               Object.keys(profileData).length ?
-              <div id='profile-wrapper'>
+              <div id='profile-data-display-wrapper'>
                 <div id='profile-datails' className='flex justify-between py-2'>
                   {/* display profile detail */}
                   <div className='space-y-1'>
                     {/* profile data */}
-                    <Link to='/editprofile' className='' >
+                    <Link to={isAccountOwner ? '/editprofile' : ''} className='' >
                       <Displayimage
+                        placeHolder=''
                         id={'avater'}
                         imageUrl={"/api/image/" + profileData?.displayImage}
                         parentClass='h-14 w-14'
@@ -194,10 +214,7 @@ const Profilesec = ({
                     />
                     <div id='space'></div>
                     {!isAccountOwner ?
-                      <div className='flex items-center gap-4'>
-                        <Followbutton userNameToFollow={profileData?.userName} />
-                        <Button children={'DM'} buttonClass='border' />
-                      </div> :
+                      <Followbutton userNameToFollow={profileData?.userName} />:
                       null
                     }
                     <div className='flex flex-wrap items-center justify-end gap-4'>
@@ -218,16 +235,6 @@ const Profilesec = ({
                           <>
                             <span className='border-b pb-1'>Following</span>
                             <span className='block pt-1'>{profileData?.following?.length}</span>
-                          </>
-                        }
-                      />
-                      <Button
-                        buttonClass=''
-                        handleClick={() => { setProfileDialog('profiledialog'); setCurrentProfileTab('interestssec') }}
-                        children={
-                          <>
-                            <span className='border-b pb-1'>Interests</span>
-                            <span className='block pt-1'>100</span>
                           </>
                         }
                       />
@@ -283,12 +290,12 @@ const Profilesec = ({
                 />
               </div>
               :
-              <div>profile not found</div>
+              <div id='user-not-found'>profile not found</div>
           }
-        </> :
-        <div>loading profileData?...</div>
+        </div> :
+        <div id='loading-profile'>loading profileData?...</div>
     }
-  </>
-}
+  </div>
+};
 
-export default Profilesec
+export default Profilesec;

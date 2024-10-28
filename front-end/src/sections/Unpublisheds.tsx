@@ -1,9 +1,8 @@
 import { Singleblogpost } from "../components";
-import { Blogpostprops } from "../entities";
 import { useAppSelector } from "../redux/slices";
 
 const Unpublisheds = () => {
-    const { userBlogposts: { data, loading: loadingUnPublishes } } = useAppSelector((state) => state.userBlogpostSlices);
+    const { unpublishedBlogposts: { data, loading: loadingUnPublishes } } = useAppSelector((state) => state.userBlogpostSlices);
 
     const unPublishedBlogposts = data.filter(item => item.status === 'unpublished');
 

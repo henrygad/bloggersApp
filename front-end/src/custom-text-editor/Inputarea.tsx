@@ -8,7 +8,7 @@ type Props = {
   inputAreaIsEmpty: boolean
   InputWrapperClassName: string
   InputClassName: string
-  createNewText: { IsNew: boolean, body?: string }
+  createNewText: { IsNew: boolean, content?: { _html: string, text: string } }
   inputAreaRef: React.RefObject<HTMLDivElement>,
   onInputAreaChange: () => void,
   handleDisplayHistory: (direction: string) => void
@@ -21,7 +21,7 @@ const Inputarea = (
     inputAreaIsEmpty,
     InputWrapperClassName,
     InputClassName,
-    createNewText,
+    createNewText = { IsNew: true, content: { _html: '', text: '' } },
     inputAreaRef,
     onInputAreaChange,
     handleDisplayHistory,
@@ -91,7 +91,7 @@ const Inputarea = (
       onInput={handleInput}
       onKeyDown={handleKeyDown}
       onPaste={(e) => { handleWhenPasteIntoInputArea(e); onInputAreaChange() }}
-      dangerouslySetInnerHTML={sanitizeHTML(`<span class="parent-span block ${InputClassName}" >${!createNewText.IsNew ? createNewText.body : `<span class="child-span editable block"><span class="editable block"><br></span></span>`}</span>`)}
+      dangerouslySetInnerHTML={sanitizeHTML(`<span class="parent-span block ${InputClassName}">${!createNewText.IsNew && createNewText.content?._html.trim() !== "" ? createNewText.content?._html : `<span class="child-span editable block"><span class="editable block"><br></span></span>`}</span>`)}
     >
     </div>
   </div>

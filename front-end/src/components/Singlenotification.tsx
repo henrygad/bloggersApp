@@ -33,15 +33,15 @@ const Advater = ({ notifyFrom }: { notifyFrom: string }) => {
 
 const Singlenotification = ({ notification, displayImage }: Props) => {
     const { msg, url, checked, notifyFrom, typeOfNotification, pegs } = notification;
-    const { patchData: checkedNotification } = usePatchData();
+
+    const { patchData: viewNotification } = usePatchData();
     const { patchData: deleteNotification, loading: loadingDelete } = usePatchData();
     const appDispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const reStructureIncomingNotifications =
-        [notification, ...(pegs || [])]
+    const reStructureIncomingNotifications = [notification, ...(pegs || [])]
             .reduce((acc: Notificationsprops[], curr: Notificationsprops) => {
-                const pre = (acc || []).map(item=> item.notifyFrom);
+                const pre = (acc || []).map(item => item.notifyFrom);
 
                 if (pre.includes(curr.notifyFrom)) {
                     acc.push({ ...curr, notifyFrom: ' ' });
@@ -74,7 +74,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
             const parentCommentId = splitUrl[1];
             const commentId = splitUrl[splitUrl.length - 1];
             const removeTheFirstUlr = splitUrl.slice(1);
-            const removeThelastUrl =  removeTheFirstUlr.slice(0, -1);
+            const removeThelastUrl = removeTheFirstUlr.slice(0, -1);
             const addressLeadingToTheTargetComment = removeThelastUrl.join('&');
 
             const commentNotification = {
@@ -91,7 +91,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
             const parentCommentId = splitUrl[1];
             const likeCommentId = splitUrl[splitUrl.length - 1];
             const removeTheFirstUlr = splitUrl.slice(1);
-            const removeThelastUrl =  removeTheFirstUlr.slice(0, -1);
+            const removeThelastUrl = removeTheFirstUlr.slice(0, -1);
             const addressLeadingToTheTargetComment = removeThelastUrl.join('&');
 
             const commentNotification = {
@@ -101,7 +101,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
                 commentId: '',
                 targetCommentLike: { autoOpenCommentLike: true, likeCommentId, commentlike: notifyFrom }
             };
-            
+
             navigate("/" + getUrl, { state: { commentNotification } });
 
         } else if (type === 'blogpostLike') {
@@ -120,31 +120,37 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
 
         reStructureIncomingNotifications.map(item => {
             handleViewedNotification(item._id);
-        }).reverse();
+        })
+            .reverse();
     };
 
     const handleDeleteNotification = async (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
         e.stopPropagation();
         reStructureIncomingNotifications.map(async item => {
-            const response = await deleteNotification('/api/deletenotification/' + item._id, null);
-            const { ok, data } = response;
-            if (ok) {
-                appDispatch(updateNotification(data));
-            };
-        }).reverse();
+            await deleteNotification<Notificationsprops[]>('/api/notification/delete/' + item._id, null)
+                .then((res) => {
+                    const { data } = res;
+                    if (!data) return;
+
+                    appDispatch(updateNotification(data));
+                });
+        })
+            .reverse();
 
     };
 
     const handleViewedNotification = async (_id: string) => {
-        const response = await checkedNotification('/api/editnotification/' + _id, null);
-        const { data, ok } = response;
-        if (ok) {
-            appDispatch(updateNotification(data));
-        };
+        await viewNotification<Notificationsprops[]>('/api/notification/viewed/' + _id, null)
+            .then((res) => {
+                const { data } = res;
+                if (!data) return;
+
+                appDispatch(updateNotification(data));
+            });
+
     };
 
-    return <>
-        <div
+    return <div
             id="comment-Notifications-layout"
             className={`flex gap-3 items-start p-2 rounded-md w-full ${checked ? ' ' : 'bg-red-50'} cursor-pointer`}
             onClick={() => handleRedirectToNotificationURL(url, typeOfNotification, notifyFrom)}
@@ -152,9 +158,9 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
             <div className="flex -space-x-6">
                 {displayImage ?
                     reStructureIncomingNotifications.map((item, index) =>
-                        item.notifyFrom.trim()  === '' || index > 2? 
-                         null :
-                         <Advater key={item._id} notifyFrom={item.notifyFrom} />
+                        item.notifyFrom.trim() === '' || index > 2 ?
+                            null :
+                            <Advater key={item._id} notifyFrom={item.notifyFrom} />
                     ).reverse()
                     :
                     null
@@ -196,7 +202,6 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
 
             </div>
         </div>
-    </>
-}
+};
 
 export default Singlenotification;

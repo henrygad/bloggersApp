@@ -8,6 +8,7 @@ type Props = {
   handleServerLoadMoreBlogposts: () => void
   moreBlogpostsLoading: boolean
   moreBlogpostsError: string
+  numberOfBlogposts: number
 };
 
 
@@ -18,37 +19,40 @@ const Blogpostsec = ({
   handleServerLoadMoreBlogposts,
   moreBlogpostsLoading,
   moreBlogpostsError,
+  numberOfBlogposts,
 }: Props) => {
 
   return <div id="profile-blogpost-wrapper">
     {!profileBlogpostsLoading ?
-      <>
+      <div>
         {profileBlogposts &&
           profileBlogposts.length ?
-          <>
+          <div id="display-blogpost">
             {profileBlogposts.map((item, index) =>
-             item.status === 'published' ?
-              < Singleblogpost
-                key={item._id}
-                blogpost={item}
-                type='text'
-                index={index}
-              /> : 
-              null
+              item.status === 'published' ?
+                < Singleblogpost
+                  key={item._id}
+                  blogpost={item}
+                  type='text'
+                  index={index}
+                /> :
+                null
             )}
-            {!moreBlogpostsError.trim() &&
+            {numberOfBlogposts !== profileBlogposts.length ?
               <button onClick={handleServerLoadMoreBlogposts}>
                 {
                   !moreBlogpostsLoading ?
                     'load more' :
-                    'loading more blogposts'
+                    'loading...'
                 }
-              </button>}
-          </> :
-          <div>no blog post</div>
+              </button> :
+              null
+            }
+          </div> :
+          <div id="no-blogpost-found">no blog post</div>
         }
-      </> :
-      <div>loading blogpost...</div>}
+      </div> :
+      <div id="loading-blogpost">loading blogpost...</div>}
   </div>
 };
 

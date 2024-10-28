@@ -1,7 +1,7 @@
 type Props = {
     files: FileList | null
     fileType: string
-    getValue: ({ url, file }: { url: string | ArrayBuffer, file: Blob }) => void
+    getValue: ({ data, url, file }: { data: string | ArrayBuffer, url: string, file: Blob }) => void
 };
 
 const useGetLocalMedia = () => {
@@ -13,28 +13,28 @@ const useGetLocalMedia = () => {
         const promise = new Promise((resolve: (value: string | ArrayBuffer) => void, reject: (value: string) => void) => {
             if (file) {
                 const readFile = new FileReader();
-                readFile.readAsDataURL(file); // To read the file data in a base64-encoded string that represents the file data
-                //const imageUrl = URL.createObjectURL(file); // To creata a url for a file
-                //readFile.readAsArrayBuffer(file); // To read the file as Blob in a binary format
+                readFile.readAsDataURL(file); // read the file data in a base64-encoded string that represents the file data
+                //const imageUrl = URL.createObjectURL(file); // creata a url for a file
+                //readFile.readAsArrayBuffer(file); // read the file as Blob in a binary format
+                //const fileBlob = new Blob([file], {type: file.type}); // create the file into a binary format which can be uploader to the server
 
                 readFile.onload = function (e) {
                     if (e.target?.result) {
                         resolve(e.target.result);
-                        //const fileBlob = new Blob([e.target.result], {type: file.type}); // To create the file into a binary format which can be uploader to the server
                     } else {
-                        reject('No url data found');
+                        reject('file data not found');
                     };
                 };
             } else {
-                reject('No file found');
+                reject('file data not found');
             };
 
-        })
+        });
 
         promise
-            .then((value) => {
-                if (fileType === 'image') getValue({ url: value, file });
-                else if (fileType === 'video') getValue({ url: URL.createObjectURL(file), file });
+            .then((data) => {
+                if (fileType === 'image') getValue({  data, url: URL.createObjectURL(file), file });
+                else if (fileType === 'video') getValue({ data, url: URL.createObjectURL(file), file });
             })
             .catch((error) => console.error(error));
     };
@@ -42,4 +42,4 @@ const useGetLocalMedia = () => {
     return getMedia;
 };
 
-export default useGetLocalMedia
+export default useGetLocalMedia;

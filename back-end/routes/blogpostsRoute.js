@@ -10,11 +10,11 @@ const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
 router.get('/blogposts', async (req, res, next) => {
-    const { query: { skip = 0, limit = 0 } } = req
+    const { query: {status = 'published', skip = 0, limit = 0 } } = req
 
     try {
         const blogposts = await blogpostsData // get all blogposts
-            .find()
+            .find({status})
             .skip(skip)
             .limit(limit)
         if (!blogposts.length) throw new Error('Not Found: no blogposts found')
@@ -28,7 +28,7 @@ router.get('/blogposts', async (req, res, next) => {
 })
 
 router.get('/blogposts/:authorUserName', authorization, async (req, res, next) => {
-    const { params: { authorUserName }, query: { skip = 0, limit = 0 } } = req
+    const { params: { authorUserName }, query: {status = 'published', skip = 0, limit = 0 } } = req
 
     try {
 
@@ -36,7 +36,7 @@ router.get('/blogposts/:authorUserName', authorization, async (req, res, next) =
 
         // get all user blogposts
         const userBlogposts = await blogpostsData
-            .find({ authorUserName })
+            .find({ authorUserName, status})
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -71,7 +71,7 @@ router.get('/blogpost/:authorUserName/:slug', async (req, res, next) => {
 })
 
 router.get('/blogposts/timeline/:timeline', authorization, async (req, res, next) => {
-    const { params: { timeline }, query: { skip = 0, limit = 0 } } = req
+    const { params: { timeline }, query: { status = 'published', skip = 0, limit = 0 } } = req
 
     try {
 
@@ -83,7 +83,7 @@ router.get('/blogposts/timeline/:timeline', authorization, async (req, res, next
         })
 
         const getFeeds = await blogpostsData
-            .find({ authorUserName: { $in: getArrOfUserNames } })
+            .find({ authorUserName: { $in: getArrOfUserNames }, status})
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -98,7 +98,7 @@ router.get('/blogposts/timeline/:timeline', authorization, async (req, res, next
 })
 
 router.get('/blogposts/saves/:_ids', authorization, async (req, res, next) => {
-    const { params: { _ids }, query: { skip = 0, limit = 0 } } = req
+    const { params: { _ids }, query: {status = 'published', skip = 0, limit = 0 } } = req
 
     try {
 
@@ -110,7 +110,7 @@ router.get('/blogposts/saves/:_ids', authorization, async (req, res, next) => {
         })
 
         const getSavedBlogpost = await blogpostsData
-            .find({ _id: { $in: getArrOfBlogpostIds } })
+            .find({ _id: { $in: getArrOfBlogpostIds }, status})
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -149,7 +149,6 @@ router.post('/addblogpost', authorization, upload.single('blogpostimage'), creat
             body: body.body,
             _html: body._html,
             catigory: body.catigory,
-            mentions: !body.mentions,
             slug: validataSlug,
             url: `${authorizeUser}/${validataSlug}`,
             status: body.status || 'archived',
@@ -168,7 +167,7 @@ router.post('/addblogpost', authorization, upload.single('blogpostimage'), creat
     }
 })
 
-router.patch('/editblogpost/:_id', authorization, upload.single('image'), createimage, async (req, res, next) => {
+router.patch('/editblogpost/:_id', authorization, upload.single('blogpostimage'), createimage, async (req, res, next) => {
     const { params: { _id } } = req
     const body = JSON.parse(req.body.data)
 
@@ -185,7 +184,6 @@ router.patch('/editblogpost/:_id', authorization, upload.single('image'), create
                 body: body.body,
                 _html: body._html,
                 catigories: body.catigories,
-                mentions: body.mentions,
                 status: body.status
             };
         } else {
@@ -194,7 +192,6 @@ router.patch('/editblogpost/:_id', authorization, upload.single('image'), create
                 body: body.body,
                 _html: body._html,
                 catigories: body.catigories,
-                mentions: body.mentions,
                 status: body.status
             };
         }
@@ -249,7 +246,7 @@ router.patch('/likeblogpost/:_id', authorization, async (req, res, next) => {
         )
         if (!likedBlogpost.likes) throw new Error('Bad Request: blogpost was not liked!')
 
-        res.json(likedBlogpost.likes);
+        res.json({likes: likedBlogpost.likes});
 
     } catch (error) {
         next(new customError(error, 400))

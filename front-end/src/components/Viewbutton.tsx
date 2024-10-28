@@ -13,22 +13,19 @@ type Props = {
 const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificationTitle, notificationUrl }: Props) => {
     const { loginStatus: { loginUserName, sessionId } } = useUserIsLogin();
     const [views, setViews] = useState<string[]>(arrOfViews);
-    const { patchData } = usePatchData<string[]>();
+    const { patchData } = usePatchData();
 
     const notify = useNotification();
 
     const handleView = async (url: string, sessionId: string) => {
-
         if (views.includes(sessionId)) return;
-
         const body = null;
-        const response = await patchData(url, body);
+        const response = await patchData<string[]>(url, body);
         const { data, ok } = response;
-
-        if (ok && data) {
+        if (data) {
             setViews(data);
            //handleViewsNotification()
-        }
+        };
     };
 
     const handleOnMouseHover = (e: MouseEvent) => {

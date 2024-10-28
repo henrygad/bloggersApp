@@ -14,10 +14,10 @@ type Props = {
     error?: {
         isTrue: boolean
         errorMsg: string
-        errorClass: string
+        errorClass?: string
     }
     checked?: boolean
-    onClick?: ()=> void
+    onClick?: () => void
 };
 
 const Input = ({
@@ -28,15 +28,15 @@ const Input = ({
     setValue,
     inputClass = '',
     labelClass = '',
-    error= {
+    error = {
         isTrue: false,
         errorMsg: '',
         errorClass: '',
     },
     placeHolder = '',
     callBack = () => null,
-    checked= false,
-    onClick= ()=> null,
+    checked = false,
+    onClick = () => null,
 }: Props) => {
     const [passWordIsVisible, setPassWordVisibility] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -58,14 +58,14 @@ const Input = ({
         {inputName}
         <span className="relative block">
             <input
+                id={id}
+                placeholder={placeHolder}
+                name={inputName}
                 className={` ${error.isTrue && 'border border-red-800'} ${inputClass}`}
                 type={type === 'password' ?
                     (!passWordIsVisible ? 'password' : 'text') :
                     (type || 'text')
                 }
-                placeholder={placeHolder}
-                name={inputName}
-                id={id}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 ref={inputRef}
@@ -77,7 +77,7 @@ const Input = ({
                     className="flex justify-center items-center absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer z-10"
                     onClick={() => setPassWordVisibility(!passWordIsVisible)}>
                     {passWordIsVisible ?
-                        <Closedeye height="20px" width="20px" />:
+                        <Closedeye height="20px" width="20px" /> :
                         <Openeye height="20px" width="20px" />
                     }
                 </span>
@@ -85,7 +85,9 @@ const Input = ({
         </span>
         <span className={error.errorClass}>
             {error.isTrue &&
-                <p className='text-red-800 text-sm text-wrap'>{error.errorMsg}</p>
+                <p className='text-red-800 text-[.85rem] text-wrap first-letter:capitalize px-1  '>
+                    {error.errorMsg}
+                </p>
             }
         </span>
     </label>

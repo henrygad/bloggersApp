@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import Button from "./Button";
 import { usePatchData } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { createSaves, deleteSaves } from "../redux/slices/userSavesSlices";
-import { saveId, unSaveId } from "../redux/slices/userProfileSlices";
 import { Blogpostprops } from "../entities";
+import { saveBlogposts, unSaveBlogpost } from "../redux/slices/userBlogpostSlices";
+import { addBlogpostIdToSaves, deleteBlogpostIdFromSaves } from "../redux/slices/userProfileSlices";
 
 const Savesbutton = ({ saves, blogpost }: { saves: string[], blogpost: Blogpostprops }) => {
     const [isSaved, setIsSaved] = useState(saves.includes(blogpost._id));
-    const { patchData, loading: loadingSaves } = usePatchData<{ _id: string }>();
+    const { patchData, loading: loadingSaves } = usePatchData();
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -18,12 +18,12 @@ const Savesbutton = ({ saves, blogpost }: { saves: string[], blogpost: Blogpostp
     const handleSaves = async (_id: string) => {
         if (isSaved) return;
 
-        await patchData('/api/profile/saves/add', { _id })
+        await patchData<{ _id: string }>('/api/profile/saves/add', { _id })
             .then((response) => {
                 const { data, ok } = response;
                 if (data) {
-                    dispatch(createSaves(blogpost));
-                    dispatch(saveId(_id));
+                    dispatch(addBlogpostIdToSaves({_id}));
+                    dispatch(saveBlogposts(blogpost));
                 };
             });
     };
@@ -35,8 +35,8 @@ const Savesbutton = ({ saves, blogpost }: { saves: string[], blogpost: Blogpostp
             .then((response) => {
                 const { data, ok } = response;
                 if (data) {
-                    dispatch(deleteSaves(_id));
-                    dispatch(unSaveId(_id));
+                    dispatch(deleteBlogpostIdFromSaves({_id}));
+                    dispatch(unSaveBlogpost({_id}));
                 };
             });
     };

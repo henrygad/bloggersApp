@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { useState } from 'react'
 
-const useDeleteData = <T,>() => {
+const useDeleteData = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const deleteData = async (url: string) => {
+    const deleteData = async <T,>(url: string) => {
         try {
             setLoading(true);
             setError('');

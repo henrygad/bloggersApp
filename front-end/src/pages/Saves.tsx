@@ -2,24 +2,26 @@ import { Singleblogpost } from "../components";
 import { useAppSelector } from "../redux/slices"
 
 const Saves = () => {
-  const { userSaves: { data: blogposts, loading: loadingSaves } } = useAppSelector((state) => state.userSavesSlices);
+  const { savedsBlogposts: { data: blogposts, loading: loadingSaves } } = useAppSelector((state) => state.userBlogpostSlices);
 
   return <div>
     {!loadingSaves ?
       <>
         {blogposts && blogposts.length ?
-          <>{
-            blogposts.map((item, index) =>
-              item.status === 'published' ?
-              <Singleblogpost
-                key={item._id}
-                type="text"
-                blogpost={item}
-                index={index}
-              /> : 
-              null
-            )
-          }</> :
+          <div id="display-saves-wrapper">
+            {
+              blogposts.map((item, index) =>
+                item.status === 'published' ?
+                  <Singleblogpost
+                    key={item._id}
+                    type="text"
+                    blogpost={item}
+                    index={index}
+                  /> :
+                  null
+              )
+            }
+          </div> :
           <div>no saves</div>
         }
       </> :

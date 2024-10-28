@@ -96,8 +96,8 @@ export const deleteUnacceptedHtmlTag = () => {
     };
 };
 
-export const focusCaretOnInputArea = (inputAreaRef: React.RefObject<HTMLDivElement>) => {
-    inputAreaRef.current?.focus();
+export const focusCaretOnInputArea = (contenteditableDiv: HTMLDivElement | null) => {
+    contenteditableDiv?.focus();
 };
 
 export const handleWhenPasteIntoInputArea = (e: React.ClipboardEvent<HTMLDivElement>) => { // filter a text pasted into the text area
@@ -105,19 +105,17 @@ export const handleWhenPasteIntoInputArea = (e: React.ClipboardEvent<HTMLDivElem
     const selectedNode = getSelection(); // get the selected node properties
 
     if (selectedNode) {
-        const { selection, range } = selectedNode;
+        const { selection, range} = selectedNode;
         const clipboardData = e.clipboardData;  // Get the clipboard data
-        const pastedData = clipboardData?.getData('text/plain'); // or 'text/plain'
+        const pastedData = clipboardData?.getData('text/plain'); // or 'text/plain
 
-        const span = createNewSpan();
-        span.classList.add('editable', 'pasted');
-        span.innerHTML = pastedData || '<br>';
-        insertSingleElementToTheDOM(span, range, selection);
+        const textNode = document.createTextNode(pastedData); // create text node and insert emoji in the caret position
+        insertSingleElementToTheDOM(textNode, range, selection); // insert emoji to the DOM
     };
 };
 
-export const deleteAll = (inputAreaRef: React.RefObject<HTMLDivElement>) => {
-    const parentSpan = inputAreaRef.current?.firstElementChild;
+export const deleteAll = (contenteditableDiv: HTMLDivElement | null) => {
+    const parentSpan = contenteditableDiv?.firstElementChild;
     const childSpan = createNewSpan();
     childSpan.classList.add('child-span', 'editable', 'block');
     const initialEditableSpan = createNewSpan();
@@ -126,5 +124,5 @@ export const deleteAll = (inputAreaRef: React.RefObject<HTMLDivElement>) => {
 
     childSpan?.appendChild(initialEditableSpan);
     parentSpan?.replaceChildren(childSpan); // replace all chidspan children with  a new initialEditablespan
-    focusCaretOnInputArea(inputAreaRef); // place focus on input area
+   focusCaretOnInputArea(contenteditableDiv); // place focus on input area
 };

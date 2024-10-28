@@ -1,99 +1,145 @@
-import { useEffect, useRef, useState } from "react";
-import {Imageprops, Blogpostprops, Commentprops, Userprops } from "../entities";
+import { useEffect, useState } from "react";
+import { Imageprops, Blogpostprops, Commentprops, Userprops } from "../entities";
 import { useFetchData } from "../hooks";
 import Profilesec from "./Profilesec";
 
+type Props = {
+  data: Userprops
+  loading: boolean
+  error: string
+  userName: string
+};
 
-const Othersprofilesec = ({ userName }: { userName: string }) => {
 
-  const {
-    data: getOthersProfile,
-    loading: getOthersProfileLoading,
-    error: getOthersProfileError,
-  } = useFetchData<Userprops>(`/api/users/${userName}`, [userName]);
+const Addprofilesec = ({
+  data: profileData,
+  loading: profileLoading,
+  error: profileError,
+  userName
+}: Props) => {
 
-  const {
-    data: getOthersBlogposts,
-    loading: getOthersBlogpostsLoading,
-    error: getOthersBlogpostsError,
+  const { // fetch total number of published blogposts
+    data: totalNumberOfPublishedBlogposts,
+    loading: totalNumberOfPublishedBlogpostsLoading
+  } = useFetchData<Blogpostprops[]>(null);
+
+  const { // fetch blogposts
+    data: blogposts,
+    loading: blogpostsLoading,
+    error: blogpostsError,
   } = useFetchData<Blogpostprops[]>(`/api/blogposts/${userName}?skip=0&limit=5`, [userName]);
 
-  const {
-    data: getOthersComments,
-    loading: getOthersCommentsLoading,
-    error: getOthersCommentsError,
-  } = useFetchData<Commentprops[]>(`/api/usercomments/${userName}?skip=0&limit=5`, [userName])
+  const { // fetch total number of comments
+    data: totalNumberOfUserComments,
+    loading: totalNumberOfUserCommentsLoading
+  } = useFetchData<Commentprops[]>(null);
 
-  const {
-    data: getOthersAdvaters,
-    loading: getOthersAdvatersLoading,
-    error: getOthersAdvatersError,
-  } = useFetchData<Imageprops[]>(`/api/images/${userName}?skip=0&limit=5`, [userName])
+  const { // fetch comments
+    data: comments,
+    loading: commentsLoading,
+    error: commentsError,
+  } = useFetchData<Commentprops[]>(`/api/usercomments/${userName}?skip=0&limit=5`, [userName]);
 
-  const [othersBlogposts, setOthersBlogposts] = useState<Blogpostprops[] | null>(null);
-  const countLoadMoreBlogpostsRef = useRef(5);
+  const { // fetch total number of avater
+    data: totalNumberOfUserAvaters,
+    loading: totalNumberOfUserAvatersLoading
+  } = useFetchData<Commentprops[]>(null);
 
-  const [othersComments, setOthersComments] = useState<Commentprops[] | null>(null);
-  const countLoadMoreCommentsRef = useRef(6);
+  const { // fetch avaters
+    data: avaters,
+    loading: avatersLoading,
+    error: avatersError,
+  } = useFetchData<Imageprops[]>(`/api/images/${userName}?skip=0&limit=5`, [userName]);
 
-  const [othersAdvaters, setOthersAdvaters] = useState<Imageprops[] | null>(null);
-  const countLoadMoreAdvatersRef = useRef(5);
+  const [addBlogposts, setAddBlogposts] = useState<Blogpostprops[]>([]);
+  const [addComments, setAddComments] = useState<Commentprops[]>([]);
+  const [addAvaters, setAddAvaters] = useState<Imageprops[]>([]);
 
-  const { fetchData: fetchMoreBlogpostsData, loading: loadingMoreBlogposts, error: errorMoreBlogposts } = useFetchData(null)
-  const { fetchData: fetchMoreCommentsData, loading: loadingMoreComments, error: errorMoreComments } = useFetchData(null)
-  const { fetchData: fetchMoreAdvatersData, loading: loadingMoreAdvaters, error: errorMoreAdvaters } = useFetchData(null)
+  const { fetchData: fetchMoreBlogpostsData, loading: loadingMoreBlogposts, error: errorMoreBlogposts } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchMoreCommentsData, loading: loadingMoreComments, error: errorMoreComments } = useFetchData<Commentprops[]>(null);
+  const { fetchData: fetchMoreAvatersData, loading: loadingMoreAvaters, error: errorMoreAvaters } = useFetchData<Imageprops[]>(null);
 
-  const handleServerLoadMoreBlogposts = async () => {
-    await fetchMoreBlogpostsData(`/api/blogposts/${userName}?skip=${countLoadMoreBlogpostsRef.current}&limit=${countLoadMoreBlogpostsRef.current}`);
-    countLoadMoreBlogpostsRef.current += countLoadMoreBlogpostsRef.current;
+  const handleServerLoadMoreBlogposts = async () => {// fetch more blogposts
+    if (!blogposts?.length) return;
+
+    await fetchMoreBlogpostsData(`/api/blogposts/${userName}?skip=${blogposts.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        setAddBlogposts((pre) => pre ? [...pre, ...data] : pre);
+      });
+
   };
 
-  const handleServerLoadMoreComments = async () => {
-    await fetchMoreCommentsData(`/api/usercomments/${userName}?skip=${countLoadMoreCommentsRef.current}&limit=5`);
-    countLoadMoreCommentsRef.current += countLoadMoreCommentsRef.current;
+  const handleServerLoadMoreComments = async () => { // fetch more comments
+    if (!comments?.length) return;
+
+    await fetchMoreCommentsData(`/api/usercomments/${userName}?skip=${comments.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        setAddComments((pre) => pre ? [...pre, ...data] : pre);
+      });
   };
 
-  const handleServerLoadMoreAdvaters = async () => {
-    await fetchMoreAdvatersData(`/api/images/${userName}?skip=${countLoadMoreAdvatersRef.current}&limit=${countLoadMoreAdvatersRef.current}`);
-    countLoadMoreAdvatersRef.current += countLoadMoreAdvatersRef.current;
+  const handleServerLoadMoreAvaters = async () => {// fetch more avaters
+    if (!avaters?.length) return;
+
+    await fetchMoreAvatersData(`/api/images/${userName}?skip=${avaters.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        setAddAvaters((pre) => pre ? [...pre, ...data] : pre);
+      });
   };
 
   useEffect(() => {
-    if (!getOthersBlogposts) return;
-    setOthersBlogposts(getOthersBlogposts);
-    if (!getOthersComments) return;
-    setOthersComments(getOthersComments);
-    if (!getOthersAdvaters) return;
-    setOthersAdvaters(getOthersAdvaters);
-  }, [getOthersBlogposts, getOthersComments, getOthersAdvaters]);
+    if (blogposts) setAddBlogposts(blogposts);
+    if (comments) setAddComments(comments);
+    if (avaters) setAddAvaters(avaters);
+  }, [
+    blogposts,
+    comments,
+    avaters
+  ]);
 
 
   return < Profilesec
-    profileData={getOthersProfile as Userprops}
-    profileLoading={getOthersProfileLoading}
-    profileError={getOthersProfileError}
+    profileData={profileData}
+    profileLoading={profileLoading}
+    profileError={profileError}
 
-    profileBlogposts={othersBlogposts as Blogpostprops[]}
-    profileBlogpostsLoading={getOthersBlogpostsLoading}
-    profileBlogpostsError={getOthersBlogpostsError}
+    profileBlogposts={addBlogposts}
+    profileBlogpostsLoading={blogpostsLoading}
+    profileBlogpostsError={blogpostsError}
     handleServerLoadMoreBlogposts={handleServerLoadMoreBlogposts}
     moreBlogpostsLoading={loadingMoreBlogposts}
     moreBlogpostsError={errorMoreBlogposts}
+    numberOfBlogposts={totalNumberOfPublishedBlogposts?.length || 0}
+    numberOfBlogpostsLoading={totalNumberOfPublishedBlogpostsLoading}
 
-    profileCommentsData={othersComments as Commentprops[]}
-    profileCommentsLoading={getOthersCommentsLoading}
-    profileCommentsError={getOthersCommentsError}
+    profileCommentsData={addComments}
+    profileCommentsLoading={commentsLoading}
+    profileCommentsError={commentsError}
     handleServerLoadMoreComments={handleServerLoadMoreComments}
     moreCommentsLoading={loadingMoreComments}
     moreCommentsError={errorMoreComments}
+    numberOfComments={totalNumberOfUserComments?.length || 0}
+    numberOfCommentsLoading={totalNumberOfUserCommentsLoading}
 
-    profileAdvatersData={othersAdvaters as Imageprops[]}
-    profileAdvatersLoading={getOthersAdvatersLoading}
-    profileAdvatersError={getOthersAdvatersError}
-    handleServerLoadMoreAdvaters={handleServerLoadMoreAdvaters}
-    moreAdvatersLoading={loadingMoreAdvaters}
-    moreAdvatersError={errorMoreAdvaters}
+    profileAvatersData={addAvaters}
+    profileAvatersLoading={avatersLoading}
+    profileAvatersError={avatersError}
+    handleServerLoadMoreAvaters={handleServerLoadMoreAvaters}
+    moreAvatersLoading={loadingMoreAvaters}
+    moreAvatersError={errorMoreAvaters}
+    numberOfAvaters={totalNumberOfUserAvaters?.length || 0}
+    numberOfAvatersLoading={totalNumberOfUserAvatersLoading}
   />
+
 };
 
-export default Othersprofilesec;
+export default Addprofilesec;

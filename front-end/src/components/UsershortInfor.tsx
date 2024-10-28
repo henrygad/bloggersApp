@@ -21,6 +21,7 @@ const UsershortInfor = ({ userName }: { userName: string }) => {
                         <>
                             <Displayimage
                                 id={'avater'}
+                                placeHolder=""
                                 imageUrl={"/api/image/" + userData.displayImage}
                                 parentClass='h-11 w-11'
                                 imageClass='object-contain rounded-full border-2 border-green-300'

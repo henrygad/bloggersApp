@@ -2,7 +2,7 @@ import { Button, Singlecomment } from "../components";
 import { Commentprops } from "../entities";
 import { useDeleteData } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { deleteComments } from "../redux/slices/userCommentsSlices";
+import { decreaseTotalNumberOfUserComments, deleteComments } from "../redux/slices/userCommentsSlices";
 
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
   handleServerLoadMoreComments: () => void
   moreCommentsLoading: boolean
   moreCommentsError: string
+  numberOfComments: number
 
 };
 
@@ -22,6 +23,7 @@ const CommentSec = ({
   handleServerLoadMoreComments,
   moreCommentsLoading,
   moreCommentsError,
+  numberOfComments,
 }: Props) => {
 
   const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
@@ -32,7 +34,8 @@ const CommentSec = ({
     const response = await deleteCommentData(url + "/" + _id);
 
     if (response.ok) {
-      appDispatch(deleteComments(_id));
+      appDispatch(deleteComments({ _id }));
+      appDispatch(decreaseTotalNumberOfUserComments(1));
     };
   };
 
@@ -53,16 +56,29 @@ const CommentSec = ({
                     handleDeleteComment={() => handleDeleteComment(item._id)}
                     deletingLoading={deleteCommentLoading}
                     allowNested={false}
+                    autoOpenTargetComment={{
+                      autoOpen: false,
+                      commentId: '',
+                      commentAddress: '',
+                      targetLike: {
+                        autoOpen: false,
+                        commentId: '',
+                        like: '',
+                      }
+                    }
+                    }
                   />
                 )
               }
-                <Button
-
-                  id="loading-more-comment"
-                  buttonClass=""
-                  children={!moreCommentsLoading ? 'load more' : 'loading more...'}
-                  handleClick={handleServerLoadMoreComments}
-                />
+                {numberOfComments !== profileCommentsData.length ?
+                  <Button
+                    id="loading-more-comment"
+                    buttonClass=""
+                    children={!moreCommentsLoading ? 'load more' : 'loading...'}
+                    handleClick={handleServerLoadMoreComments}
+                  /> :
+                  null
+                }
               </> :
               <div>no comments yet</div>
           }

@@ -3,13 +3,17 @@ import { Dialog, Displayimage, Fileinput, Input, Selectinput, Texarea } from "..
 import { useGetLocalMedia, usePatchData } from "../hooks";
 import { useDispatch, useSelector } from "react-redux";
 import { editProfile } from "../redux/slices/userProfileSlices";
+import { useAppDispatch, useAppSelector } from "../redux/slices";
+import { Userprops } from "../entities";
+import { increaseTotalNumberOfUserAvaters } from "../redux/slices/userImageSlices";
 
 const Editeprofile = () => {
-    const { userProfile: { 
-        data: accountProfile, 
-        loading: accountProfileLoading, 
-        error: accountProfileError } } = useSelector((state) => state.userProfileSlices);
-    const dispatch = useDispatch();
+    const { userProfile: {
+        data: accountProfile,
+        loading: accountProfileLoading,
+        error: accountProfileError
+    } } = useAppSelector((state) => state.userProfileSlices)
+
     const [dateOfBirth, setDateOfBirth] = useState<Date | string>('');
     const [website, setWebsite] = useState('');
     const [country, setCountry] = useState('Nigeria');
@@ -27,11 +31,13 @@ const Editeprofile = () => {
     const getMedia = useGetLocalMedia();
     const { patchData, loading, error } = usePatchData();
     const [file, setFile] = useState<Blob | string>('');
-    const url = '/api/editprofile';
+
+    const appDispatch = useAppDispatch();
 
 
     const arrOfInputs = [
         {
+            id: 'full-name-input',
             name: 'Full name',
             type: 'text',
             placeHolder: '',
@@ -39,6 +45,7 @@ const Editeprofile = () => {
             setValu: (value: string) => setFullName(value),
         },
         {
+            id: 'date-of-birth-input',
             name: 'Date of birth',
             type: 'date',
             placeHolder: '',
@@ -46,6 +53,7 @@ const Editeprofile = () => {
             setValu: (value: Date) => setDateOfBirth(value),
         },
         {
+            id: 'email-input',
             name: 'Email',
             type: 'email',
             placeHolder: 'example@gmail.com',
@@ -53,6 +61,7 @@ const Editeprofile = () => {
             setValu: (value: string) => setEmail(value),
         },
         {
+            id: 'phone-number-input',
             name: 'phone number',
             type: 'phonenumber',
             placeHolder: '+234',
@@ -60,6 +69,7 @@ const Editeprofile = () => {
             setValu: (value: string) => setPhoneNumber(value),
         },
         {
+            id: 'website-input',
             name: 'Website',
             type: 'text',
             placeHolder: 'www.example.com',
@@ -70,6 +80,7 @@ const Editeprofile = () => {
 
     const handleEditProfile = async () => {
         if (loading) return;
+
         const body = {
             displayImage: null,
             email,
@@ -84,15 +95,21 @@ const Editeprofile = () => {
         const formData = new FormData();
         formData.append('avater', file);
         formData.append('data', JSON.stringify(body));
+        const url = '/api/editprofile';
 
-        const response = await patchData(url, formData);
+        await patchData<Userprops>(url, formData)
+            .then((res) => {
+                const { data } = res;
+                if (!data) return;
 
-        if (response.ok) {
-            dispatch(editProfile(response.data))
-            setImageChange(false);
-            setCaretIsOn('');
-            setFile('');
-        };
+                if(file) appDispatch(increaseTotalNumberOfUserAvaters(1));
+                
+                appDispatch(editProfile(data));
+                setImageChange(false);
+                setCaretIsOn('');
+                setFile('');
+
+            });
     };
 
     const handleSaveAllChanges = (e: React.FormEvent<HTMLFormElement>) => {
@@ -117,30 +134,31 @@ const Editeprofile = () => {
         if (input.toLocaleLowerCase().trim() === 'website') setWebsite(website);
         if (input.toLocaleLowerCase().trim() === 'bio') setBio(bio);
         if (input.toLocaleLowerCase().trim() === 'sex') setSex(sex);
-        if (input.toLocaleLowerCase().trim() === 'phonenumber') setPhoneNumber(phoneNumber);
+        if (input.toLocaleLowerCase().trim() === 'phonenumber') setPhoneNumber(phoneNumber.toString());
         if (input.toLocaleLowerCase().trim() === 'email') setEmail(email);
 
         setCaretIsOn('');
     };
 
-    const handleDefaultStateValues = ()=>{
+    const handleDefaultStateValues = () => {
+        if (!accountProfile) return;
         const {
             displayImage, email, name, dateOfBirth, country, sex, website, bio, phoneNumber,
         } = accountProfile;
 
-        setDateOfBirth(dateOfBirth || '');
-        setImageUrl("/api/image/" + displayImage || '');
-        setFullName(name || '');
-        setCountry(country || 'USA');
-        setWebsite(website || '');
-        setBio(bio || '');
-        setSex(sex || 'male');
-        setPhoneNumber(phoneNumber || '');
-        setEmail(email || '');
+        setDateOfBirth(dateOfBirth);
+        setImageUrl("/api/image/" + displayImage);
+        setFullName(name);
+        setCountry(country);
+        setWebsite(website);
+        setBio(bio);
+        setSex(sex);
+        setPhoneNumber(phoneNumber.toString());
+        setEmail(email);
     };
 
     useEffect(() => {
-       accountProfile && handleDefaultStateValues()
+        accountProfile && handleDefaultStateValues()
     }, [accountProfile]);
 
     useEffect(() => {
@@ -162,6 +180,7 @@ const Editeprofile = () => {
                     <div id="avater" className=" space-y-4">
                         <Displayimage
                             id="advater"
+                            placeHolder=""
                             imageUrl={imageUrl}
                             parentClass="h-[70px] w-[70px] cursor-pointer"
                             imageClass=" rounded-full object-contain"
@@ -253,6 +272,7 @@ const Editeprofile = () => {
                                 key={item.name}
                                 className=" flex justify-between items-end gap-4">
                                 <Input
+                                    id={item.id}
                                     type={item.type}
                                     inputName={item.name}
                                     placeHolder={item.placeHolder}
@@ -295,7 +315,7 @@ const Editeprofile = () => {
                             setSeletedValue={(value) => {
                                 setCountry(value);
                                 setCaretIsOn('country')
-                             }}
+                            }}
                             parentClass="w-[120px]"
                             animation={true}
                         />
@@ -347,6 +367,7 @@ const Editeprofile = () => {
                                 >
                                     <Displayimage
                                         id="advater"
+                                        placeHolder=""
                                         imageUrl={imageUrl}
                                         parentClass="w-full h-full"
                                         imageClass="object-contain"
@@ -363,8 +384,10 @@ const Editeprofile = () => {
                                                 View image
                                             </span>
                                             <Fileinput
-                                                name=""
+                                                name="avater"
                                                 id="choose-local-image"
+                                                type="image"
+                                                accept="image/*"
                                                 setValue={(value) => {
                                                     getMedia({
                                                         files: value,

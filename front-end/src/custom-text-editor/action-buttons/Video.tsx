@@ -62,11 +62,23 @@ const Video = ({
                                     getMedia({
                                         files: value,
                                         fileType: 'video',
-                                        getValue: ({ url, file }) => {
-                                            const fileObj = file as Blob & { name: string };
-                                            setVideoName(fileObj.name);
-                                            setVideoUrl('');
-                                            setVideoFileUrl(url.toString());
+                                        getValue: ({data, url, file }) => {
+                                            const maxSizeInMB = 2;
+                                            const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+
+                                            if (file && file.size > maxSizeInBytes) {
+                                                alert(`Video size exceeds ${maxSizeInMB} MB. Please select a smaller file.`);
+
+                                                setVideoName('');
+                                                setVideoUrl('');
+                                                setVideoFileUrl(data.toString());
+                                            }else {
+                                                const fileObj = file as Blob & { name: string };
+                                                setVideoName(fileObj.name);
+                                                setVideoUrl('');
+                                                setVideoFileUrl(data.toString());
+                                            };
+                                            
                                         },
                                     });
                                 }}

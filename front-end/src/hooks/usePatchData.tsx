@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { useState } from 'react';
 
-const usePatchData = <T,>() => {
+const usePatchData = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const patchData = async (url: string, body: {} | [] | string | null | undefined) => {
+    const patchData = async <T,>(url: string, body: {} | [] | string | null | undefined) => {
 
         try {
             setLoading(true);

@@ -1,4 +1,4 @@
-import { Advaterprops } from "../entities";
+import { Imageprops } from "../entities";
 import Displayimage from "./Displayimage"
 import Imageplaceholder from "../assert/imageplaceholder.png";
 import Dotnav from "./Dotnav";
@@ -8,15 +8,15 @@ import { useDeleteData, useUserIsLogin } from "../hooks";
 import Dialog from "./Dialog";
 import Button from "./Button";
 import { useAppDispatch } from "../redux/slices";
-import { deleteAdvaters } from "../redux/slices/userAdvatersSlices";
+import { decreaseTotalNumberOfUserAvaters, deleteAvaters, deleteBlogpostImages} from "../redux/slices/userImageSlices";
 
 type Props = {
-    image: Advaterprops,
+    image: Imageprops,
     index: number,
     placeHolder?: string
 };
 
-const SingleImage = ({ image: { _id, uploader }, index, placeHolder = Imageplaceholder }: Props) => {
+const SingleImage = ({ image: { _id, uploader, fieldname }, index, placeHolder = Imageplaceholder }: Props) => {
     const { loginStatus: { loginUserName } } = useUserIsLogin();
 
     const isAccountOwner = uploader === loginUserName;
@@ -56,7 +56,7 @@ const SingleImage = ({ image: { _id, uploader }, index, placeHolder = Imageplace
             content: <Button
                 children={!LoadingDelete ? 'Delete' : 'loading...'}
                 buttonClass=" border-b"
-                handleClick={() => handleDeleteImage(_id)}
+                handleClick={() => handleDeleteImage(_id, fieldname)}
             />
         },
     ];
@@ -67,11 +67,13 @@ const SingleImage = ({ image: { _id, uploader }, index, placeHolder = Imageplace
 
     const handleShareImage = () => { };
 
-    const handleDeleteImage = async(_id: string) => { 
+    const handleDeleteImage = async(_id: string, fieldname: string) => { 
         const response = await deleteData('/api/deleteimage/'+_id);
         const { ok}= response;
         if(ok){
-            appDispatch(deleteAdvaters(_id));
+            appDispatch(deleteAvaters({_id}));
+            appDispatch(deleteBlogpostImages({_id}));
+           if(fieldname == 'avater') appDispatch(decreaseTotalNumberOfUserAvaters(1));
         };
     };
 

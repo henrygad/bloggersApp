@@ -36,7 +36,7 @@ router.patch('/notification/:userToNotify', authorization, async (req, res, next
 
 })
 
-router.patch('/editnotification/:_id', authorization, async (req, res, next) => {
+router.patch('/notification/viewed/:_id', authorization, async (req, res, next) => {
     const { params: { _id }, authorizeUser } = req
 
     try {
@@ -57,7 +57,7 @@ router.patch('/editnotification/:_id', authorization, async (req, res, next) => 
     }
 })
 
-router.patch('/deletenotification/:_id', authorization, async (req, res, next) => {
+router.patch('/notification/delete/:_id', authorization, async (req, res, next) => {
     const { params: { _id }, authorizeUser } = req
 
     try {

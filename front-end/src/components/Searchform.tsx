@@ -11,7 +11,7 @@ const Searchform = () => {
     const { loginStatus: { searchHistory }, setLoginStatus } = useUserIsLogin();
     const [getSearchInput, setGetSearchInput] = useState('');
     const [multipleSearchHistorySelection, setMultipleSearchHistorySelection] = useState<string[]>([]);
-    const { deleteData, loading: loadingMultipleDeletes } = useDeleteData<{ _id: string, searched: string }[]>();
+    const { deleteData, loading: loadingMultipleDeletes } = useDeleteData();
     const navigate = useNavigate();
 
     const formWrapperRef = useRef(null);
@@ -40,7 +40,7 @@ const Searchform = () => {
     const handleMultipleDeleteSearchHistory = async (arrOfId: string[]) => {
         if (!multipleSearchHistorySelection.length) return;
 
-        await deleteData('/api/search/delete/history/' + arrOfId.join('&'))
+        await deleteData<{ _id: string, searched: string }[]>('/api/search/delete/history/' + arrOfId.join('&'))
             .then((response) => {
                 const { data } = response
                 if (data) {
@@ -50,7 +50,6 @@ const Searchform = () => {
                 setMultipleSearchHistorySelection([]);
             });
     };
-
 
     return <div className="font-text text-sm">
         <div

@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Blogpostprops, Userprops } from "../../entities";
+import { Notificationsprops, Userprops } from "../../entities";
 
 type InitialState = {
     userProfile: {
-        data: Userprops
+        data: Userprops | null
         loading: boolean
         error: string
     },
@@ -21,55 +21,61 @@ const userProfile = createSlice({
     name: ' userProfile',
     initialState,
     reducers: {
-        addProfile: (state, action) => {
+        fetchProfile: (state, action: { payload: InitialState['userProfile'] }) => {
             state.userProfile = action.payload
         },
-        editProfile: (state, action) => {
+        editProfile: (state, action: { payload: Userprops }) => {
             const { data } = state.userProfile;
             state.userProfile.data = { ...data, ...action.payload };
         },
-        deleteProfile: (state, action) => {
+        deleteProfile: (state, action: { payload: InitialState['userProfile'] }) => {
             state.userProfile = action.payload
         },
-        follow: (state, action) => {
+        follow: (state, action: { payload: { userName: string } }) => {
             const { data } = state.userProfile;
-            state.userProfile.data = { ...data, following: [...data.following, action.payload] };
+            if (!data) return;
+            state.userProfile.data = { ...data, following: [...data.following, action.payload.userName] };
         },
-        unFollow: (state, action) => {
+        unFollow: (state, action: { payload: { userName: string } }) => {
             const { data } = state.userProfile;
+            if (!data) return;
             state.userProfile.data = {
                 ...data,
-                following: data.following.filter(item => item !== action.payload)
+                following: data.following.filter(item => item !== action.payload.userName)
             };
         },
-        updateNotification: (state, action) => {
+        updateNotification: (state, action: { payload: Notificationsprops[] }) => {
             const { data } = state.userProfile;
+            if (!data) return;
             state.userProfile.data = {
                 ...data,
                 notifications: action.payload
-            }
-        },
-        saveId: (state, action) => {
-            const { data } = state.userProfile;
-            state.userProfile.data = {
-                ...data,
-                saves: [action.payload, ...data.saves]
             };
         },
-        unSaveId: (state, action) => {
+        addBlogpostIdToSaves: (state, action: { payload: { _id: string } }) => {
             const { data } = state.userProfile;
+            if (!data) return;
             state.userProfile.data = {
                 ...data,
-                saves: data.saves.filter(item => item !== action.payload)
+                saves: [action.payload._id, ...data.saves]
+            };
+        },
+        deleteBlogpostIdFromSaves: (state, action: { payload: { _id: string } }) => {
+            const { data } = state.userProfile;
+            if (!data) return;
+            state.userProfile.data = {
+                ...data,
+                saves: data.saves.filter(item => item !== action.payload._id)
             };
         }
     }
 });
 
 export const {
-    addProfile, editProfile,
+    fetchProfile, editProfile,
     deleteProfile, follow,
     unFollow, updateNotification,
-    saveId, unSaveId,
+    addBlogpostIdToSaves, deleteBlogpostIdFromSaves,
 } = userProfile.actions;
+
 export default userProfile.reducer;

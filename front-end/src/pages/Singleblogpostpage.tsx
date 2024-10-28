@@ -16,49 +16,53 @@ const Singleblogpostpage = () => {
   if (!blogpostUrl) return;
 
   // get single blogpost
-  const { data: singleBlogpostData, loading: loaidngSinglgeBlogpost } = useFetchData<Blogpostprops>('/api/blogpost/' + blogpostUrl, [blogpostUrl]);
+  const { data: singleBlogpostData, loading: loaidngSinglgeBlogpost, error: singleBlogpostError, } = useFetchData<Blogpostprops>('/api/blogpost/' + blogpostUrl, [blogpostUrl]);
 
   // for targeting a specific comment / comment like or blogpost like data
   const { data: notificationComment, loading: loadingNotificationComment } = useFetchData<Commentprops>(commentNotification?.autoOpenComment ? '/api/comments/' + commentNotification?.parentCommentId : null, [commentNotification?.parentCommentId]);
 
   return <div>
-    <>
-      {
-        !loaidngSinglgeBlogpost && !loadingNotificationComment ?
+    {
+      !(loaidngSinglgeBlogpost || loadingNotificationComment) ?
+        <div id="display-single-blogpost-wrapper">
           <>
-            {singleBlogpostData &&
-              Object.keys(singleBlogpostData) &&
-              singleBlogpostData.status === 'published' ?
-              <Singleblogpost
-                blogpost={singleBlogpostData}
-                type="html"
-                index={0}
+            {singleBlogpostError.trim() ?
+              <div id="not-found-blogpost">error, blogpost not found</div>:
+              <>
+                {singleBlogpostData &&
+                  singleBlogpostData.status === 'published' ?
+                  <Singleblogpost
+                    blogpost={singleBlogpostData}
+                    type="html"
+                    index={0}
 
-                autoOpenTargetComment={{
-                  autoOpen: commentNotification?.autoOpenComment,
-                  commentId: commentNotification?.commentId,
-                  commentAddress: commentNotification?.commentAddress,
-                  comment: notificationComment,
-                  blogpostId: singleBlogpostData?._id,
-                  targetLike: {
-                    autoOpen: targetCommentLike?.autoOpenCommentLike,
-                    commentId: targetCommentLike?.likeCommentId,
-                    like: targetCommentLike?.commentlike
-                  }
-                }}
+                    autoOpenTargetComment={{
+                      autoOpen: commentNotification?.autoOpenComment,
+                      commentId: commentNotification?.commentId,
+                      commentAddress: commentNotification?.commentAddress,
+                      comment: notificationComment,
+                      blogpostId: singleBlogpostData?._id,
+                      targetLike: {
+                        autoOpen: targetCommentLike?.autoOpenCommentLike,
+                        commentId: targetCommentLike?.likeCommentId,
+                        like: targetCommentLike?.commentlike
+                      }
+                    }}
 
-                autoOpenTargetBlogpostLike={{
-                  autoOpen: blogpostLikeNotification?.autoOpenBlogpostLike,
-                  blogpostId: singleBlogpostData?._id,
-                  like: blogpostLikeNotification?.blogpostlike
-                }}
-              /> :
-              <div>blogpost has been brought down by the author</div>
+                    autoOpenTargetBlogpostLike={{
+                      autoOpen: blogpostLikeNotification?.autoOpenBlogpostLike,
+                      blogpostId: singleBlogpostData?._id,
+                      like: blogpostLikeNotification?.blogpostlike
+                    }}
+                  /> :
+                  <div>blogpost has been brought down by the author</div>
+                }
+              </>
             }
-          </> :
-          <div>loading single blogpost...</div>
-      }
-    </>
+          </>
+        </div> :
+        <div>loading single blogpost...</div>
+    }
   </div>
 };
 

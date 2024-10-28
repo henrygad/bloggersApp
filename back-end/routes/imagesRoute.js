@@ -29,25 +29,24 @@ router.get('/images', async (req, res, next) => {
 })
 
 router.get('/images/:authorUserName', authorization, async (req, res, next) => {
-    const { params: { authorUserName }, query: { skip = 0, limit = 0 } } = req
+    const { params: { authorUserName }, query: {fieldname ='avater', skip = 0, limit = 0 } } = req
 
-    try {
-
-        // get display advater image
-        const userImages = await imageFiles
-            .find({ uploader: authorUserName })
+    try { 
+        const userImages = await imageFiles // get display advater image
+            .find({ uploader: authorUserName, fieldname })
             .skip(skip)
             .limit(limit)
 
         if (!userImages.length) throw new Error('Not Found: no image found')
 
         res.json(userImages.map((image) => ({
-            _id:image._id, 
-            fileName: image.fileName, 
+            _id: image._id,
+            fileName: image.fileName,
             size: image.size,
-            uploader: image.uploader
+            uploader: image.uploader,
+            fieldname: image.fieldname,
         })))
-        
+
     } catch (error) {
 
         next(new customError(error, 404))
@@ -76,10 +75,10 @@ router.get('/image/:_id', async (req, res, next) => {
 
 })
 
-router.post('/addimage', authorization, upload.single('file'), createimage, async (req, res, next) => {
+router.post('/addimage', authorization, upload.single('blogpostimage'), createimage, async (req, res, next) => {
 
     try {
-        res.json(req.image)
+        res.json({ imageId: req.image })
     } catch (error) {
 
         next(new customError(error, 404))

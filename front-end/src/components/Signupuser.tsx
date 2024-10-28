@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useUserIsLogin, useValidation, usePostData } from '../hooks';
+import { useUserIsLogin, usePostData } from '../hooks';
 import tw from 'tailwind-styled-components';
 import Input from './Input';
 import { Userstatusprops } from '../entities';
+import Button from './Button';
 
 type Props = {
     switchPages: () => void
@@ -14,140 +15,128 @@ const Signupuser = ({ switchPages, closePages }: Props) => {
     const [email, setEmail] = useState('');
     const [passWord, setPassWord] = useState('');
     const [confirmPassWord, setConfirmPassWord] = useState('');
-    const { postData, loading, error: signUpError } = usePostData();
-    const [validationError, setValidationError] = useState(''); // start here
-    const url = '/api/signup';
+
+    const { postData, loading, error } = usePostData();
     const { setLoginStatus } = useUserIsLogin();
-    const validate = useValidation();
 
     const handleSignUPUser = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const body = { userName, email, password: passWord };
-        const error = validate({ userName, email, passWord, confirmPassWord }); // 
+        const url = '/api/signup';
+        const body = { userName, email, password: passWord, comfirmPassword: confirmPassWord };
 
-        if (error.isTrue) {
-            setValidationError(error.msg);
-            setPassWord('');
-            setConfirmPassWord('');
-            return;
-        };
-
-        const response = await postData<Userstatusprops>(url, body); // sign up user
-        const {ok, data} = response;
-
-        if (ok && data) {
-            setLoginStatus({
-                isLogin: data.isLogin,
-                loginUserName: data.loginUserName,
-            });
-            setUserName('');
-            setEmail('');
-            setPassWord('');
-            setConfirmPassWord('');
-            closePages();
-        } else {
-            setPassWord('');
-            setConfirmPassWord('');
-        };
+        await postData<Userstatusprops>(url, body)// sign up user
+            .then((res) => {
+                const { data, ok } = res;
+                if (data) {
+                    setLoginStatus({ ...data });
+                    setUserName('');
+                    setEmail('');
+                    setPassWord('');
+                    setConfirmPassWord('');
+                    closePages();
+                } else {
+                    setPassWord('');
+                    setConfirmPassWord('');
+                };
+            })
     };
 
-    let error = (validationError || signUpError) ?
-        (validationError || signUpError.slice(6)) :
-        '';
-        
     return <form
         action=""
         onSubmit={handleSignUPUser}
         className='space-y-6'
     >
-        <div>
-            <h2 className='text-center text-xl capitalize font-primary'>Sign up</h2>
-        </div>
         <Inputwrapper >
+            <span className='block text-2xl font-primary text-center capitalize'>Sign up</span>
             <Input
+                id='signup-username-input'
                 type='text'
                 inputName='username'
+                labelClass='block text-base font-text first-letter:capitalize'
                 inputClass='block w-full outline-blue-700 border-2 p-2 mt-2 rounded-md'
                 value={userName}
                 setValue={(value) => { setUserName(value as string) }}
-                labelClass='block text-sm'
                 error={{
-                    isTrue: (error.trim() !== '' &&
-                        (error.includes('username') || error.includes('empty field'))
+                    isTrue: (
+                        error.toLowerCase().includes('field') ||
+                        error.toLowerCase().includes('username')
                     ),
-                    errorClass: '',
-                    errorMsg: error
+                    errorMsg: error.replace('Error:', '')
                 }}
             />
             <Input
+                id='signup-email-input'
                 type='email'
                 inputName='email'
+                labelClass='block text-base font-text first-letter:capitalize'
                 inputClass='block w-full  outline-blue-700 border-2 p-2 mt-2 rounded-md'
                 value={email}
                 setValue={(value) => setEmail(value as string)}
-                labelClass='block text-sm'
                 error={{
-                    isTrue: (error.trim() !== '' &&
-                        (error.includes('email') || error.includes('empty field'))
+                    isTrue: (
+                        error.toLowerCase().includes('field') ||
+                        error.toLowerCase().includes('email')
                     ),
-                    errorClass: '',
-                    errorMsg: error
+                    errorMsg: error.replace('Error:', '')
                 }}
             />
+            <span className='block relative'>
+                <Input
+                    id='signup-password-input'
+                    type='password'
+                    inputName='password'
+                    labelClass='block text-base font-text first-letter:capitalize'
+                    inputClass='block w-full  outline-blue-700 border-2 p-2 mt-2 rounded-md'
+                    value={passWord}
+                    setValue={(value) => setPassWord(value as string)}
+                    error={{
+                        isTrue: (
+                            error.toLowerCase().includes('field') ||
+                            error.toLowerCase().includes('password')
+                        ),
+                        errorMsg: error.replace('Error:', '')
+                    }}
+                />
+                <span className='block relative'>
+                <span className='absolute -bottom-5 right-1 text-wrap text-[.8rem] font-text '>
+                    Password must be 8 characters long
+                    </span>
+                </span>
+            </span>
             <Input
-                type='password'
-                inputName='password'
-                inputClass='block w-full  outline-blue-700 border-2 p-2 mt-2 rounded-md'
-                value={passWord}
-                setValue={(value) => setPassWord(value as string)}
-                labelClass='block text-sm'
-                error={{
-                    isTrue: (error.trim() !== '' &&
-                        (error.includes('password') ||
-                            error.includes('password confirmation') ||
-                            error.includes('empty field'))
-                    ),
-                    errorClass: '',
-                    errorMsg: error
-                }}
-            />
-            <Input
+                id='signup-confirmpassword-input'
                 type='password'
                 inputName='confirm password'
+                labelClass='block text-base font-text first-letter:capitalize'
                 inputClass='block w-full  outline-blue-700 border-2 p-2 mt-2 rounded-md'
                 value={confirmPassWord}
                 setValue={(value) => setConfirmPassWord(value as string)}
-                labelClass='block text-sm'
                 error={{
-                    isTrue: (error.trim() !== '' &&
-                        (error.includes('password confirmation') ||
-                            error.includes('empty field'))
+                    isTrue: (
+                        error.toLowerCase().includes('field') ||
+                        error.toLowerCase().includes('passwords did not match')
                     ),
-                    errorClass: '',
-                    errorMsg: error
+                    errorMsg: error.replace('Error:', '')
                 }}
             />
-            <div>
-                <button
-                    className='w-full text-base bg-green-600 p-3 border shadow-md shadow-green-200'>
-                    {loading ? "loading..." : "Sign up"}
-                </button>
-            </div>
+            <Button
+                id='signin-user-btn'
+                buttonClass='w-full font-bold text-white bg-green-500 p-3 border shadow-md shadow-green-200'
+                children={loading ? "loading..." : "Sign up"}
+
+            />
         </Inputwrapper>
         <div>
-            <span className='block text-center cursor-pointer' onClick={switchPages}>Already have an account?
-                <p className='text-green-400'>Log in!</p>
+            <span className='block text-center cursor-pointer' onClick={switchPages}>
+                Already have an account?
+                <p className='text-green-500'>Log in!</p>
             </span>
         </div>
     </form>
 };
 
 const Inputwrapper = tw.div`
-font-secondary 
-min-w-[240xp] 
-sm:min-w-[380px] 
-max-w-[480px] 
-p-4
+p-8
 border 
 shadow-md
 space-y-6

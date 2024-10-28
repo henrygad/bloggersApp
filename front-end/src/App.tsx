@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import {
   Feed,
-  About,
   Contact,
   Searchresult,
   Treadingfeeds,
@@ -13,36 +12,37 @@ import {
   Settings,
   Landingpage,
   Notification,
-  Directmessage,
   Pageloading,
   Saves
 } from './pages';
 import { Suspense, useEffect, useState } from "react";
 import { useFetchData, useUserIsLogin } from "./hooks";
-import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser, Searchform } from "./components";
-import { Homeicon, Mailicon, Notificationsicon, Penicon, Profileicon, Searchicon } from "./components/Icons";
+import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser, Button } from "./components";
+import { Homeicon, Notificationsicon, Penicon, Profileicon, Searchicon } from "./components/Icons";
 import tw from "tailwind-styled-components";
-import { addProfile } from "./redux/slices/userProfileSlices";
-import { addBlogposts } from "./redux/slices/userBlogpostSlices";
+import { fetchProfile } from "./redux/slices/userProfileSlices";
+import { fetchArchivedBlogposts, fetchPublishedBlogposts, fetchSavedsBlogpost, fetchTimelineFeeds, fetchTotalNumberOfPublishedBlogposts, fetchUnpublishedBlogposts } from "./redux/slices/userBlogpostSlices";
 import { useAppDispatch, useAppSelector } from "./redux/slices";
-import { addComments } from "./redux/slices/userCommentsSlices";
+import { fetchComments, fetchTotalNumberOfUserComments } from "./redux/slices/userCommentsSlices";
 import { Imageprops, Blogpostprops, Commentprops, Userprops } from "./entities";
-import { addAdvaters } from "./redux/slices/userAdvatersSlices";
-import { addTimelineFeeds } from "./redux/slices/userTimelineFeedSlices";
-import { addTreadingFeeds } from "./redux/slices/treadingFeedsSlices";
-import { addSaves } from "./redux/slices/userSavesSlices";
+import { fetchAvaters, fetchBlogpostImages, fetchTotalNumberOfUserAvaters } from "./redux/slices/userImageSlices";
 
 const App = () => {
-  const { loginStatus: { isLogin, loginUserName } } = useUserIsLogin();
+  const { loginStatus: { isLogin, loginUserName, greetings, searchHistory } } = useUserIsLogin();
 
-  const { fetchData: fetchgProfileData } = useFetchData<Userprops>(null);
-  const { fetchData: fetchgAdvaterData } = useFetchData<Imageprops[]>(null);
-  const { fetchData: fetchgCommentData } = useFetchData<Commentprops[]>(null);
-  const { fetchData: fetchgBlogpostData } = useFetchData<Blogpostprops[]>(null);
+  const { data: treadingFeedsData, loading: treadingFeedsLoading, error: treadingFeedsError } = useFetchData<Blogpostprops[]>('/api/blogposts?status=published&skip=0&limit=5');
+  const { fetchData: fetchProfileData } = useFetchData<Userprops>(null);
+  const { fetchData: fetchPublishedBlogpostData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchTotalNumberOfPublishedBlogpostData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchArchivedBlogpostData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchUnpublishedBlogpostData } = useFetchData<Blogpostprops[]>(null);
+  const { fetchData: fetchBlogpostImagesData } = useFetchData<Imageprops[]>(null);
+  const { fetchData: fetchAvatersData } = useFetchData<Imageprops[]>(null);
+  const { fetchData: fetchTotalNumberOfAvatersData } = useFetchData<Imageprops[]>(null);
+  const { fetchData: fetchCommentData } = useFetchData<Commentprops[]>(null);
+  const { fetchData: fetchTotalNumberOfCommentData } = useFetchData<Commentprops[]>(null);
   const { fetchData: fetchTimelineFeedData } = useFetchData<Blogpostprops[]>(null);
-  const { fetchData: fetchTreadingFeedData } = useFetchData<Blogpostprops[]>(null);
   const { fetchData: fetchSavesBlogpostsData } = useFetchData<Blogpostprops[]>(null);
-  const { fetchData: fetchDisplayBlogpostImagesData } = useFetchData<Imageprops[]>(null);
 
   const { userProfile: { data: getProfileData } } = useAppSelector((state) => state.userProfileSlices);
   const appDispatch = useAppDispatch();
@@ -98,7 +98,6 @@ const App = () => {
 
   const logOutFooterMenu = [
     { name: 'contact us', to: '/contact', content: '' },
-    { name: 'about', to: '/about-us', content: '' },
     { name: 'help', to: '/help', content: '' },
     { name: 'policy', to: '/policy', content: '' },
     { name: 'cookies', to: '/cookies', content: '' },
@@ -128,13 +127,6 @@ const App = () => {
       </Link>
     },
     {
-      name: 'directmessages',
-      to: '',
-      content: <Link to='/directmessages' >
-        <Mailicon width="30px" height="30px" />
-      </Link>
-    },
-    {
       name: 'profile',
       to: '',
       content: <Link to={'/' + loginUserName} >
@@ -144,150 +136,257 @@ const App = () => {
 
   ];
 
-  const authenticationTabs = [
-    {
-      name: 'login',
-      content: <Signinuser switchPages={() => setAuthenticationCurrentTabOn('signup')} closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />,
-    },
-    {
-      name: 'signup',
-      content: <Signupuser switchPages={() => setAuthenticationCurrentTabOn('login')} closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />
-    }
-  ];
-
   const handleFetchProfileData = async () => {
-    if (isLogin) {
-      appDispatch(addProfile({
-        loading: true,
-      }));
 
-      appDispatch(addBlogposts({
-        loading: true,
-      }));
+    appDispatch(fetchProfile({
+      data: null,
+      loading: true,
+      error: ''
+    }));
 
-      appDispatch(addComments({
-        loading: true,
-      }));
+    appDispatch(fetchTotalNumberOfPublishedBlogposts({
+      data: 0,
+      error: '',
+      loading: true
+    }))
 
-      appDispatch(addAdvaters({
-        loading: true,
-      }));
+    appDispatch(fetchPublishedBlogposts({
+      data: [],
+      loading: true,
+      error: ''
+    }));
 
-      appDispatch(addSaves({
-        loading: true,
-      }));
+    appDispatch(fetchArchivedBlogposts({
+      data: [],
+      loading: true,
+      error: '',
+    }));
 
-      appDispatch(addTimelineFeeds({
-        loading: true,
-      }));
+    appDispatch(fetchUnpublishedBlogposts({
+      data: [],
+      loading: true,
+      error: '',
+    }));
 
-      appDispatch(addTreadingFeeds({
-        loading: true
-      }));
+    appDispatch(fetchTotalNumberOfUserComments({
+      data: 0,
+      loading: true,
+      error: ''
+    }));
 
-      await fetchgProfileData('/api/authorizeduser').then((response) => {
-        const { data, loading } = response;
+    appDispatch(fetchComments({
+      data: [],
+      loading: true,
+      error: ''
+    }));
 
-        appDispatch(addProfile({
+    appDispatch(fetchAvaters({
+      data: [],
+      loading: true,
+      error: ''
+    }));
+
+    appDispatch(fetchTotalNumberOfUserAvaters({
+      data: 0,
+      loading: true,
+      error: ''
+    }));
+
+    appDispatch(fetchBlogpostImages({
+      data: [],
+      loading: true,
+      error: '',
+    }));
+
+    appDispatch(fetchSavedsBlogpost({
+      data: [],
+      loading: true,
+      error: ''
+    }));
+
+    appDispatch(fetchTimelineFeeds({
+      data: [],
+      loading: true,
+      error: ''
+    }));
+
+    await fetchProfileData('/api/authorizeduser')
+      .then(async (res) => {
+        const { data, loading } = res;
+
+        appDispatch(fetchProfile({
           data,
           loading,
           error: '',
         }));
 
-        const handleFetchSavesBlogpost = async () => {
-          if (data?.saves.length) {
+        if (data) { // if user data is fetched
+
+          if (data.saves?.length) { // fetch saveds Blogposts
 
             await fetchSavesBlogpostsData('/api/blogposts/saves/' + data.saves.join('&'))
-              .then((response) => {
-                const { data, loading } = response;
-                appDispatch(addSaves({
+              .then((res) => {
+                const { data, loading } = res;
+                if (!data) return;
+
+                appDispatch(fetchSavedsBlogpost({
                   data,
                   loading: false,
                   error: '',
                 }));
               });
-
           } else {
 
-            appDispatch(addSaves({
+            appDispatch(fetchSavedsBlogpost({
+              data: [],
               loading: false,
+              error: ''
+            }));
+          };
+
+          if (data.timeline?.length) { // fetch timeline feed blogpost
+
+            await fetchTimelineFeedData(`/api/blogposts/timeline/${data?.timeline.join('&')}?status=published&skip=0&limit=5`)
+              .then((res) => {
+                const { data, loading } = res;
+                if (!data) return;
+
+                appDispatch(fetchTimelineFeeds({
+                  data,
+                  loading,
+                  error: '',
+                }));
+              });
+          } else {
+
+            appDispatch(fetchTimelineFeeds({
+              data: [],
+              loading: false,
+              error: '',
             }));
           };
 
         };
 
-        const handleFetchTimelineFeeds = async () => {
-          if (!data?.timeline.length) return;
-
-          await fetchTimelineFeedData(`/api/blogposts/timeline/${data.timeline.join('&')}?skip=0&limit=5`).then((response) => {
-            const { data, loading } = response;
-
-            appDispatch(addTimelineFeeds({
-              data,
-              loading,
-              error: '',
-            }));
-          });
-
-        };
-
-        handleFetchSavesBlogpost();
-        handleFetchTimelineFeeds();
-
       });
 
-      await fetchgBlogpostData('/api/blogposts/' + loginUserName + '?skip=0&limit=5').then((response) => {
-        const { data, loading } = response;
+    await fetchTotalNumberOfPublishedBlogpostData('/api/blogposts/' + loginUserName + '?status=published')
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
 
-        appDispatch(addBlogposts({
+        appDispatch(fetchTotalNumberOfPublishedBlogposts({
+          data: data.length,
+          error: '',
+          loading: false
+        }))
+      });
+
+    await fetchPublishedBlogpostData('/api/blogposts/' + loginUserName + '?status=published&skip=0&limit=5')
+      .then((res) => {
+        const { data, loading } = res;
+        if (!data) return;
+
+        appDispatch(fetchPublishedBlogposts({
           data,
           loading,
           error: '',
         }));
       });
 
-      await fetchgCommentData('/api/usercomments/' + loginUserName + '?skip=0&limit=5').then((response) => {
-        const { data, loading } = response;
-
-        appDispatch(addComments({
+    await fetchArchivedBlogpostData('/api/blogposts/' + loginUserName + '?status=archived')
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+        appDispatch(fetchArchivedBlogposts({
           data,
-          loading,
+          loading: false,
+          error: '',
+        }));
+
+      });
+
+    await fetchUnpublishedBlogpostData('/api/blogposts/' + loginUserName + '?status=unpublished')
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+        appDispatch(fetchUnpublishedBlogposts({
+          data,
+          loading: false,
           error: '',
         }));
       });
 
-      await fetchgAdvaterData('/api/images/' + loginUserName + '?skip=0&limit=5').then((response) => {
-        const { data, loading } = response;
+    await fetchTotalNumberOfCommentData('/api/usercomments/' + loginUserName)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
 
-        appDispatch(addAdvaters({
-          data,
-          loading,
-          error: '',
-        }));
-      });
-
-      await fetchTreadingFeedData('/api/blogposts').then((response) => {
-        const { data, loading } = response;
-
-        appDispatch(addTreadingFeeds({
-          data,
-          loading,
+        appDispatch(fetchTotalNumberOfUserComments({
+          data: data.length,
+          loading: false,
           error: ''
         }));
       });
-    };
+
+    await fetchCommentData('/api/usercomments/' + loginUserName + '?skip=0&limit=5')
+      .then((res) => {
+        const { data, loading } = res;
+        if (!data) return;
+
+        appDispatch(fetchComments({
+          data,
+          loading,
+          error: '',
+        }));
+      });
+
+    await fetchTotalNumberOfAvatersData('/api/images/' + loginUserName + '?fieldname=avater')
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        appDispatch(fetchTotalNumberOfUserAvaters({
+          data: data.length,
+          loading: false,
+          error: ''
+        }));
+      });
+
+    await fetchAvatersData('/api/images/' + loginUserName + '?fieldname=avater&skip=0&limit=5')
+      .then((res) => {
+        const { data, loading } = res;
+        if (!data) return;
+
+        appDispatch(fetchAvaters({
+          data,
+          loading,
+          error: '',
+        }));
+      });
+
+    await fetchBlogpostImagesData('/api/images/' + loginUserName + '?fieldname=blogpostimage&skip=0&limit=5')
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        appDispatch(fetchBlogpostImages({
+          data,
+          loading: false,
+          error: '',
+        }));
+      });
+
   };
 
-
   useEffect(() => {
-    handleFetchProfileData();
-  }, [isLogin === true]);
+    isLogin && handleFetchProfileData();
+  }, [isLogin]);
 
   return <Appwrapper>
     <header className="container w-full">
       <nav id="header-nav" className="relative h-[50px] flex items-center gap-5 justify-between">
         <Conpanylogo />
-        <Searchform />
         {isLogin ?
           <>
             <Menu
@@ -309,19 +408,31 @@ const App = () => {
       <Suspense fallback={<Pageloading />}>
         <Routes>
           <Route path="*" element={<Page404 />} />
-          <Route path="/about-us" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/searchresult" element={<Searchresult />} />
           <Route path="/:authorUserName/:slug" element={<Singleblogpostpage />} />
-          <Route path="/" element={isLogin ? <Navigate to={`/${loginUserName}`} /> : <Landingpage />} />
+          <Route path="/" element={isLogin ?
+            <Navigate to={`/${loginUserName}`} /> :
+            <Landingpage
+              treadingFeedsData={treadingFeedsData || []}
+              treadingFeedsLoading={treadingFeedsLoading}
+              treadingFeedsError={treadingFeedsError}
+            />
+          } />
           <Route path="/feeds" element={isLogin ? <Feed /> : <Navigate to="/" />} />
           <Route path="/:userName" element={isLogin ? <Profile /> : <Navigate to={'/'} />} />
-          <Route path="/createpost" element={true ? <Post /> : <Navigate to={'/'} />} />
+          <Route path="/createpost" element={isLogin ? <Post /> : <Navigate to={'/'} />} />
           <Route path="/notifications" element={isLogin ? <Notification /> : <Navigate to={'/'} />} />
-          <Route path="/treading" element={isLogin ? <Treadingfeeds /> : <Navigate to={'/'} />} />
+          <Route path="/treading" element={isLogin ?
+            <Treadingfeeds
+              treadingFeedsData={treadingFeedsData || []}
+              treadingFeedsLoading={treadingFeedsLoading}
+              treadingFeedsError={treadingFeedsError}
+            /> :
+            <Navigate to={'/'} />}
+          />
           <Route path="/editprofile" element={isLogin ? <Editeprofile /> : <Navigate to={'/'} />} />
           <Route path="/settings" element={isLogin ? <Settings /> : <Navigate to={'/'} />} />
-          <Route path="/directmessages" element={isLogin ? <Directmessage /> : <Navigate to={'/'} />} />
           <Route path="/saves" element={isLogin ? <Saves /> : <Navigate to={'/'} />} />
         </Routes>
       </Suspense>
@@ -347,23 +458,46 @@ const App = () => {
               {/* authentication dialog */}
               <Dialog
                 id="authenticationDialog"
+                parentClass="container flex justify-center items-center"
+                childClass=""
                 currentDialog="authenticationDialog"
                 children={
-                  <div className="border p-4 rounded-sm">
-                    <div
-                      className="flex justify-end text-red-800 cursor-pointer"
-                      onClick={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }}
-                    >close </div>
+                  <div className="relative min-w-[320px] sm:min-w-[420px] md:min-w-[620px]  min-h-[480px] border p-3 rounded-sm space-y-10">
+                    <span className="block">
+                      <Button
+                        id="authentication-dialog-close-btn"
+                        buttonClass='absolute top-1 right-1 text-red-800 cursor-pointer'
+                        children={<>close</>}
+                        handleClick={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }}
+                      />
+                    </span>
+                    <span className='block text-center'>
+                      <Conpanylogo />
+                      <span className="block text-4xl font-primary capitalize mt-2">
+                        Wellcome back!
+                      </span>
+                    </span>
                     <Tab
                       id="authentication-tab"
-                      arrOfTab={authenticationTabs}
                       tabClass=""
                       currentTab={authenticationCurrentTabOn}
+                      arrOfTab={[
+                        {
+                          name: 'login',
+                          content: <Signinuser
+                            switchPages={() => setAuthenticationCurrentTabOn('signup')}
+                            closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />,
+                        },
+                        {
+                          name: 'signup',
+                          content: <Signupuser
+                            switchPages={() => setAuthenticationCurrentTabOn('login')}
+                            closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />
+                        }
+                      ]}
                     />
                   </div>
                 }
-                parentClass="container flex justify-center items-center"
-                childClass=""
                 dialog={authenticationDialog}
                 setDialog={setAuthenticationDialog}
               />

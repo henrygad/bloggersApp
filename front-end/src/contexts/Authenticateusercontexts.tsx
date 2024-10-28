@@ -32,12 +32,6 @@ const Authenticateusercontexts = ({ Children }: { Children: ReactElement }) => {
       if(!data) return
       setLoginStatus({...data})
      });
-
-      await fetchData('/api/').then((response)=> {
-        const {data} = response;
-        if(!data) return;
-        setLoginStatus((pre)=> pre? {...pre, ...data}: pre);
-      });
   };
 
   useEffect(() => {

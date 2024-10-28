@@ -2,6 +2,7 @@ import { Menu } from "../components";
 import {Deleteuseraccount, Signoutuser } from "../components";
 
 const Settings = () => {
+    
     const settingsMenus = [
         {
             name: 'Edit profile',

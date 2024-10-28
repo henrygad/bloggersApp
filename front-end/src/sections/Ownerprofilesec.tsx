@@ -1,96 +1,144 @@
-import { useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
 import Profilesec from "./Profilesec";
-import { useFetchData } from "../hooks";
-import { addBlogposts } from "../redux/slices/userBlogpostSlices";
-import { Imageprops, Blogpostprops, Commentprops } from "../entities";
-import { addComments } from "../redux/slices/userCommentsSlices";
-import { addAdvaters } from "../redux/slices/userAdvatersSlices";
+import { useFetchData, useUserIsLogin } from "../hooks";
+import { Imageprops, Blogpostprops, Commentprops, Userprops } from "../entities";
+import { fetchPublishedBlogposts } from "../redux/slices/userBlogpostSlices";
+import { fetchComments } from "../redux/slices/userCommentsSlices";
+import { fetchAvaters } from "../redux/slices/userImageSlices";
 
-const Ownerprofilesec = ({ loginUserName }: { loginUserName: string }) => {
+type Props = {
+  data: Userprops
+  loading: boolean
+  error: string
+};
 
-  const { userProfile: {
-    data: ownerProfileData,
-    loading: ownerProfileDataLoading,
-    error: ownerProfileDataError
-  } } = useAppSelector((state) => state.userProfileSlices);
+const Ownerprofilesec = ({
+  data: profileData,
+  loading: profileLoading,
+  error: profileError, }: Props) => {
 
-  const { userBlogposts: {
-    data: ownerBlogposts,
-    error: ownerBlogpostsError,
-    loading: ownerBlogpostsLoading }
+    const { loginStatus: { loginUserName } } = useUserIsLogin();
+
+  const { totalNumberOfPublishedBlogposts: { // get total number of published blogposts
+    data: totalNumberOfPublishedBlogposts,
+    loading: totalNumberOfPublishedBlogpostsLoading
+  } } = useAppSelector(state => state.userBlogpostSlices);
+
+  const { publishedBlogposts: { // get blogposts
+    data: blogposts,
+    error: blogpostsError,
+    loading: blogpostsLoading }
   } = useAppSelector((state) => state.userBlogpostSlices);
 
-  const { userComments: {
-    data: ownerComments,
-    loading: ownerCommentsLoading,
-    error: ownerCommentsError,
+  const { totalNumberOfUserComments: { // get total number of published comments
+    data: totalNumberOfUserComments,
+    loading: totalNumberOfUserCommentsLoading
+  } } = useAppSelector(state => state.userCommentsSlices);
+
+  const { userComments: { // get comments
+    data: comments,
+    loading: commentsLoading,
+    error: commentsError,
   } } = useAppSelector((state) => state.userCommentsSlices);
 
-  const { userAdvaters: {
-    data: ownerAdvaters,
-    loading: ownerAdvaterLoading,
-    error: ownerAdvaterError,
-  } } = useAppSelector((state) => state.userAdvatersSlices);
+  const { totalNumberOfUserAvaters: { // get total number of published comments
+    data: totalNumberOfUserAvaters,
+    loading: totalNumberOfUserAvatersLoading
+  } } = useAppSelector(state => state.userImageSlices);
+
+  const { userAvaters: { // get avaters
+    data: avaters,
+    loading: avaterLoading,
+    error: avaterError,
+  } } = useAppSelector((state) => state.userImageSlices);
 
   const { fetchData: fetchMoreBlogpostData, loading: loadingMoreBlogpost, error: errorMoreBlogpost } = useFetchData<Blogpostprops[]>(null);
-  const countLoadMoreBlogpostsRef = useRef(5);
-
   const { fetchData: fetchMoreCommentsData, loading: loadingMoreComments, error: errorMoreComments } = useFetchData<Commentprops[]>(null);
-  const countLoadMoreCommentsRef = useRef(6);
-
   const { fetchData: fetchMoreAdvaterData, loading: loadingMoreAdvater, error: errorMoreAdvater } = useFetchData<Imageprops[]>(null);
-  const counLoadMoreAdvaterRef = useRef(5);
 
   const appDispatch = useAppDispatch();
 
-  const handleServerLoadMoreBlogposts = async () => {
-    const { data, ok } = await fetchMoreBlogpostData(`/api/blogposts/${loginUserName}?skip=${countLoadMoreBlogpostsRef.current}&limit=${countLoadMoreBlogpostsRef.current}`);
-    if (!ok || !data) return;
-    appDispatch(addBlogposts((pre: { data: Blogpostprops[] }) => pre ? { ...pre, data: [...pre.data, ...data] } : pre));
-    countLoadMoreBlogpostsRef.current += countLoadMoreBlogpostsRef.current;
+  const handleServerLoadMoreBlogposts = async () => { // load more blogposts
+    if (!blogposts.length) return;
+
+    await fetchMoreBlogpostData(`/api/blogposts/${loginUserName}?status=published&skip=${blogposts.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        appDispatch(fetchPublishedBlogposts({
+          data: [...blogposts, ...data],
+          loading: false,
+          error: '',
+        }));
+
+      });
   };
 
-  const handleServerLoadMoreComments = async () => {
-    const { data, ok } = await fetchMoreCommentsData(`/api/usercomments/${loginUserName}?skip=${countLoadMoreCommentsRef.current}&limit=5`);
-    if (!ok || !data) return;
-    appDispatch(addComments((pre: { data: Commentprops[] }) => pre ? { ...pre, data: [...pre.data, ...data] } : pre));
-    countLoadMoreCommentsRef.current += countLoadMoreCommentsRef.current;
+  const handleServerLoadMoreComments = async () => { // load more comments
+    if (!comments.length) return;
+
+    await fetchMoreCommentsData(`/api/usercomments/${loginUserName}?skip=${comments.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        appDispatch(fetchComments({
+          data: [ ...comments, ...data],
+          loading: false,
+          error: ''
+        }));
+      });
   };
 
-  const handleServerLoadMoreAdvaters = async () => {
-    const { data, ok } = await fetchMoreAdvaterData(`/api/images/${loginUserName}?skip=${counLoadMoreAdvaterRef.current}&limit=${counLoadMoreAdvaterRef.current}`);
-    if (!ok || !data) return;
-    appDispatch(addAdvaters((pre: { data: Imageprops[] }) => pre ? { ...pre, data: [...pre.data, ...data] } : pre));
-    counLoadMoreAdvaterRef.current += counLoadMoreAdvaterRef.current;
+  const handleServerLoadMoreAvaters = async () => { // load more avater
+    if (!avaters.length) return;
+
+    await fetchMoreAdvaterData(`/api/images/${loginUserName}?fieldname=avater&skip=${avaters.length}&limit=5`)
+      .then((res) => {
+        const { data } = res;
+        if (!data) return;
+
+        appDispatch(fetchAvaters({
+          data: [...avaters, ...data],
+          loading: false,
+          error: ''
+        }));
+      });
   };
 
   return <Profilesec
 
-    profileLoading={ownerProfileDataLoading}
-    profileError={ownerProfileDataError}
-    profileData={ownerProfileData}
+    profileData={profileData}
+    profileLoading={profileLoading}
+    profileError={profileError}
 
-    profileBlogposts={ownerBlogposts}
-    profileBlogpostsLoading={ownerBlogpostsLoading}
-    profileBlogpostsError={ownerBlogpostsError}
+    profileBlogposts={blogposts}
+    profileBlogpostsLoading={blogpostsLoading}
+    profileBlogpostsError={blogpostsError}
     handleServerLoadMoreBlogposts={handleServerLoadMoreBlogposts}
     moreBlogpostsLoading={loadingMoreBlogpost}
     moreBlogpostsError={errorMoreBlogpost}
+    numberOfBlogposts={totalNumberOfPublishedBlogposts}
+    numberOfBlogpostsLoading={totalNumberOfPublishedBlogpostsLoading}
 
-    profileCommentsData={ownerComments}
-    profileCommentsLoading={ownerCommentsLoading}
-    profileCommentsError={ownerCommentsError}
+    profileCommentsData={comments}
+    profileCommentsLoading={commentsLoading}
+    profileCommentsError={commentsError}
     handleServerLoadMoreComments={handleServerLoadMoreComments}
     moreCommentsLoading={loadingMoreComments}
     moreCommentsError={errorMoreComments}
+    numberOfComments={totalNumberOfUserComments}
+    numberOfCommentsLoading={totalNumberOfUserCommentsLoading}
 
-    profileAdvatersData={ownerAdvaters}
-    profileAdvatersLoading={ownerAdvaterLoading}
-    profileAdvatersError={ownerAdvaterError}
-    handleServerLoadMoreAdvaters={handleServerLoadMoreAdvaters}
-    moreAdvatersLoading={loadingMoreAdvater}
-    moreAdvatersError={errorMoreAdvater}
+    profileAvatersData={avaters}
+    profileAvatersLoading={avaterLoading}
+    profileAvatersError={avaterError}
+    handleServerLoadMoreAvaters={handleServerLoadMoreAvaters}
+    moreAvatersLoading={loadingMoreAdvater}
+    moreAvatersError={errorMoreAdvater}
+    numberOfAvaters={totalNumberOfUserAvaters}
+    numberOfAvatersLoading={totalNumberOfUserAvatersLoading}
 
   />
 };

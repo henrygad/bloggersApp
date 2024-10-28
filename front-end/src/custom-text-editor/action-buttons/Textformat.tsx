@@ -174,7 +174,7 @@ const Textformat = ({
                             <button
                                 key={item}
                                 className={`block h-[40px] w-[40px] ${item} shadow-md`}
-                                onClick={() => handleTextFormat('bgcolor', [item])}></button>
+                                onClick={() => handleTextFormat('bgcolor', [item, 'rounded', 'p-.5'])}></button>
                         ) :
                         null
                     }

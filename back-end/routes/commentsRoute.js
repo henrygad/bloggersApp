@@ -53,7 +53,7 @@ router.get('/comments/:_id', async (req, res, next) => {
 })
 
 router.get('/blogpostcomments/:blogpostId', async (req, res, next) => {
-    const { params: { blogpostId, authorizeUser }, query: { skip = 0, limit = 0 } } = req
+    const { params: { blogpostId }, query: { skip = 0, limit = 0 } } = req
 
     try {
         // verify blogpost id

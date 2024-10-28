@@ -1,23 +1,73 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, Tab } from "../components";
 import { Button } from "../components";
-import { Archiveds, Createblogpostsec, Unpublisheds } from "../sections";
+import { Archiveds, Createblogpostsec, Displayblogpostimagessec, Unpublisheds } from "../sections";
 import { useLocation } from "react-router-dom";
+import { Blogpostprops } from "../entities";
 
 
 const Post = () => {
   const location = useLocation();
+  const { edit, data } = location.state || { edit: false, data: null };
+  const blogpostToEdit: Blogpostprops = data;
+  const toEdit: boolean = edit;
+
   const [parentTabs, setParentTabs] = useState('post');
   const [childrenTabs, setChildrenTabs] = useState('');
+
+  const [inputAreasStatus, setInputAreasStatus] = useState(toEdit ? 'old' : 'empty');
+
+  const [getBlogpostId, setGetBlogpostId] = useState(blogpostToEdit?._id || '');
+  const [titleContent, setTitleContent] = useState<{ _html: string, text: string }>({
+    _html: blogpostToEdit?._html.title || '',
+    text: blogpostToEdit?.title || '',
+  });
+  const [bodyContent, setBodyContent] = useState<{ _html: string, text: string }>({
+    _html: blogpostToEdit?._html.body || '',
+    text: blogpostToEdit?.body || '',
+  });
+  const [displayImage, setDisplayImage] = useState(('/api/image/' + blogpostToEdit?.displayImage) || ' ');
+  const [catigory, setCatigory] = useState(blogpostToEdit?.catigory || '');
+  const [slug, setSlug] = useState(blogpostToEdit?.slug || '');
+  const [blogpostStatus, setBlogpostStatus] = useState(blogpostToEdit?.status || 'archive');
+
+  const [imageFile, setImageFile] = useState<Blob | string>('');
 
   const sideBar = [
     {
       menu: {
         name: 'Post',
         to: '',
-        content: <Button children="Post" buttonClass="" id="" handleClick={() => handleSwitchBetweenParentTabs('post')} />
+        content: <Button
+          id=""
+          children="Post"
+          buttonClass=""
+          handleClick={() => handleSwitchBetweenParentTabs('post')} />
       },
-      tab: { name: 'post', content: <Createblogpostsec toEdit={location.state?.toEdit} blogpostToEdit={location.state?.data} /> }
+      tab: {
+        name: 'post',
+        content: <Createblogpostsec
+          toEdit={toEdit}
+          inputAreasStatus={inputAreasStatus}
+          setInputAreasStatus={setInputAreasStatus}
+          getBlogpostId={getBlogpostId}
+          setGetBlogpostId={setGetBlogpostId}
+          titleContent={titleContent}
+          setTitleContent={setTitleContent}
+          bodyContent={bodyContent}
+          setBodyContent={setBodyContent}
+          displayImage={displayImage}
+          setDisplayImage={setDisplayImage}
+          catigory={catigory}
+          setCatigory={setCatigory}
+          slug={slug}
+          setSlug={setSlug}
+          blogpostStatus={blogpostStatus}
+          setBlogpostStatus={setBlogpostStatus}
+          imageFile={imageFile}
+          setImageFile={setImageFile}
+        />
+      }
     },
     {
       menu: {
@@ -28,12 +78,20 @@ const Post = () => {
           {
             name: "Unpublished",
             to: '',
-            content: <Button children="Unpublished" buttonClass="" id="" handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('unpublished') }} />
+            content: <Button 
+            children="Unpublished" 
+            buttonClass="" 
+            id=""
+             handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('unpublished') }} />
           },
           {
             name: "Archived",
             to: '',
-            content: <Button children="Archived" buttonClass="" id="" handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('Archived') }} />
+            content: <Button 
+            children="Archived"
+             buttonClass="" 
+             id=""
+              handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('Archived') }} />
           },
         ]
       },
@@ -56,9 +114,16 @@ const Post = () => {
       menu: {
         name: 'Media',
         to: '',
-        content: <Button children="Media" buttonClass="" id="" handleClick={() => handleSwitchBetweenParentTabs('media')} />
+        content: <Button
+          children="Media"
+          buttonClass=""
+          id=""
+          handleClick={() => handleSwitchBetweenParentTabs('media')} />
       },
-      tab: { name: 'media', content: <div id="media">media</div> }
+      tab: {
+        name: 'media',
+        content: <Displayblogpostimagessec />
+      }
     },
     {
       menu: {
@@ -89,6 +154,27 @@ const Post = () => {
   const handleSwitchBetweenParentTabs = (newTabName: string) => {
     setParentTabs(newTabName);
   };
+
+  useEffect(() => {
+    if (toEdit) {
+      setInputAreasStatus('old');
+      setGetBlogpostId(blogpostToEdit?._id);
+      setTitleContent({
+        _html: blogpostToEdit?._html.title,
+        text: blogpostToEdit?.title,
+      });
+      setBodyContent({
+        _html: blogpostToEdit?._html.body,
+        text: blogpostToEdit?.body,
+      });
+      setDisplayImage(('/api/image/' + blogpostToEdit?.displayImage));
+      setCatigory(blogpostToEdit?.catigory);
+      setSlug(blogpostToEdit?.slug);
+      setBlogpostStatus(blogpostToEdit?.status);
+
+      handleSwitchBetweenParentTabs('post');
+    };
+  }, [toEdit]);
 
   return <div>
     <div className="flex">

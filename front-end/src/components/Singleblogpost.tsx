@@ -8,13 +8,13 @@ import Button from "./Button";
 import { useRef, useState } from "react";
 import Dotnav from "./Dotnav";
 import { useCopyLink, useDeleteData, useFetchData, usePatchData, useSanitize, useTrimWords, useUserIsLogin } from "../hooks";
-import { deleteBlogposts, editBlogposts } from "../redux/slices/userBlogpostSlices";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
 import Likebutton from "./Likebutton";
 import Commentbutton from "./Commentbutton";
 import Viewbutton from "./Viewbutton";
 import Savesbutton from "./Savesbutton";
 import Sharebutton from "./Sharebutton";
+import { decreaseTotalNumberOfPublishedBlogposts, deleteArchivedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, unpublishBlogposts } from "../redux/slices/userBlogpostSlices";
 
 type Props = {
     blogpost: Blogpostprops
@@ -36,11 +36,11 @@ const Singleblogpost = ({
     const { patchData, loading: editingLoading } = usePatchData();
     const { deleteData: deleteBlogpostData, loading: deletingBlogpostLoading, error: deletingError } = useDeleteData();
     const navigate = useNavigate();
+
     const {
         _id, displayImage, authorUserName,
         title, body, _html, catigory, url, likes, views,
-        updatedAt, createdAt, shares,
-    } = blogpost;
+        updatedAt, createdAt, shares, status } = blogpost;
     const [toggleSideMenu, setToggleSideMenu] = useState('');
     const isAccountOwner = authorUserName === profileData?.userName
     const { handleCopyLink, copied } = useCopyLink(url);
@@ -77,7 +77,7 @@ const Singleblogpost = ({
             name: 'save',
             to: '',
             content: <Savesbutton
-                saves={profileData?.saves}
+                saves={profileData?.saves || []}
                 blogpost={blogpost}
             />
         },
@@ -98,12 +98,13 @@ const Singleblogpost = ({
         {
             name: 'unPublished',
             to: '',
-            content: <Button
+            content: status === 'published' ? <Button
                 id="share-blogpost-link"
                 children={!editingLoading ? 'Unpublish' : 'unpublish loading...'}
                 buttonClass="border-b"
                 handleClick={() => handleUnpublishBlogpost(_id)}
-            />
+            /> :
+                null
         },
         {
             name: 'delete',
@@ -112,14 +113,14 @@ const Singleblogpost = ({
                 id="share-blogpost-link"
                 children={!deletingBlogpostLoading ? 'Delete' : 'delete loading...'}
                 buttonClass="border-b"
-                handleClick={() => handleDeleteBlogpost(_id)}
+                handleClick={() => handleDeleteBlogpost(_id, status)}
             />
         },
 
     ];
 
     const handleEditBlogpost = (blogpost: Blogpostprops) => {
-        navigate('/createpost', { state: { toEdit: true, data: blogpost } });
+        navigate('/createpost', { state: { edit: true, data: blogpost } });
     };
 
     const handleUnpublishBlogpost = async (_id: string) => {
@@ -132,22 +133,27 @@ const Singleblogpost = ({
         formData.append('blogpostimage', 'no image');
         formData.append('data', JSON.stringify(body));
 
-        const response = await patchData(url, formData);
+        await patchData<Blogpostprops>(url, formData)
+            .then((res) => {
+                const { data } = res;
+                if (!data) return;
+                appDispatch(unpublishBlogposts(data));
+                appDispatch(decreaseTotalNumberOfPublishedBlogposts(1))
 
-        if (response.ok) {
-            appDispatch(editBlogposts({ ...response.data }));
-        };
+            });
     };
 
-    const handleDeleteBlogpost = async (_id: string) => {
+    const handleDeleteBlogpost = async (_id: string, status: string) => {
         const url = '/api/deleteblogpost/' + _id;
-        const response = await deleteBlogpostData(url);
+        await deleteBlogpostData(url)
+            .then((res) => {
 
-        if (response.ok) {
-            appDispatch(deleteBlogposts(_id));
-        };
+                appDispatch(deletePublishedBlogpost({ _id }));
+                appDispatch(deleteArchivedBlogposts({ _id }));
+                appDispatch(deleteUnpublishedBlogposts({ _id }));
+                if (status === 'published') appDispatch(decreaseTotalNumberOfPublishedBlogposts(1));
+            });
     };
-
 
     return <article ref={blogpostRef} className={`
         flex flex-col items-start gap-4 font-text w-full 
