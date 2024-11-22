@@ -8,7 +8,6 @@ const multer = require('multer')
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage })
-
 router.get('/images', async (req, res, next) => {
     const { query: { skip = 0, limit = 0 } } = req
 
@@ -29,9 +28,9 @@ router.get('/images', async (req, res, next) => {
 })
 
 router.get('/images/:authorUserName', authorization, async (req, res, next) => {
-    const { params: { authorUserName }, query: {fieldname ='avater', skip = 0, limit = 0 } } = req
+    const { params: { authorUserName }, query: { fieldname = 'avater', skip = 0, limit = 0 } } = req
 
-    try { 
+    try {
         const userImages = await imageFiles // get display advater image
             .find({ uploader: authorUserName, fieldname })
             .skip(skip)
@@ -75,15 +74,26 @@ router.get('/image/:_id', async (req, res, next) => {
 
 })
 
-router.post('/addimage', authorization, upload.single('blogpostimage'), createimage, async (req, res, next) => {
+router.post('/image/avater/add', authorization, upload.single('avater'), createimage, async (req, res, next) => {
+    const { image } = req
+    res.json({
+        _id: image._id,
+        fileName: image.fileName,
+        size: image.size,
+        uploader: image.uploader,
+        fieldname: image.fieldname,
+    })
+})
 
-    try {
-        res.json({ imageId: req.image })
-    } catch (error) {
-
-        next(new customError(error, 404))
-    }
-
+router.post('/image/blogpostimage/add', authorization, upload.single('blogpostimage'), createimage, async (req, res, next) => {
+    const { image } = req
+    res.json({
+        _id: image._id,
+        fileName: image.fileName,
+        size: image.size,
+        uploader: image.uploader,
+        fieldname: image.fieldname,
+    })
 })
 
 router.delete('/deleteimage/:_id', authorization, async (req, res, next) => {
@@ -91,11 +101,9 @@ router.delete('/deleteimage/:_id', authorization, async (req, res, next) => {
 
     try {
 
-        // verify image id
-        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: invalid image id!')
+        if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error('Bad Request: invalid image id!') // verify image id
 
-        // get display advater image
-        const deleteImage = await imageFiles.findByIdAndDelete({ _id })
+        const deleteImage = await imageFiles.findByIdAndDelete({ _id }) // get display advater image
         if (!deleteImage) throw new Error('Bad Request: image not deleted!')
 
         res.json({ deleted: 'sucessfully deleted image' })

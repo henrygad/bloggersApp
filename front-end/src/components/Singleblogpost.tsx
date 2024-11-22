@@ -1,5 +1,5 @@
 import { Blogpostprops, Commentprops } from "../entities"
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Displayimage from "./Displayimage";
 import blogpostImagePlaceHolder from '../assert/imageplaceholder.png';
 import UsershortInfor from "./UsershortInfor";
@@ -7,14 +7,20 @@ import Menu from "./Menu";
 import Button from "./Button";
 import { useRef, useState } from "react";
 import Dotnav from "./Dotnav";
-import { useCopyLink, useDeleteData, useFetchData, usePatchData, useSanitize, useTrimWords, useUserIsLogin } from "../hooks";
+import { useConvertRawDate, useDeleteData, useFetchData, usePatchData, useSanitize, useTrimWords } from "../hooks";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
 import Likebutton from "./Likebutton";
 import Commentbutton from "./Commentbutton";
 import Viewbutton from "./Viewbutton";
 import Savesbutton from "./Savesbutton";
 import Sharebutton from "./Sharebutton";
-import { decreaseTotalNumberOfPublishedBlogposts, deleteArchivedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, unpublishBlogposts } from "../redux/slices/userBlogpostSlices";
+import { decreaseTotalNumberOfPublishedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, unpublishBlogposts } from "../redux/slices/userBlogpostSlices";
+import { LuExternalLink } from "react-icons/lu"
+import { FiEdit } from "react-icons/fi"
+import { FaLongArrowAltDown } from "react-icons/fa"
+import { MdBlock, MdDeleteOutline } from "react-icons/md"
+import { TfiFlagAlt2 } from "react-icons/tfi";
+import tw from "tailwind-styled-components";
 
 type Props = {
     blogpost: Blogpostprops
@@ -43,36 +49,34 @@ const Singleblogpost = ({
         updatedAt, createdAt, shares, status } = blogpost;
     const [toggleSideMenu, setToggleSideMenu] = useState('');
     const isAccountOwner = authorUserName === profileData?.userName
-    const { handleCopyLink, copied } = useCopyLink(url);
     const appDispatch = useAppDispatch();
 
-    const trimedWordsInitailNum = 10
-    const { trimWords, trimedWords, trimedWordsDone } = useTrimWords(body, trimedWordsInitailNum);
-    const trimedWordsNumRef = useRef(trimedWordsInitailNum);
+    const { trimedWords } = useTrimWords(body, 50);
     const sanitizeHTML = useSanitize();
     const blogpostRef = useRef<HTMLElement | null>(null);
 
-    // api for blog post comments and their nested children comments
-    const { data: getCommentData, loading: loadingComment } = useFetchData<Commentprops[] | null>(`/api/blogpostcomments/${_id}?skip=0&limit=5`, [_id]);
+    const { data: getCommentData, loading: loadingComment } =  // api for blogpost parent comments
+        useFetchData<Commentprops[] | null>(`/api/comments/blogpost/${_id}?skip=0&limit=10`, [_id]);
+    const handleReadableDate = useConvertRawDate()
 
-    const generalMenuForBlogpost = [
+    const handleViewBlogpost = (url: string) => {
+        navigate(url);
+    };
+
+    const generalMenu = [
         {
             name: 'view',
-            to: url,
-            content: ''
-        },
-        {
-            name: 'copy link',
-            to: '',
             content: <Button
-                id="copy-blogpost-link"
-                children={<>
-                    Copy link {copied ? <span className="text-green-500">Copied</span> : null}
-                </>}
-                buttonClass="border-b"
-                handleClick={() => handleCopyLink()}
+                id="see-all-of-blogpost-btn"
+                buttonClass="flex gap-2"
+                children={<><LuExternalLink size={20} />  View</>}
+                handleClick={() => handleViewBlogpost('/' + url)}
             />
         },
+    ];
+
+    const intaracttionMenu = [
+        ...generalMenu,
         {
             name: 'save',
             to: '',
@@ -81,43 +85,62 @@ const Singleblogpost = ({
                 blogpost={blogpost}
             />
         },
+        {
+            name: 'report',
+            to: '',
+            content: <Button
+                id="report-content-btn"
+                buttonClass="flex gap-2"
+                children={<><TfiFlagAlt2 size={20} />  Report</>}
+                handleClick={() => ''}
+            />
+        },
+        {
+            name: 'block',
+            to: '',
+            content: <Button
+                id="report-content-btn"
+                buttonClass="flex gap-2"
+                children={<><MdBlock size={20} />  Block</>}
+                handleClick={() => ''}
+            />
+        },
     ];
 
     const accountOnwerMenuForBlogpost = [
-        ...generalMenuForBlogpost,
+        ...generalMenu,
         {
             name: 'edit',
             to: '',
             content: <Button
                 id="share-blogpost-link"
-                children={'Edit'}
-                buttonClass="border-b"
+                buttonClass="flex gap-2"
+                children={<><FiEdit size={20} /> Edit</>}
                 handleClick={() => handleEditBlogpost(blogpost)}
             />
         },
         {
-            name: 'unPublished',
+            name: 'unpublished',
             to: '',
-            content: status === 'published' ? <Button
+            content: <Button
                 id="share-blogpost-link"
-                children={!editingLoading ? 'Unpublish' : 'unpublish loading...'}
-                buttonClass="border-b"
+                buttonClass="flex gap-2"
+                children={<><FaLongArrowAltDown size={20} /> Unpublish</>}
                 handleClick={() => handleUnpublishBlogpost(_id)}
-            /> :
-                null
+            />
         },
         {
             name: 'delete',
             to: '',
             content: <Button
                 id="share-blogpost-link"
-                children={!deletingBlogpostLoading ? 'Delete' : 'delete loading...'}
-                buttonClass="border-b"
+                buttonClass="flex gap-2"
+                children={<><MdDeleteOutline size={22} /> Delete</>}
                 handleClick={() => handleDeleteBlogpost(_id, status)}
             />
         },
-
     ];
+
 
     const handleEditBlogpost = (blogpost: Blogpostprops) => {
         navigate('/createpost', { state: { edit: true, data: blogpost } });
@@ -149,92 +172,82 @@ const Singleblogpost = ({
             .then((res) => {
 
                 appDispatch(deletePublishedBlogpost({ _id }));
-                appDispatch(deleteArchivedBlogposts({ _id }));
                 appDispatch(deleteUnpublishedBlogposts({ _id }));
                 if (status === 'published') appDispatch(decreaseTotalNumberOfPublishedBlogposts(1));
             });
     };
 
-    return <article ref={blogpostRef} className={`
-        flex flex-col items-start gap-4 font-text w-full 
-        ${type === 'text' ? 'min-w-[280px] sm:min-[480px]  max-w-[480px] xl:min-w-[768px] xl:max-w-[768px]' : ' '} 
-        ${(index % 2 !== 0) ? "border-y" : ''} 
-        px-2 py-1`
-    }
-    >
-        <span id="blogpost-menu" className="block relative w-full">
+
+    return <Article ref={blogpostRef}
+        className={` ${type === 'text' ? 'max-w-[480px] xl:min-w-[768px] xl:max-w-[768px]' : ' '} 
+        ${(index % 2 !== 0) ? "border-y" : ''}`}>
+        <div className="relative w-full">
             <Dotnav
+                id="blogpost-nav"
                 setToggleSideMenu={setToggleSideMenu}
                 toggleSideMenu={toggleSideMenu}
                 name={_id}
                 children={
                     <Menu
+                        id="MenuForBlogpost"
+                        parentClass='absolute top-0 -right-2 min-w-[140px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer space-y-4'
+                        childClass=""
                         arrOfMenu={!isAccountOwner ?
-                            generalMenuForBlogpost
+                            intaracttionMenu
                             : accountOnwerMenuForBlogpost
                         }
-                        id="MenuForBlogpost"
-                        parentClass='flex-col gap-2 absolute top-0 -right-2 min-w-[140px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer'
-                        childClass=""
                     />
                 }
             />
-        </span>
-        <span id="author-shortInfor" >
-            <UsershortInfor
-                userName={authorUserName}
-            />
-        </span>
-        <Link id="blogpostInfor" to={'/' + url} className="block w-full space-y-2">
+        </div>
+        <UsershortInfor
+            userName={authorUserName}
+        />
+        <span id="post-body" onClick={() => handleViewBlogpost('/' + url)}
+            className={`block w-full text-center space-y-2 ${type === 'text' ? 'cursor-pointer' : "cursor-text"}`}>
             {type &&
                 type === 'text' ?
-                <span id="text-title" className="block w-full text-xl font-semibold first-letter:capitalize text-center">
+                <span id="text-title"
+                    className="w-full text-xl sm:text-2xl font-semibold first-letter:capitalize">
                     {title}
                 </span> :
-                <span id="_html-title" className="flex justify-center items-center" dangerouslySetInnerHTML={sanitizeHTML(_html.title)}></span>
-            }
-            <span id="more-infor" className="block font-secondary text-sm space-y-1">
-                <span className="block">
-                    <span id="Published" className="block"> Published: {createdAt}</span>
-                    <span id="Last published">Last published: {updatedAt}</span>
-                </span>
-                <span id="catigory" className="block">catigory: {catigory}</span>
+                <span id="_html-title" className="flex justify-center" dangerouslySetInnerHTML={sanitizeHTML(_html.title)}>
 
+                </span>
+            }
+            <span id="blopost-infor" className="block font-secondary text-sm space-y-2">
+                <span id="date" >
+                    Last upated<span> {handleReadableDate(updatedAt)}</span>
+                </span>
+                <span id="catigory"
+                    className="block text-start w-full font-semibold">
+                    {catigory?.split(' ').map((item =>
+                        <span key={item}>.{item}</span>
+                    ))}
+                </span>
             </span>
-            <span id="display-image" className="flex justify-center" >
-                {displayImage ?
-                    <Displayimage
-                        id="blogpostimage"
-                        imageUrl={'/api/image/' + displayImage}
-                        parentClass={type === 'text' ? 'w-[280px] h-[160px]' : "w-full h-[320px]"}
-                        imageClass="object-contain rounded-md"
-                        placeHolder={blogpostImagePlaceHolder}
-                    />
-                    : null}
-            </span>
-        </Link>
-        <span id="blogpost-text" className="w-full ">
             {type &&
                 type === 'text' ?
-                <span id="text" className="block text-start" >
+                <span id="text" className="block text-start w-full text-wrap py-2" >
                     {trimedWords}
-                    <>
-                        {(body.split(' ').length > trimedWordsInitailNum) ?
-                            <>
-                                {
-                                    trimedWordsDone ?
-                                        <span className="text-blue-300 cursor-pointer pl-1" onClick={() => trimWords(trimedWordsNumRef.current = 10)} >See less</span> :
-                                        <span className="text-blue-500 cursor-pointer pl-1" onClick={() => trimWords(trimedWordsNumRef.current += 10)} >see more</span>
-                                }
-                            </> :
-                            null
-                        }
-                    </>
+                    <span className="text-blue-500 cursor-pointer">see more</span>
                 </span> :
-                <span id="_html" className="block w-full border-y py-3" dangerouslySetInnerHTML={sanitizeHTML(_html.body)}></span>
+                <span id="_html" className="block text-start w-full py-2" dangerouslySetInnerHTML={sanitizeHTML(_html.body)}>
+                </span>
+            }
+            {displayImage ?
+                <Displayimage
+                    id="blopost-display-image"
+                    imageId={displayImage}
+                    parentClass={`w-full  ${type === 'text' ? "h-[140px]" : "h-[320px]"}`}
+                    imageClass="object-cover rounded-md"
+                    placeHolder={blogpostImagePlaceHolder}
+                />
+                :
+                null
             }
         </span>
-        <span id="blogpost-statisties" className="flex justify-around gap-4 w-full">
+        <span id="blogpost-statisties" className=" relative flex justify-around gap-4 w-full">
             <Commentbutton
                 loadingComment={loadingComment}
                 arrOfcomment={
@@ -255,7 +268,7 @@ const Singleblogpost = ({
                 parentId={_id}
                 arrOfLikes={likes}
                 apiForLike={'/api/likeblogpost/' + _id}
-                apiForUnlike={'/api/blogposts/shares/' + _id}
+                apiForUnlike={'/api/unlikeblogpost/' + _id}
 
                 autoOpenTargetLike={{ ...autoOpenTargetBlogpostLike, commentId: autoOpenTargetBlogpostLike.blogpostId }}
 
@@ -265,23 +278,34 @@ const Singleblogpost = ({
                 liking="blogpostLike"
             />
             <Sharebutton
-                shares={blogpost.shares}
-                url={'/api/blogposts/shares/' + _id}
+                arrOfShares={shares}
+                blogpostUrl={url}
+                apiForShare={'/api/blogpost/share/' + _id}
 
                 notificationUrl={url + '/#blogpost-statistics'}
                 notificationTitle={title}
             />
             <Viewbutton
-                url={'/api/viewblogpost/' + _id}
-                elementRef={blogpostRef}
                 arrOfViews={views}
+                apiForView={'/api/viewblogpost/' + _id}
+                elementRef={blogpostRef}
                 onLoadView={type?.trim() !== 'text' ? true : false}
 
                 notificationUrl={url + '/#blogpost-statistics'}
                 notificationTitle={title}
             />
         </span>
-    </article>
+    </Article>
 };
 
 export default Singleblogpost;
+
+const Article = tw.article`
+flex 
+flex-col 
+items-start 
+gap-4 
+font-text 
+w-full 
+ px-2 py-1 
+`

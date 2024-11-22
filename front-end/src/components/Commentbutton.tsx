@@ -3,11 +3,14 @@ import { Commentprops } from "../entities"
 import Button from "./Button";
 import Dialog from "./Dialog";
 import Trythistexteditor from "../custom-text-editor/App";
-import { useDeleteData, useFetchData, useNotification, usePostData, useUserIsLogin } from "../hooks";
+import { useFetchData, useNotification, usePostData, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { addComment, decreaseTotalNumberOfUserComments, deleteComments, increaseTotalNumberOfUserComments } from "../redux/slices/userCommentsSlices";
+import { addComment, increaseTotalNumberOfUserComments } from "../redux/slices/userCommentsSlices";
 import Singlecomment from "./Singlecomment";
 import { deleteAll } from "../custom-text-editor/settings";
+import { FaRegComments } from "react-icons/fa6"
+import { IoMdArrowRoundBack } from "react-icons/io";
+import tw from "tailwind-styled-components";
 
 type Props = {
     arrOfcomment: Commentprops[]
@@ -30,308 +33,193 @@ const Commentbutton = ({
     blogpostTitle,
     blogpostUrl,
 
-    autoOpenTargetComment = { autoOpen: false, commentId: '', commentAddress: '', comment: null, blogpostId: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
+    autoOpenTargetComment =
+    { autoOpen: false, commentId: '', commentAddress: '', comment: null, blogpostId: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
 }: Props) => {
 
     const { loginStatus: { loginUserName } } = useUserIsLogin()
 
     const { fetchData: fetchSeeMoreCommentData, loading: loadingMoreComment } = useFetchData<Commentprops[]>(null);
-    const [displayCommentData, setDisplayCommentData] = useState<Commentprops[]>([]);
 
-    const [getCommentContent, setGetCommentContent] = useState<{ _html: string, text: string } | null>(null);
-    const [parentComment, setParentCpmment] = useState<Commentprops | null>(null);
-    const [replying, setReplying] = useState<string[] | null>([]);
-    const [parentId, setParentId] = useState<string | null>(null);
+    const [getParentCommentContent, setParentGetCommentContent] = useState<{ _html: string, text: string } | null>(null);
+    const [displayParentComments, setDisplayParentComment] = useState<Commentprops[]>([]);
 
-    const { postData, loading: postCommentLoading } = usePostData();
-    const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
+    const { postData: postComment, loading: loadingPostComment } = usePostData();
     const appDispatch = useAppDispatch();
 
     const notify = useNotification();
 
     const [toggleCommentDialog, setToggleCommentDialog] = useState(' ');
-    const [toggleListOfComments, setToggleListOfComments] = useState(false);
 
-    const clearInputArea = () => {
+
+    const clearCommentInputArea = () => {
         const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div on page
         contentEditAbleELe.forEach((element) => {
             deleteAll(element as HTMLDivElement)
         });
     };
 
-    const handleAddComment = async (comment: {
-        blogpostId: string,
-        parentId: string | null,
-        parentUrl: string,
-        body: { _html: string, text: string },
-        commentIsAReplyTo: string[]
-    }) => {
+    const handleParentCommentNotification = async (comment: Commentprops) => {
+        const { _id, parentUrl } = comment;
+        if (loginUserName === blogpostAuthorUserName) return; // don't notify blogpost author when he commented
 
-        if (!comment.blogpostId.trim()) return;
+        const url = '/api/notification/' + blogpostAuthorUserName;
+        const body = {
+            typeOfNotification: 'blogpostComment',
+            msg: `commented on your post, <span class="underline">${blogpostTitle}</span>`,
+            url: parentUrl + '/' + _id,
+            notifyFrom: loginUserName,
+        };
+
+        await notify(url, body);
+    };
+
+    const handleAddCommentToBlogpost = async () => {
+        if (!blogpostId) return;
 
         const url = '/api/addcomment';
-        const body = comment;
-        const response = await postData<Commentprops>(url, { ...body });
-        const { ok, data } = response;
-
-        if (data) {
-
-            if (parentId) {
-                setDisplayCommentData((pre) => pre ? displayChildrenCommentRecursively(pre, data) : pre);
-            } else {
-                setDisplayCommentData((pre) => pre ? [data, ...pre] : pre);
-            };
-
-            setReplying(null)
-            setParentId(null);
-            appDispatch(addComment(data));
-            clearInputArea();
-            appDispatch(increaseTotalNumberOfUserComments(1));
-
-            handleNotification(data?.parentId || '', data);
+        const body = {
+            parentId: null,
+            blogpostId,
+            parentUrl: blogpostUrl,
+            body: getParentCommentContent || { _html: '', text: '' },
+            commentIsAReplyTo: [blogpostAuthorUserName]
         };
+        postComment<Commentprops>(url, { ...body })
+            .then((req) => {
+                const { data } = req;
+
+                if (data) {
+                    setDisplayParentComment((pre) => pre ? [data, ...pre] : pre);
+                    appDispatch(addComment(data));
+                    appDispatch(increaseTotalNumberOfUserComments(1));
+                    clearCommentInputArea();
+                    handleParentCommentNotification(data);
+                };
+            });
     };
 
-    const displayChildrenCommentRecursively = (arrData: Commentprops[], data: Commentprops): Commentprops[] => {
-        return [...arrData.map(item => {
-            if (item._id === data.parentId ||
-                (item.children && item.children.length)
-            ) {
-                if (item._id === data.parentId) {
-                    return { ...item, children: [data, ...item.children] };
-                } else {
-                    return { ...item, children: displayChildrenCommentRecursively(item.children, data) };
-                }
-            } else {
-                return item;
-            }
-        })];
-    };
-
-    const handleDeleteComment = async (comment: Commentprops) => {
-        if (!comment._id) return;
-        const url = '/api/deletecomment';
-        const response = await deleteCommentData(url + "/" + comment._id);
-
-        if (response.ok) {
-            appDispatch(deleteComments({ _id: comment._id }));
-            setReplying(null);
-            setParentId(null);
-
-            if (comment.parentId) {
-                setDisplayCommentData((pre) => pre ? deleteChildrenCommentRecursively(pre, comment) : pre);
-            } else {
-                setDisplayCommentData((pre) => pre ? pre.filter((item) => item._id !== comment._id) : pre);
-            };
-
-            appDispatch(decreaseTotalNumberOfUserComments(1));
-        };
-    };
-
-    const deleteChildrenCommentRecursively = (arrData: Commentprops[], data: Commentprops): Commentprops[] => {
-        return [...arrData.map(item => {
-            if (item._id === data.parentId ||
-                (item.children && item.children.length)
-            ) {
-                if (item._id === data.parentId) {
-                    return { ...item, children: item.children.filter((item) => item._id !== data._id) };
-                } else {
-                    return { ...item, children: deleteChildrenCommentRecursively(item.children, data) };
-                }
-            } else {
-                return item;
-            }
-        })];
-    };
-
-    const handleLoadMoreComments = async () => {
-        await fetchSeeMoreCommentData(`/api/blogpostcommentsandnestedcomments/${blogpostId}?skip=${displayCommentData.length}&limit=5`)
+    const handleLoadMoreParentComment = () => {
+        fetchSeeMoreCommentData(`/api/comments/blogpost/${blogpostId}?skip=${displayParentComments.length}&limit=5`)
             .then((res) => {
                 const { data } = res;
                 if (data) {
-                    setDisplayCommentData((pre) => pre ? [...pre, ...data] : pre);
+                    setDisplayParentComment((pre) => pre ? [...pre, ...data] : pre);
                 };
             });
-    };
-
-    const handleNotification = async (parentId: string, comment: Commentprops) => {
-        const { commentIsAReplyTo, authorUserName, parentUrl, _id } = comment;
-
-        if (parentId) { // for notifying all users involve in this comment
-
-            commentIsAReplyTo.map(async (item) => {
-                const isCommentAuthor = authorUserName === item;
-                if (isCommentAuthor) return;
-
-                const url = '/api/notification/' + item;
-                const body = {
-                    typeOfNotification: 'replyComment',
-                    msg: `replied to ${item === parentComment?.authorUserName ?
-                        'your' :
-                        `<span class="font-bold" >${parentComment?.authorUserName?.slice(1)}</span>`
-                        } comment, <span class="underline">${parentComment?.body.text}</span>`,
-                    url: parentUrl + '&' + _id,
-                    notifyFrom: loginUserName,
-                };
-
-                await notify(url, body);
-            });
-
-        } else { // for notifying just the author of the bloppost
-
-            const isCommentAuthor = authorUserName === blogpostAuthorUserName;
-            if (isCommentAuthor) return;
-
-            const url = '/api/notification/' + blogpostAuthorUserName;
-            const body = {
-                typeOfNotification: 'blogpostComment',
-                msg: `commmented on your post, <span class="underline">${blogpostTitle}</span>`,
-                url: parentUrl + '&' + _id,
-                notifyFrom: loginUserName,
-            };
-
-            await notify(url, body);
-        };
-
     };
 
     useEffect(() => {
-        setDisplayCommentData(
+        setDisplayParentComment(
             autoOpenTargetComment?.autoOpen &&
                 autoOpenTargetComment?.comment ?
                 [autoOpenTargetComment.comment, ...arrOfcomment.filter(item => item._id !== autoOpenTargetComment.comment?._id)] :
                 arrOfcomment
         );
-    }, [
-        arrOfcomment,
-        autoOpenTargetComment?.autoOpen,
-        autoOpenTargetComment.blogpostId,
-    ]);
+    }, [arrOfcomment, autoOpenTargetComment]);
 
     useEffect(() => {
         setTimeout(() => {
-            setToggleCommentDialog(autoOpenTargetComment?.autoOpen ? autoOpenTargetComment.blogpostId : '');
-            setToggleListOfComments(autoOpenTargetComment?.autoOpen ? true : false);
+           setToggleCommentDialog(autoOpenTargetComment?.autoOpen ? autoOpenTargetComment.blogpostId : '');
         }, 1000);
-    }, [
-        autoOpenTargetComment?.autoOpen,
-        autoOpenTargetComment.blogpostId,
-    ]);
-   
-
+    }, [autoOpenTargetComment]);
 
     return <div>
-        <div>
-            <Button
-                id='comment-btn'
-                children={<>
-                    Comment:
-                    <span className="bg-blue-300 p-1"
-                        onClick={(e) => { { setToggleCommentDialog(blogpostId); setToggleListOfComments(true); e.stopPropagation() } }}
-                    >
-                        {displayCommentData ? displayCommentData.length : 0}
-                    </span>
-                </>}
-                buttonClass="text-sm border px-1 rounded-md"
-                handleClick={() => { setToggleListOfComments(false); setToggleCommentDialog(blogpostId) }}
-            />
-        </div>
-        <div className="comment-dialog">
-            <Dialog
-                id="blogpost-comments-dialog"
-                currentDialog={blogpostId}
-                parentClass="flex justify-center"
-                childClass={`
-                    w-full min-w-[280px] sm:min-w-[320px] max-w-[768px] 
-                    ${toggleListOfComments ? 'overflow-y-scroll max-h-screen pb-[200px]' : ''}
-                ` }
-                dialog={toggleCommentDialog}
-                setDialog={() => { setToggleCommentDialog(' '); setReplying(null); setParentId(null); }}
-                children={
+        <Button
+            id='comment-btn'
+            buttonClass="flex gap-2"
+            children={<>
+                <FaRegComments size={22} />
+                {displayParentComments?.length || 0}
+            </>}
+            handleClick={() => setToggleCommentDialog(blogpostId)}
+        />
+        <Dialog
+            id="blogpost-comments-dialog"
+            currentDialog={blogpostId}
+            parentClass=""
+            childClass="container relative flex flex-col w-full h-full bg-white dark:bg-stone-800 dark:text-white py-4 "
+            dialog={toggleCommentDialog}
+            setDialog={() => setToggleCommentDialog(' ')}
+            children={
+                <>
                     <>
-                        {toggleListOfComments ?
-                            <div className="flex flex-col items-center pt-2">
-                                <span id="comment-title">
-                                    {displayCommentData ? displayCommentData.length : 0}: comments
-                                </span>
-                                <div id="display-comments-wrapper">
-                                    {!loadingComment ?
-                                        <div id="list-comments">
-                                            {displayCommentData &&
-                                                displayCommentData.length ?
-                                                <>
-                                                    {
-                                                        displayCommentData.map((item, index) =>
-                                                            <Singlecomment
-                                                                key={index}
-                                                                index={index}
-                                                                type="text"
-                                                                allowNested={true}
-                                                                comment={item}
-                                                                setParentId={setParentId}
-                                                                setReplying={setReplying}
-                                                                setParentComment={setParentCpmment}
-                                                                handleDeleteComment={handleDeleteComment}
-                                                                deletingLoading={deleteCommentLoading}
-
-                                                                autoOpenTargetComment={autoOpenTargetComment}
-                                                            />
-                                                        )
-                                                    }
-                                                    <span className="cursor-pointer" onClick={handleLoadMoreComments} >
-                                                        {!loadingMoreComment ? 'load more' : 'loading...'}
-                                                    </span>
-                                                </> :
-                                                <div id="comment-not-found">be the first to comment</div>
-                                            }
-                                        </div> :
-                                        <div id="loaidng-comment">loading...</div>
-                                    }
-                                </div>
-                            </div> :
-                            null
-                        }
-                        <div id="comment-textarea-wrapper" className="absolute bottom-1 left-1/2 -translate-x-1/2 w-full h-[180px] max-w-[280px] sm:max-w-[320px] md:max-w-[420px] space-y-4 p-4 z-50">
-                            <div className="space-y-2">
-                                {replying &&
-                                    <span className="block text-[.8rem] px-4 ">
-                                        Replying to
-                                        <span className="text-blue-500 space-x-1 ml-1">
-                                            {replying.map(item => <span key={item}>{item}</span>)}
-                                        </span>
-                                    </span>
-                                }
-                                <Trythistexteditor
-                                    id='comment-text-editor'
-                                    placeHolder="Reply..."
-                                    InputWrapperClassName="border-2 p-3 rounded-full"
-                                    InputClassName=""
-                                    createNewText={{ IsNew: true }}
-                                    useTextEditors={false}
-                                    inputTextAreaFocus={true}
-                                    setGetContent={setGetCommentContent}
-                                />
-                            </div>
-                            <div className="flex justify-center">
-                                <Button
-                                    id="create-comment"
-                                    children={!postCommentLoading ? 'Add comment' : 'loading...'}
-                                    buttonClass=" bg-green-400 py-2 px-4"
-                                    handleClick={() => handleAddComment({
-                                        blogpostId: blogpostId,
-                                        parentId: parentId || null,
-                                        parentUrl: parentComment?.parentUrl ? (parentComment.parentUrl + '&' + parentComment._id) : blogpostUrl,
-                                        body: getCommentContent || { _html: '', text: '' },
-                                        commentIsAReplyTo: replying || [blogpostAuthorUserName],
-                                    })}
-                                />
-                            </div>
+                        <div className="flex gap-2 items-center py-2">
+                            <Button
+                                id="return-black"
+                                buttonClass=""
+                                children={<IoMdArrowRoundBack size={20} />}
+                                handleClick={() => setToggleCommentDialog(' ')}
+                            />
+                            <span id="search-history-title" className="text-xl font-semibold">
+                                Comments
+                            </span>
                         </div>
+                        {!loadingComment ?
+                            <div id="list-comments" className="flex-1 relative max-h-full overflow-y-auto p-4">
+                                {displayParentComments &&
+                                    displayParentComments.length ?
+                                    <>
+                                        {
+                                            displayParentComments.map((item, index) =>
+                                                <Singlecomment
+                                                    key={index}
+                                                    index={index}
+                                                    type="text"
+                                                    comment={item}
+                                                    setDisplayParentComment={setDisplayParentComment}
+                                                    autoOpenTargetComment={autoOpenTargetComment}
+                                                />
+                                            )
+                                        }
+                                        <div className="flex justify-center items-center mt-3">
+                                            <Button
+                                                id=""
+                                                buttonClass=""
+                                                children={!loadingMoreComment ? 'Load more comment' : 'loading...'}
+                                                handleClick={handleLoadMoreParentComment}
+                                            />
+                                        </div>
+                                    </> :
+                                    null
+                                }
+                            </div> :
+                            <div id="loaidng-comment">loading...</div>
+                        }
                     </>
-                }
-            />
-        </div>
+                    <Commentinputareawrapper id="blogpost-comment-textarea-wrapper">
+                        <Trythistexteditor
+                            id='blogpost-comment-text-editor'
+                            placeHolder="Comment..."
+                            InputWrapperClassName="w-full max-h-[140px] border-2 p-3 rounded-md  overflow-y-auto"
+                            InputClassName=""
+                            createNewText={{ IsNew: true }}
+                            useTextEditors={false}
+                            inputTextAreaFocus={true}
+                            setGetContent={setParentGetCommentContent}
+                        />
+                        <div id="comment-btn" className="flex justify-center">
+                            <Button
+                                id="create-comment"
+                                children={!loadingPostComment ? 'Comment' : 'loading...'}
+                                buttonClass="font-simibold bg-green-800 rounded-md py-2 px-4 border border-green-400 shadow active:bg-green-400 transition-color"
+                                handleClick={() => handleAddCommentToBlogpost()}
+                            />
+                        </div>
+                    </Commentinputareawrapper>
+                </>
+            }
+        />
     </div>
 };
 
 export default Commentbutton;
+
+const Commentinputareawrapper = tw.div` 
+flex 
+flex-col
+gap-4
+justify-center
+px-4
+py-2
+`

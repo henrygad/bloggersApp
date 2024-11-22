@@ -1,9 +1,14 @@
 import DOMPurify from "dompurify";
+import he from 'he';
 
 const useSanitize = () => {
-    const sanitizeHTML = (html: string) => {
+
+    const sanitizeHTML = (htmlString: string) => {
+        const sanitizedHtml = DOMPurify.sanitize(htmlString);
+        const decodeString = he.decode(sanitizedHtml);
+
         return {
-            __html: DOMPurify.sanitize(html)
+            __html: decodeString
         };
     };
 

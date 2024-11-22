@@ -1,6 +1,6 @@
 import { useDeleteData, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { deleteProfile } from "../redux/slices/userProfileSlices";
+import { clearProfile } from "../redux/slices/userProfileSlices";
 import Button from "./Button";
 
 const Deleteuseraccount = () => {
@@ -21,7 +21,7 @@ const Deleteuseraccount = () => {
           loginUserName: '',
           greetings: data.deleted
         } : pre);
-        appDispatch(deleteProfile({ data: null, loading: true, error: '' }));
+        appDispatch(clearProfile({ data: null, loading: true, error: '' }));
       });
   };
 

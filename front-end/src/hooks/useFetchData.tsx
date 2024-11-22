@@ -11,7 +11,12 @@ const useFetchData = <T,>(url: string | null = '', dependences: any[] = []) => {
             setLoading(true);
             setError('');
 
-            const response = await axios.get(url);
+            const response = await axios.get('https://localhost:3000' + url,
+                {
+                   baseURL: 'https://localhost:3000',
+                    withCredentials: true
+                }
+            );
             const data: T = await response.data;
 
             if (data ||
@@ -22,7 +27,7 @@ const useFetchData = <T,>(url: string | null = '', dependences: any[] = []) => {
                 setError(' ');
                 setLoading(false);
 
-                return { ok: true, data, loading: false, error: ''};
+                return { ok: true, data, loading: false, error: '' };
 
             } else throw new Error('this is new error');
 
@@ -36,20 +41,21 @@ const useFetchData = <T,>(url: string | null = '', dependences: any[] = []) => {
                 }
             };
 
+
             setData(null);
-            setError(error.response.data.message);
+            setError(error.response?.data?.message);
             setLoading(false);
             console.error(error);
 
-            return { ok: true, data: null, loading: false, error: error.response.data.message };
+            return { ok: true, data: null, loading: false, error: error.response?.data?.message};
         };
 
     };
 
     useEffect(() => {
-       if(url){
-        fetchData(url);
-       }
+        if (url) {
+            fetchData(url);
+        }
     }, dependences);
 
     return { fetchData, data, error, loading };

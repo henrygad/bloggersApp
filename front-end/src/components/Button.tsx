@@ -12,7 +12,7 @@ const Button = ({ children, buttonClass, id='', handleClick = (e) => null }: Pro
 
     return <button
         id={id}
-        className={` ${buttonClass} text-[0.92rem] md:text-base cursor-pointer px-1 rounded-md`}
+        className={` ${buttonClass} text-[0.92rem] md:text-base cursor-pointer`}
         onClick={handleClick}
     >
         {children}

@@ -5,11 +5,7 @@ const usersData = require('../schema/usersDataSchema')
 const bcypt = require('bcryptjs')
 const hashPassword = require('../utils/hashPassword')
 const { customError } = require('../middlewares/error')
-const createimage = require('../middlewares/createimage')
-const multer = require('multer')
-
-const storage = multer.memoryStorage()
-const upload = multer({ storage })
+const { validationResult, body } = require('express-validator')
 
 router.get('/users', async (req, res, next) => {// all users
     const { query: { skip = 0, limit = 0 } } = req
@@ -68,58 +64,36 @@ router.get('/authorizeduser', authorization, async (req, res, next) => { // sing
     }
 })
 
-router.patch('/editprofile', authorization, upload.single('avater'), createimage, async (req, res, next) => {
-    const { authorizeUser } = req
+router.patch('/editprofile',
+    [body(['displayImage', 'name', 'bio', 'dateOfBirth', 'phoneNumber', 'website', 'country', 'sex'])
+        .optional()
+        .trim()
+        .isString().withMessage("displayImage, name, bio, dateOfBirth, phoneNumber, website, country, and sex must be a string data type"),
 
-    try {
-        if (!req.body.data) throw new Error('bad request: no data was sent')
-        const body = JSON.parse(req.body.data)
+    body('email')
+        .trim()
+        .isEmail().withMessage('Must be a valid email.'),
+    ], authorization, async (req, res, next) => {
+        const { body: { displayImage, name, bio, dateOfBirth, email, phoneNumber, website, country, sex }, authorizeUser } = req
 
-        if (!body) throw new Error('bad request: empty field')
+        try {
+            const error = validationResult(req)
+            if (!error.isEmpty()) throw new Error(error.array().map((error) => error.msg + ' ').join('')) // if there is errors durring validating body throw error
 
-        //sanitized body
-        const sanitizedBody = {}
+            const updateUserData = await usersData.findOneAndUpdate({ userName: authorizeUser },  // update other user data
+                { displayImage, name, bio, dateOfBirth, email, phoneNumber, website, country, sex },
+                { new: true }
+            )
+            if (!updateUserData) throw new Error('bad request: user data was not updated')
 
-        if (req.image) {
-            sanitizedBody = {
-                displayImage: req.image,
-                name: body.name,
-                bio: body.bio,
-                dateOfBirth: body.dateOfBirth,
-                email: body.email,
-                phoneNumber: body.phoneNumber,
-                website: body.website,
-                country: body.country,
-                sex: body.sex,
-            }
-        } else {
-            sanitizedBody = {
-                name: body.name,
-                bio: body.bio,
-                dateOfBirth: body.dateOfBirth,
-                email: body.email,
-                phoneNumber: body.phoneNumber,
-                website: body.website,
-                country: body.country,
-                sex: body.sex,
-            }
+            res.json(updateUserData)
+
+        } catch (error) {
+
+            next(new customError(error, 400))
         }
 
-        // update other user data
-        const updateUserData = await usersData.findOneAndUpdate({ userName: authorizeUser },
-            { ...sanitizedBody },
-            { new: true }
-        )
-        if (!updateUserData) throw new Error('bad request: user data was not updated')
-
-        res.json(updateUserData)
-
-    } catch (error) {
-
-        next(new customError(error, 400))
-    }
-
-})
+    })
 
 router.delete('/deleteprofile', authorization, async (req, res, next) => {
     const { authorizeUser } = req

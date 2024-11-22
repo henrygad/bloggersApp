@@ -11,7 +11,12 @@ const usePatchData = () => {
             setLoading(true);
             setError('');
 
-            const response = await axios.patch(url, body);
+            const response = await axios.patch('https://localhost:3000' + url, body,
+                {
+                    baseURL: 'https://localhost:3000',
+                     withCredentials: true
+                 }
+            );
             const data: T = await response.data;
 
             if (data) {

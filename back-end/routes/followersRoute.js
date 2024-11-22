@@ -3,6 +3,21 @@ const authorization = require('../middlewares/authorization')
 const { customError } = require('../middlewares/error')
 const usersData = require('../schema/usersDataSchema')
 
+router.get('/followers', authorization, async (req, res, next) => {
+    const { authorizeUser } = req
+
+    try {
+
+        const getUser = await usersData.findOne({ userName: authorizeUser }) // get user
+        if (!getUser) throw new Error('Bad request: no user was found!') // error if user not found
+
+        res.json({ followers: getUser.followers })
+
+    } catch (error) {
+
+        next(new customError(error, 400))
+    }
+})
 
 router.patch('/follow/:userToFollow', authorization, async (req, res, next) => {
     const { params: { userToFollow }, authorizeUser } = req
@@ -27,15 +42,17 @@ router.patch('/follow/:userToFollow', authorization, async (req, res, next) => {
         )
         if (!followed.followers) throw new Error('Bad request: user was not followed')
 
-        // add the userName to follow to the login user following 
+        // add the userName to follow to the login user following and timeline
         const addFollowing = await usersData.findOneAndUpdate({ userName: authorizeUser },
             { $push: { following: followed.userName, timeline: followed.userName } },
             { new: true }
         )
         if (!addFollowing.following) throw new Error('Bad request: user was not added to login user following')
 
-        res.json({ followed: followed.userName })
+        res.json({ followed: userToFollow })
+
     } catch (error) {
+
         next(new customError(error, 400))
     }
 })
@@ -60,13 +77,12 @@ router.patch('/unfollow/:userToUnfollow', authorization, async (req, res, next) 
         if (!unFollowed.followers) throw new Error('Bad request: user not followed')
 
         // delete the user to unfollow from the login user following 
-        const removeFollowing = await usersData.findOneAndUpdate({ userName: authorizeUser },
+        await usersData.findOneAndUpdate({ userName: authorizeUser },
             { $pull: { following: unFollowed.userName, timeline: unFollowed.userName } },
-            {new: true}
-        )
-        if (!removeFollowing.following) throw new Error('Bad request: user was not remove from login user following')
+            { new: true })
 
-        res.json({ unFollowed: unFollowed.userName })
+        res.json({ unFollowed: userToUnfollow })
+
     } catch (error) {
 
         next(new customError(error, 400))

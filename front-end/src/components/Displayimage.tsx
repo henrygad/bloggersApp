@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 type Props = {
     id: string
-    imageUrl: string
+    imageId: string
+    imageUrl?: string
     onClick?: (e: React.MouseEvent<HTMLImageElement, MouseEvent>) => void
     parentClass: string
     imageClass: string
@@ -11,22 +12,24 @@ type Props = {
 
 const Displayimage = ({
     id,
+    imageId,
     imageUrl,
     parentClass,
     imageClass,
     placeHolder,
-    onClick 
+    onClick
 }: Props) => {
     const [imageLoading, setImageLoading] = useState(true);
 
     return <div className={`relative ${parentClass}`}>
         <img
             id={id}
-            src={imageUrl}
+            src={imageId ? 'https://localhost:3000/api/image/' + imageId : imageUrl ? imageUrl : ''}
             className={imageClass}
             style={{ width: '100%', height: '100%' }}
             onError={(e) => {
                 if (e.target instanceof HTMLImageElement) {
+                    setImageLoading(false)
                     e.target.src = placeHolder;
                 };
             }}

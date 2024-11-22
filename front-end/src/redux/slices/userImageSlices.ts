@@ -66,6 +66,7 @@ const userImage = createSlice({
             state.userBlogpostimage = action.payload;
         },
         addBlogpostImages: (state, action: { payload: Imageprops }) => {
+            console.log(action.payload)
             state.userBlogpostimage.data = [action.payload, ...state.userBlogpostimage.data];
         },
         deleteBlogpostImages: (state, action: { payload: { _id: string } }) => {

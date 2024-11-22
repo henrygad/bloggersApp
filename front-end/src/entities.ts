@@ -4,7 +4,7 @@ export type Userstatusprops = {
     loginUserName: string
     greetings?: string
     sessionId?: string
-    searchHistory: {_id: string, searched: string}[]
+    searchHistory: { _id: string, searched: string }[]
 }
 
 export type Login = {
@@ -43,10 +43,7 @@ export type Userprops = {
     interests: string[]
     notifications: Notificationsprops[]
     saves: string[]
-    archived: Blogpostprops[]
-    groupsIn: string[]
-    yourGroup: string[]
-    chat: string[]
+    drafts: Blogpostprops[]
 };
 
 export type Notificationsprops = {
@@ -73,6 +70,7 @@ export type Blogpostprops = {
     likes: string[]
     views: string[]
     shares: string[]
+    preStatus?: string
     status: string
     updatedAt: string
     createdAt: string
@@ -83,13 +81,11 @@ export type Commentprops = {
     authorUserName: string
     blogpostId: string
     parentId: string | null
-    children: Commentprops[]
+    children: string[]
     parentUrl: string
     body: { _html: string, text: string }
     commentIsAReplyTo: string[]
-    mentions: string
     likes: string[]
-    shares: string[]
     updatedAt: string
     createdAt: string
 };
@@ -101,3 +97,9 @@ export type Imageprops = {
     uploader: string,
     fieldname: string,
 };
+
+export type Searchresultprops = {
+    userSearchResults: UsershortInforprops[],
+    blogpostSearchResult: Blogpostprops[],
+    searchHistory: { _id: string, searched: string }[]
+  };

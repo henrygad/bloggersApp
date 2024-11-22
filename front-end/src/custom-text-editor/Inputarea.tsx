@@ -1,6 +1,6 @@
-import DOMPurify from "dompurify";
-import { addSpanToInputAreaIfEmpty, handleSpacialCharacters, handleWhenPasteIntoInputArea, selectedElement } from "./settings";
-import { textFormatCmd } from "./cmds";
+import { addSpanToInputAreaIfEmpty, handleSpacialCharacters, handleWhenPasteIntoInputArea } from "./settings";
+import { getSelection, textFormatCmd } from "./cmds";
+import { useSanitize } from "../hooks";
 
 type Props = {
   placeHolder: string,
@@ -28,11 +28,7 @@ const Inputarea = (
   }: Props
 ) => {
 
-  const sanitizeHTML = (html: string) => {
-    return {
-      __html: DOMPurify.sanitize(html)
-    };
-  };
+  const sanitizeHTML = useSanitize();
 
   const handleSpecialCharactersIsAvailable = (text: string) => {
     const getText = text.split('');
@@ -46,13 +42,22 @@ const Inputarea = (
   };
 
   const handleInsideSpecialCharacterElement = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const getselectedElement: HTMLAnchorElement = selectedElement() as HTMLAnchorElement
-    const elementClassName = getselectedElement?.className;
-    if (elementClassName?.includes('special-characters')) {
-      if (e.key.trim() === "" || e.key === 'Enter') {
-        getselectedElement.href = '#';
+    const selectedNode = getSelection()
+    if (!selectedNode) return
+
+    const { element } = selectedNode;
+
+    if (element) {
+      const getselectedElement: HTMLAnchorElement = element as HTMLAnchorElement
+      const elementClassName = getselectedElement?.className;
+      if (elementClassName?.includes('special-characters')) {
+        if (e.key.trim() === "" || e.key === 'Enter') {
+          getselectedElement.href = '#';
+        };
       };
+
     };
+
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -91,7 +96,11 @@ const Inputarea = (
       onInput={handleInput}
       onKeyDown={handleKeyDown}
       onPaste={(e) => { handleWhenPasteIntoInputArea(e); onInputAreaChange() }}
-      dangerouslySetInnerHTML={sanitizeHTML(`<span class="parent-span block ${InputClassName}">${!createNewText.IsNew && createNewText.content?._html.trim() !== "" ? createNewText.content?._html : `<span class="child-span editable block"><span class="editable block"><br></span></span>`}</span>`)}
+      dangerouslySetInnerHTML={sanitizeHTML(`<span class="parent-span block ${InputClassName}">${!createNewText.IsNew &&
+        createNewText.content?._html &&
+        createNewText.content._html.trim() !== "" ?
+        createNewText.content._html :
+        `<span class="child-span editable block"><span class="editable block"><br></span></span>`}</span>`)}
     >
     </div>
   </div>

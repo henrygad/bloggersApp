@@ -1,13 +1,15 @@
-import React, { SetStateAction, useEffect, useState } from 'react'
+import React, { SetStateAction, useState } from 'react'
 import Trythistexteditor from '../custom-text-editor/App'
 import { Button, Dialog, Displayimage, Fileinput, Input, Menu } from '../components';
 import displayImagePlaceHolder from '../assert/imageplaceholder.png'
-import { useDeleteData, useGetLocalMedia, usePatchData, usePostData } from '../hooks';
-import { Blogpostprops } from '../entities';
+import { useCreateImage, useDeleteData, useGetLocalMedia, useImageGalary, usePatchData, usePostData } from '../hooks';
+import { Blogpostprops, Imageprops } from '../entities';
 import { deleteAll } from '../custom-text-editor/settings';
 import { useAppDispatch } from '../redux/slices';
-import { archivedBlogposts, decreaseTotalNumberOfPublishedBlogposts, deleteArchivedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, increaseTotalNumberOfPublishedBlogposts, publishBlogpost, unpublishBlogposts } from '../redux/slices/userBlogpostSlices';
+import { decreaseTotalNumberOfPublishedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, editPublishedBlogpost, increaseTotalNumberOfPublishedBlogposts, publishBlogpost, unpublishBlogposts } from '../redux/slices/userBlogpostSlices';
+import { addDrafts, deleteDrafts, editDrafts } from '../redux/slices/userProfileSlices';
 import { addBlogpostImages } from '../redux/slices/userImageSlices';
+import Displayblogpostimagessec from './Displayblogpostimagessec';
 
 
 type Props = {
@@ -34,8 +36,8 @@ type Props = {
     setSlug: React.Dispatch<SetStateAction<string>>
     blogpostStatus: string,
     setBlogpostStatus: React.Dispatch<SetStateAction<string>>
-    imageFile: Blob | string
-    setImageFile: React.Dispatch<SetStateAction<Blob | string>>
+    blogpostPreStatus: string
+    setBlogpostPreStatus: React.Dispatch<SetStateAction<string>>
 };
 
 const Createblogpostsec = ({
@@ -56,18 +58,21 @@ const Createblogpostsec = ({
     setSlug,
     blogpostStatus,
     setBlogpostStatus,
-    imageFile,
-    setImageFile,
+    blogpostPreStatus,
+    setBlogpostPreStatus,
 }: Props) => {
     const [displayBlogpostImageDialog, setDisplayBlogpostImageDialog] = useState('');
     const [onGoingOperation, setOnGoingOperation] = useState('');
 
-    const { postData, loading: postLoading } = usePostData();
-    const { patchData, loading: editLoading } = usePatchData();
+    const { postData: postBlogpostData, loading: postLoading } = usePostData();
+    const { patchData: patchBlogpostData, loading: LoadingPatchBlogpostData } = usePatchData();
+    const { patchData: patchDraftData, loading: loadingPatchDraftData } = usePatchData();
     const { deleteData, loading: deleteLoaidng } = useDeleteData();
 
     const appDispatch = useAppDispatch();
     const getMedia = useGetLocalMedia();
+    const { createImage, loading: loaidngCreateImage, error: errorCreateImage, } = useCreateImage();
+    const { imageGalary, setImageGalary } = useImageGalary();
 
     const blogpostMenu = [
         {
@@ -75,8 +80,8 @@ const Createblogpostsec = ({
             content: <Button
                 id="add-new"
                 children={'Add new'}
-                buttonClass="test-base"
-                handleClick={() => handleAddNew()}
+                buttonClass={`test-base ${inputAreasStatus !== 'empty' ? '' : 'opacity-20 cursor-text'} `}
+                handleClick={() => { handleClearInputsArea() }}
             />
         },
         {
@@ -84,7 +89,7 @@ const Createblogpostsec = ({
             content: <Button
                 id="publish"
                 children={<>
-                    {!(postLoading || editLoading) ?
+                    {!(postLoading || LoadingPatchBlogpostData) ?
                         <span>Publish</span> :
                         <>{onGoingOperation === 'publish' ?
                             <span>creating blogpost...</span> :
@@ -92,23 +97,20 @@ const Createblogpostsec = ({
                         }</>
                     }
                 </>}
-                buttonClass={`test-base ${(blogpostStatus !== 'published' && inputAreasStatus === 'new') ||
-                    (blogpostStatus === 'published' && inputAreasStatus === 'editing') ||
-                    (blogpostStatus === 'unpublished' || (blogpostStatus === 'unpublished' && inputAreasStatus === 'editing')) ||
-                    (blogpostStatus === 'archived' && inputAreasStatus === 'old') ?
-                    ''
-                    : 'opacity-20'
-                    } `}
+                buttonClass={`test-base ${(inputAreasStatus !== 'empty' && blogpostStatus !== 'published') ||
+                    inputAreasStatus === 'editing' ?
+                    '' : 'opacity-20 cursor-text'} `}
                 handleClick={() => {
                     setOnGoingOperation('publish');
 
-                    if (inputAreasStatus === 'new' && blogpostStatus === 'archive') {
-                        handlePublish();
-                    } else if ((blogpostStatus === 'published' && inputAreasStatus === 'editing') ||
-                        (blogpostStatus === 'archived' && inputAreasStatus === 'old')) {
+                    if (inputAreasStatus === 'editing') {
                         handlePublishChanges(getBlogpostId);
                     } else if (blogpostStatus === 'unpublished') {
                         handleRepublish(getBlogpostId);
+                    } else if (blogpostStatus === 'draft') {
+                        handlePublishDraft()
+                    } else if (blogpostStatus !== 'published') {
+                        handldePublish();
                     };
                 }}
             />
@@ -118,61 +120,61 @@ const Createblogpostsec = ({
             content: <Button
                 id="delete"
                 children={<>
-                    {!deleteLoaidng ?
+                    {!(deleteLoaidng || loadingPatchDraftData) ?
                         <span>Delete</span> :
-                        <span>deleting blogpost...</span>
+                        <>{onGoingOperation === 'delete' ?
+                            <span>deleting blogpost...</span> :
+                            <span>Delete</span>
+                        }</>
                     }
                 </>}
-                buttonClass={`test-base ${blogpostStatus === 'published' ?
-                    '' :
-                    'opacity-20'
-                    } `}
-                handleClick={() => handleDeleteBlogpost(getBlogpostId, blogpostStatus)}
+                buttonClass={`test-base ${blogpostStatus === 'published' || blogpostStatus === 'draft' ? '' : 'opacity-20 cursor-text'} `}
+                handleClick={() => {
+                    setOnGoingOperation('delete');
+                    if (blogpostStatus === 'draft') {
+                        handleDeleteDraft(getBlogpostId, true);
+                    } else {
+                        handleDeleteBlogpost(getBlogpostId, blogpostStatus);
+                    };
+                }}
             />
         },
         {
             name: 'unpublish',
             content: <Button
-                id="delete"
+                id="unpublish"
                 children={<>
-                    {!editLoading ?
+                    {!LoadingPatchBlogpostData ?
                         <span>Unpublish</span> :
-                        <>{onGoingOperation === 'unpublish' ?
-                            <span>unpublishing blogpost...</span> :
-                            <span>Unpublish</span>
-                        }</>
+                        <>
+                            {onGoingOperation === 'unpublish' ?
+                                <span>unpublishing blogpost...</span> :
+                                <span>Unpublish</span>
+                            }
+                        </>
                     }
                 </>}
-                buttonClass={`test-base ${blogpostStatus === 'published' ?
-                    '' :
-                    'opacity-20'
-                    } `}
+                buttonClass={`test-base ${blogpostStatus === 'published' ? '' : 'opacity-20 cursor-text'} `}
                 handleClick={() => {
-                    setOnGoingOperation('unpublish');
-                    handleUnpublish(getBlogpostId);
+                    setOnGoingOperation('unpublish')
+                    handleUnpublish(getBlogpostId)
                 }}
             />
         },
         {
-            name: 'Archived',
+            name: 'Draft',
             content: <Button
-                id="archived"
-                children={<>
-                    {!(postLoading || editLoading) ?
-                        <span>Archived</span> :
-                        <>{onGoingOperation === 'archive' ?
-                            <span>Archived blogpost...</span> :
-                            <span>Archived</span>
-                        }</>
-                    }
-                </>}
-                buttonClass={`test-base ${inputAreasStatus === 'new' ||
-                    inputAreasStatus === 'editing'
-                    ? '' : 'opacity-20'
-                    } `}
+                id="draft"
+                children={<>{!loadingPatchDraftData ? 'Draft' : 'loading...'}</>}
+                buttonClass={`test-base ${inputAreasStatus !== 'empty' && inputAreasStatus !== 'old'
+                    ? '' : 'opacity-20 cursor-text'} `}
                 handleClick={() => {
-                    setOnGoingOperation('archive')
-                    handleArchived(getBlogpostId);
+                    if (inputAreasStatus !== 'empty' &&
+                        inputAreasStatus !== 'old') {
+                        setOnGoingOperation('draft');
+                        if (blogpostStatus !== 'draft') handleAddDraft('new');
+                        else handleAddDraft('edit');
+                    };
                 }}
             />
         },
@@ -182,19 +184,19 @@ const Createblogpostsec = ({
         return slug.split(' ').join(slugPertern);
     };
 
-    const handleAddNew = () => {
+    const handleClearInputsArea = () => {
         setGetBlogpostId('');
         setTitleContent({ _html: '', text: '' });
         setBodyContent({ _html: '', text: '' });
         setDisplayImage('');
-        setImageFile('');
         setCatigory('');
         setSlug('');
 
         setDisplayBlogpostImageDialog('');
 
         setInputAreasStatus('empty');
-        setBlogpostStatus('archive');
+        setBlogpostStatus('');
+        setBlogpostPreStatus('');
 
         const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div on page
         contentEditAbleELe.forEach((element) => {
@@ -202,51 +204,33 @@ const Createblogpostsec = ({
         });
     };
 
-    const createNewBlogpost = async (status: string) => {
-        if (!slug && blogpostStatus !== 'archived' && inputAreasStatus !== 'new') return;
-
+    const handldePublish = async () => {
+        if (!slug) return;
         const url = '/api/addblogpost';
         const body = {
+            displayImage,
             title: titleContent?.text,
             body: bodyContent?.text,
             _html: { title: titleContent?._html, body: bodyContent?._html },
             catigory,
             slug,
-            status,
+            status: 'published',
         };
 
-        const formData = new FormData();
-        formData.append('blogpostimage', imageFile);
-        formData.append('data', JSON.stringify(body));
-
-        postData<Blogpostprops>(url, formData)
+        postBlogpostData<Blogpostprops>(url, body)
             .then((res) => {
                 const { data } = res;
                 if (data) {
-                    if (data.status === 'archived') appDispatch(archivedBlogposts(data));
                     if (data.status === 'published') {
                         appDispatch(publishBlogpost(data));
                         appDispatch(increaseTotalNumberOfPublishedBlogposts(1))
                     };
-                    
+
                     setGetBlogpostId(data._id)
-                    setBlogpostStatus(status);
-                    setInputAreasStatus('old');
+                    setBlogpostStatus('published');
+                    setInputAreasStatus('empty');
                 };
             });
-    };
-
-    const handlePublish = () => {
-        createNewBlogpost('published');
-    };
-
-    const handleArchived = (_id: string) => {
-        if (blogpostStatus === 'published') {
-            editBlogpost(_id, 'archived');
-            appDispatch(decreaseTotalNumberOfPublishedBlogposts(1));
-        } else {
-            createNewBlogpost('archived');
-        };
     };
 
     const editBlogpost = async (_id: string, status: string) => {
@@ -254,6 +238,7 @@ const Createblogpostsec = ({
 
         const url = '/api/editblogpost/' + _id;
         const body = {
+            displayImage,
             title: titleContent?.text,
             body: bodyContent?.text,
             _html: { title: titleContent?._html, body: bodyContent?._html },
@@ -262,27 +247,23 @@ const Createblogpostsec = ({
             status,
         };
 
-        const formData = new FormData();
-        formData.append('blogpostimage', imageFile);
-        formData.append('data', JSON.stringify(body));
-
-        await patchData<Blogpostprops>(url, formData)
+        await patchBlogpostData<Blogpostprops>(url, body)
             .then((res) => {
                 const { data } = res;
                 if (data) {
 
-                    if (data.status === 'archived') appDispatch(archivedBlogposts(data));
                     if (data.status === 'published') {
-                        appDispatch(publishBlogpost(data));
+                        appDispatch(editPublishedBlogpost(data));
                         appDispatch(increaseTotalNumberOfPublishedBlogposts(1))
+                        setInputAreasStatus('empty');
                     };
                     if (data.status === 'unpublished') {
                         appDispatch(unpublishBlogposts(data));
                         appDispatch(decreaseTotalNumberOfPublishedBlogposts(1))
+                        setInputAreasStatus('old');
                     };
                     setGetBlogpostId(data._id)
-                    setBlogpostStatus(status);
-                    setInputAreasStatus('old');
+                    setBlogpostStatus(data.status);
                 };
 
             }).catch((error) => {
@@ -290,11 +271,10 @@ const Createblogpostsec = ({
             });
     };
 
-    const handlePublishChanges = (_id: string) => {
-        if ((blogpostStatus === 'published' && inputAreasStatus === 'editing') ||
-            (blogpostStatus === 'archived' && inputAreasStatus === 'old')
-        ) {
-            editBlogpost(_id, 'published');
+    const handlePublishChanges = async (_id: string) => {
+        if ((blogpostStatus === 'published' &&
+            inputAreasStatus === 'editing') || blogpostStatus === 'draft') {
+            await editBlogpost(_id, 'published');
         };
     };
 
@@ -308,21 +288,79 @@ const Createblogpostsec = ({
 
     const handleDeleteBlogpost = async (_id: string, status: string) => {
         const url = '/api/deleteblogpost/' + _id;
-
         await deleteData(url)
             .then((data) => {
 
                 appDispatch(deletePublishedBlogpost({ _id }));
-                appDispatch(deleteArchivedBlogposts({ _id }));
                 appDispatch(deleteUnpublishedBlogposts({ _id }));
-                if(status === 'published') appDispatch(decreaseTotalNumberOfPublishedBlogposts(1));
-                handleAddNew();
+                if (status === 'published') appDispatch(decreaseTotalNumberOfPublishedBlogposts(1));
+                handleClearInputsArea();
             })
             .catch((error) => {
                 console.log(error);
             });
     };
 
+    const handlePublishDraft = async () => {
+        setOnGoingOperation('publish');
+        if (blogpostPreStatus === 'published' ||
+            blogpostPreStatus === 'unpublished'
+        ) {
+            await handlePublishChanges(getBlogpostId);
+        } else {
+            await handldePublish();
+        };
+
+        await handleDeleteDraft(getBlogpostId, false);
+    };
+
+    const handleAddDraft = async (type: string) => {
+        if (!slug) return;
+        const url = '/api/profile/drafts/add';
+        const copy = {
+            _id: getBlogpostId,
+            displayImage,
+            title: titleContent?.text,
+            body: bodyContent?.text,
+            _html: { title: titleContent?._html, body: bodyContent?._html },
+            catigory,
+            slug,
+            preStatus: blogpostStatus,
+            status: 'draft',
+        };
+
+        await patchDraftData<Blogpostprops>(url, copy)
+            .then((res) => {
+                const { data } = res;
+                if (data) {
+                    if (type === 'new') appDispatch(addDrafts(data));
+                    else appDispatch(editDrafts(data));
+                    setGetBlogpostId(data._id);
+                    setBlogpostStatus('draft');
+                    setInputAreasStatus('empty');
+                };
+            });
+    };
+
+    const handleDeleteDraft = async (_id: string, clearInput?: boolean) => {
+        const url = '/api/profile/drafts/delete';
+        const copy = { _id };
+
+        await patchDraftData<Blogpostprops>(url, copy)
+            .then((data) => {
+                if (data) {
+                    console.log(data)
+                    appDispatch(deleteDrafts({ _id }));
+                    setBlogpostStatus('deleted');
+                    setInputAreasStatus('empty');
+                    clearInput && handleClearInputsArea();
+                } else {
+                    console.log('didt delete')
+                }
+            });
+    };
+
+   
     return <div className='font-text space-y-6'>
         {/* blog post menus */}
         <Menu
@@ -365,11 +403,11 @@ const Createblogpostsec = ({
             {/* img */}
             <Displayimage
                 id='blogpost-display-img'
-                imageUrl={displayImage || ''}
+                imageId={displayImage}
                 parentClass='h-[60px] w-[60px]'
                 imageClass='object-fit border-2 rounded cursor-pointer'
                 placeHolder={displayImagePlaceHolder}
-                onClick={() => setDisplayBlogpostImageDialog('displayBlogpostImageDialog')}
+                onClick={() => setDisplayBlogpostImageDialog('blogpost-image-dialog')}
             />
             <div id='catigory-perlink' className='flex justify-between gap-3 '>
                 {/* catigory */}
@@ -440,21 +478,20 @@ const Createblogpostsec = ({
                 }}
             />
         </div>
-        {/* run display blog post image dialog */}
         <Dialog
-            id='textarea-dialog'
+            id='change-image-dialog-for-blogpost-display-image'
             parentClass="flex justify-center items-center"
-            childClass=""
-            currentDialog={'displayBlogpostImageDialog'}
+            childClass="-mt-60"
+            currentDialog={'blogpost-image-dialog'}
             dialog={displayBlogpostImageDialog}
-            setDialog={setDisplayBlogpostImageDialog}
+            setDialog={()=>  setDisplayBlogpostImageDialog('')}
             children={
                 <div className='flex justify-around items-center gap-4 min-w-[280px] md:min-w-[480px] min-h-[140px] border-2 shadow rounded-md'>
                     <Button
-                        children="Form library"
+                        id="choose-image-from-library"
                         buttonClass=""
-                        id=""
-                        handleClick={() => ''}
+                        children="Form library"
+                        handleClick={() => setImageGalary({ displayImageGalary: 'blogpost-images-1', selectedImages: [] })}
                     />
                     <Fileinput
                         id="computer"
@@ -465,13 +502,16 @@ const Createblogpostsec = ({
                             getMedia({
                                 files: value,
                                 fileType: 'image',
-                                getValue: ({ url, file }) => {
-                                    setDisplayImage(url.toString());
-                                    setImageFile(file)
+                                getValue: async ({ dataUrl, tempUrl, file }) => {
+                                    const image: Imageprops | null = await createImage({ fieldname: 'blogpostimage', file, url: '/api/image/blogpostimage/add' });
+                                    if (image) {
+                                        setDisplayImage(image._id);
+                                        appDispatch(addBlogpostImages(image))
 
-                                    if ((blogpostStatus === 'published' || blogpostStatus === 'unpublished') &&
-                                        (displayImage.trim() !== url.trim())) { // check for change in displayimage after puplishing 
-                                        setInputAreasStatus('editing');
+                                        if ((blogpostStatus === 'published' || blogpostStatus === 'unpublished') &&
+                                            (displayImage.trim() !== image._id.trim())) { // check for change in displayimage after puplishing 
+                                            setInputAreasStatus('editing');
+                                        };
                                     };
                                 },
                             });
@@ -480,6 +520,39 @@ const Createblogpostsec = ({
                     />
                 </div>
             }
+        />
+        <Dialog
+            id="blogpost-image-galary-dialog-1"
+            parentClass=""
+            childClass="container relative w-full h-full py-10"
+            currentDialog="blogpost-images-1"
+            dialog={imageGalary.displayImageGalary === 'blogpost-images-1' ? 'blogpost-images-1' : ''}
+            setDialog={()=> null}
+            children={<>
+                <Displayblogpostimagessec selection={true} />
+                <div className='absolute bottom-1 right-1 flex items-center gap-6'>
+                    <Button
+                        id='add-selected-image-galary-btn'
+                        buttonClass='text-white px-2.5 py-1.5 rounded bg-green-800'
+                        children={`(${imageGalary.selectedImages?.length || 0}) Add`}
+                        handleClick={() => { 
+                            if(imageGalary.selectedImages?.length == 0) return;
+                            setDisplayImage(imageGalary.selectedImages[0]);
+                            setImageGalary({selectedImages: [], displayImageGalary: ''}); 
+                            setDisplayBlogpostImageDialog('');
+                        }}
+                    />
+                    <Button
+                        id='close-image-galary-btn'
+                        buttonClass='text-white px-2 py-1.5 rounded bg-red-800'
+                        children={'Close'}
+                        handleClick={() => {
+                            setImageGalary({ displayImageGalary: '', selectedImages: [] });
+                            setDisplayBlogpostImageDialog('displayBlogpostImageDialog');
+                        }}
+                    />
+                </div>
+            </>}
         />
     </div>
 };

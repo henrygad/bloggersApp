@@ -62,7 +62,7 @@ const Video = ({
                                     getMedia({
                                         files: value,
                                         fileType: 'video',
-                                        getValue: ({data, url, file }) => {
+                                        getValue: ({dataUrl, tempUrl, file }) => {
                                             const maxSizeInMB = 2;
                                             const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
 
@@ -71,12 +71,12 @@ const Video = ({
 
                                                 setVideoName('');
                                                 setVideoUrl('');
-                                                setVideoFileUrl(data.toString());
+                                                setVideoFileUrl(dataUrl.toString());
                                             }else {
                                                 const fileObj = file as Blob & { name: string };
                                                 setVideoName(fileObj.name);
                                                 setVideoUrl('');
-                                                setVideoFileUrl(data.toString());
+                                                setVideoFileUrl(dataUrl.toString());
                                             };
                                             
                                         },

@@ -25,14 +25,15 @@ export const getSelection = () => {
 };
 
 export const resetSelections = (selection: Selection, range: Range, element: HTMLElement | Text, setType: string = 'start') => {
-    selection.removeAllRanges(); // remove selectionif
     if (setType === 'end') {
         range.setEndBefore(element); // set position of caret just before the end of the element
     } else {
-        range.setStart(element, 0); // set position of caret inside the element
+        range.setStart(element, element.childNodes.length); // set position of caret inside the element
     };
+    //range.collapse(true) // collapses the range so that it becomes a caret positioned
+    selection.removeAllRanges(); // clear existing selections.
     selection.addRange(range); // add the range object to the selection
-    selection.collapseToEnd(); // remove the selection highlight 
+    selection.collapseToEnd(); // collapse selection highlight to caret
 };
 
 export const insertSingleElementToTheDOM = (ele: HTMLElement | Text, range: Range, selection: Selection, setType?: string) => {
@@ -135,9 +136,21 @@ export const textFormatCmd = (command: string, value: string[]) => {
 
 export const alignTextCmd = (value: string[]) => {
     const selectedNode = getSelection(); // get the selected node properties
+    if (!selectedNode) return // return if no node was selected
 
-    if (selectedNode) {
-        const { element } = selectedNode;
+    const { range, element } = selectedNode;
+    const nodes = getMultipleSelectedNodes(range) // get all the selected nodes
+
+    if (nodes.length) {
+        nodes.forEach((nodes) => {
+            const nodeElement = nodes.parentElement;
+            if (nodeElement?.classList.contains('editable')) { // node element must be editable
+                nodeElement.classList.remove('flex', 'block', 'text-left', 'text-center', 'text-right')
+                nodeElement.classList.add(...value); // add display block class names and other class name
+            };
+        });
+
+    } else {
         if (element?.classList.contains('editable')) { // element must be editable
             element.classList.remove('block', 'text-left', 'text-center', 'text-right')
             element.classList.add(...value); // add display block class names and other class name
@@ -186,8 +199,11 @@ export const emojiCmd = (emoji: string) => {
 
     if (selectedNode) {
         const { selection, range, element } = selectedNode;
+
         if (element?.classList.contains('editable') ||
             element?.classList.contains('codeChild')) {
+
+            console.log(emoji)
 
             const textNode = document.createTextNode(emoji); // create text node and insert emoji in the caret position
             insertSingleElementToTheDOM(textNode, range, selection); // insert emoji to the DOM

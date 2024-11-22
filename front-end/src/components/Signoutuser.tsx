@@ -1,22 +1,24 @@
 import { Userstatusprops } from "../entities";
 import { usePostData, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
-import { deleteProfile } from "../redux/slices/userProfileSlices";
+import { clearProfile } from "../redux/slices/userProfileSlices";
 import Button from "./Button";
+import Cookies from 'js-cookie';
 
 const Signoutuser = () => {
     const { postData, } = usePostData();
-    const {setLoginStatus } = useUserIsLogin();
+    const { setLoginStatus } = useUserIsLogin();
     const appDispatch = useAppDispatch();
 
     const handleLogOut = async () => {
         const url = '/api/logout';
         const response = await postData<Userstatusprops>(url, null);
-        const { ok, data } = response;
+        const { data } = response;
 
-        if (ok && data) {
+        if (data) {
+            Cookies.remove('blogbackclient');
             setLoginStatus((pre) => pre ? { ...pre, ...data } : pre);
-            appDispatch(deleteProfile({ data: null, loading: true, error: '' }));
+            appDispatch(clearProfile({ data: null, loading: true, error: '' }));
         };
     };
 

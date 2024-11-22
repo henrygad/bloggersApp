@@ -1,34 +1,34 @@
 import { useEffect, useState } from "react";
 
-const useTrimWords = (words: string, numOfWords: number) => {
+const useTrimWords = (words: string, numOfWordsToDisplay: number) => {
     const [trimedWords, setTrimedWords] = useState('');
-    const [trimedWordsDone, setTrimedWordsDone] = useState(false);
+    const [totalNumOfWords, setTotalNumOfWords] = useState(0);
 
-    const trimWords = (words: string, numOfWords: number) => {
-        const rawText = words.split(' ')
+    const trimWords = (words: string, numOfWordsToDisplay: number) => {
+        const rawText = words
+            .split(' ')
             .map((text, index) => {
-                if (index < numOfWords) {
+                if (index < numOfWordsToDisplay) {
                     return text;
                 } else {
                     return;
                 };
             });
 
-        const newText = rawText.join(' ');
-
-        setTrimedWords(newText);
-        setTrimedWordsDone(() => numOfWords >= rawText.length);
+        setTrimedWords(rawText.join(' '));
+        setTotalNumOfWords(rawText.length);
     };
 
     useEffect(() => {
-        words.trim() &&
-            numOfWords && trimWords(words, numOfWords);
+        if(words.trim() && numOfWordsToDisplay){
+            trimWords(words, numOfWordsToDisplay);
+        };
     }, []);
 
     return {
-        trimWords: (updatedNumOfWords: number) => trimWords(words, updatedNumOfWords),
+        updateNoOfWwords: (updatedNumOfWords: number) => trimWords(words, updatedNumOfWords),
         trimedWords,
-        trimedWordsDone
+        totalNumOfWords
     };
 };
 

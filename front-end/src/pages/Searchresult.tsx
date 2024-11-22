@@ -1,22 +1,15 @@
 import { useLocation } from "react-router-dom";
 import { useFetchData, useUserIsLogin } from "../hooks";
-import { Blogpostprops, UsershortInforprops } from "../entities";
-import { Button, Menu, Singleblogpost, Tab, UsershortInfor } from "../components";
+import { Searchresultprops} from "../entities";
+import { Button, Menu, Searchform, Singleblogpost, Tab, UsershortInfor } from "../components";
 import { useEffect, useState } from "react";
-
-type Searchresult = {
-  userSearchResults: UsershortInforprops[],
-  blogpostSearchResult: Blogpostprops[],
-  searchHistory: { _id: string, searched: string }[]
-};
 
 const Searchresult = () => {
   const location: { state: { getSearchInput: null } } = useLocation()
   const { getSearchInput } = location.state;
   const { setLoginStatus } = useUserIsLogin();
   const { data: searchResult, loading: loadingSearchResult } =
-    useFetchData<Searchresult>(getSearchInput ? `/api/search?title=${getSearchInput}&body=${getSearchInput}&catigory=${getSearchInput}&userName=${getSearchInput}&name=${getSearchInput}` : '', [getSearchInput]);
-
+    useFetchData<Searchresultprops>(getSearchInput ? `/api/search?title=${getSearchInput}&body=${getSearchInput}&catigory=${getSearchInput}&userName=${getSearchInput}&name=${getSearchInput}` : '', [getSearchInput]);
   const [searchResultCurrentTab, setSearchResultCurrentTab] = useState('allresults');
 
   const searchTabMenu = [
@@ -58,7 +51,12 @@ const Searchresult = () => {
     };
   }, [searchResult?.searchHistory]);
 
-  return <div className="mt-5 space-y-5">
+  return <div className="space-y-5">
+    <div id="search-form-wrapper" className="relative flex justify-center items-center">
+      <div className="absolute -top-8">
+        <Searchform />
+      </div>
+    </div>
     <div id="search-result-menu" className="border-b" >
       <Menu
         id={'search-tab-menu'}

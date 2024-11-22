@@ -4,6 +4,8 @@ import Input from './Input';
 import tw from 'tailwind-styled-components';
 import { Userstatusprops } from '../entities';
 import Button from './Button';
+import Cookies from 'js-cookie';
+
 
 type Props = {
     switchPages: () => void
@@ -16,6 +18,13 @@ const Signinuser = ({ switchPages, closePages }: Props) => {
     const { postData, loading, error } = usePostData()
 
     const { setLoginStatus } = useUserIsLogin();
+    const setCookie = (myCookieValue: string) => { // create cookies to keep user login
+        Cookies.set('blogbackclient', myCookieValue, {
+            expires: 1, // Cookie expires in 1 days
+            secure: true, // Ensures the cookie is only sent over HTTPS
+            sameSite: 'Strict', // Prevents cross-site request forgery (adjust as needed)
+        });
+    };
 
     const handleSignInUser = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -26,6 +35,7 @@ const Signinuser = ({ switchPages, closePages }: Props) => {
             .then((res) => {
                 const { data, ok } = res;
                 if (ok && data) {
+                    setCookie(data.loginUserName);
                     setLoginStatus({ ...data });
                     setValue('');
                     setPassWord('');
@@ -40,8 +50,11 @@ const Signinuser = ({ switchPages, closePages }: Props) => {
     return <form
         action=""
         onSubmit={handleSignInUser}
-        className='space-y-6'
+        className='space-y-12'
     >
+        <span className="block text-4xl font-primary capitalize mt-2 text-center">
+            Wellcome back!
+        </span>
         <Inputwrapper >
             <span className='block text-2xl font-primary text-center capitalize'>Log In</span>
             <Input
@@ -54,7 +67,7 @@ const Signinuser = ({ switchPages, closePages }: Props) => {
                 setValue={(value) => setValue(value as string)}
                 error={{
                     isTrue: (error?.trim() !== '' ? true : false),
-                    errorMsg: error.replace('Error:', '')
+                    errorMsg: ''
                 }}
             />
             <Input
@@ -67,16 +80,25 @@ const Signinuser = ({ switchPages, closePages }: Props) => {
                 setValue={(value) => setPassWord(value as string)}
                 error={{
                     isTrue: (error?.trim() !== '' ? true : false),
-                    errorMsg: error.replace('Error:', '')
+                    errorMsg: ''
                 }}
             />
-            <Button
-                id='signin-user-btn'
-                buttonClass='w-full font-bold text-white bg-green-500 p-3 border shadow-md shadow-green-200'
-                children={loading ? "loading..." : "Log in"}
+            <span id='btn' className='block'>
+                <Button
+                    id='signin-user-btn'
+                    buttonClass='w-full font-bold text-white bg-green-800 rounded-md p-3 shadow-md'
+                    children={loading ? "loading..." : "Log in"}
 
-            />
-            <span className='block text-sm text-center hover:text-green-500 transition-colors cursor-pointer  '>
+                />
+                <ol className='list-decimal py-1' >
+                    {[...new Set(error.replace('Error:', '').split('.'))].map((error) =>
+                        <li key={error} className='block text-red-500 text-sm text-wrap'>
+                            {error}
+                        </li>
+                    )}
+                </ol>
+            </span>
+            <span className='block text-sm text-center hover:text-green-500 transition-colors cursor-pointer'>
                 Forget password
             </span>
         </Inputwrapper>

@@ -4,6 +4,9 @@ import { useNotification, usePatchData, useUserIsLogin } from "../hooks";
 import Dialog from "./Dialog";
 import UsershortInfor from "./UsershortInfor";
 import Userdotnav from "./Userdotnav";
+import { SlLike } from "react-icons/sl";
+import Singleuser from "./Singleuser";
+import { IoMdArrowRoundBack } from "react-icons/io";
 
 type Props = {
     parentId: string
@@ -49,16 +52,16 @@ const Likebutton = ({
 
     const handlelike = async (apiForLike: string) => {
         if (liked) return;
+        setLiked(true);
+
         const url = apiForLike;
         const body = null;
 
-        const response = await patchData<{likes: string[]}>(url, body);
-        const { data, ok } = response;
+        const response = await patchData<{ like: string }>(url, body);
+        const { data } = response;
 
         if (data) {
-            setLikes(data.likes);
-            setLiked(true);
-
+            setLikes(pre => pre ? [...pre, data.like] : pre);
             handleNotification();
         };
 
@@ -66,14 +69,16 @@ const Likebutton = ({
 
     const handleUnlike = async (apiForUnlike: string) => {
         if (!liked) return;
+        setLiked(false);
+
         const url = apiForUnlike;
         const body = null;
 
-        const response = await patchData<{likes: string[]}>(url, body);
-        const { data, ok } = response;
+        const response = await patchData<{ unlike: string }>(url, body);
+        const { data } = response;
 
         if (data) {
-            setLikes(data?.likes);
+            setLikes(pre => pre.filter(like => like !== data.unlike));
             setLiked(false);
         };
     };
@@ -85,7 +90,7 @@ const Likebutton = ({
         const url = '/api/notification/' + userNameToNotify;
         const body = {
             typeOfNotification: liking,
-            msg: `liked your ${liking.includes('blogpost') ? 'blogpost' : 'comment'}, ${notificationTitle}`,
+            msg: `liked your ${liking.includes('blogpost') ? 'blogpost' : 'comment'}, <span class="underline">${notificationTitle}</span>`,
             url: notificationUrl,
             notifyFrom: loginUserName,
         };
@@ -94,81 +99,75 @@ const Likebutton = ({
     };
 
     useEffect(() => {
-        setLiked((likes).includes(loginUserName));
-    }, [
-        likes,
-        loginUserName,
-    ]);
+        if (likes && loginUserName) {
+            setLiked(likes.includes(loginUserName));
+        }
+    }, [likes, loginUserName]);
 
     useEffect(() => {
-        setTimeout(() => {
-            setToggleLikesDialog(autoOpenTargetLike?.autoOpen ? autoOpenTargetLike?.commentId : ' ')
-        }, 1000);
-
-        setTargetLike(autoOpenTargetLike?.autoOpen ? autoOpenTargetLike?.like : ' ');
-
-        setTimeout(() => {
-            setTargetLike(' ');
-        }, 2000);
-    }, [
-        autoOpenTargetLike?.autoOpen,
-        autoOpenTargetLike?.commentId
-    ])
+        /*   setToggleLikesDialog(autoOpenTargetLike?.autoOpen ?
+              autoOpenTargetLike?.commentId :
+              ' '
+          );
+          setTargetLike(autoOpenTargetLike?.autoOpen ?
+              autoOpenTargetLike?.like :
+              ' '
+          );
+          setTimeout(() => {
+              setTargetLike(' ');
+          }, 3000);
+   */
+    }, [autoOpenTargetLike]);
 
     return <div>
-        <div>
-            <Button
-                id='like-btn'
-                children={<>
-                    {
-                        (!loadingLike ?
-                            (!liked ?
-                                'like' :
-                                'liked') :
-                            'loading...')
-                    }
-                    : <span className="bg-blue-200 P-1" onClick={(e) => { setToggleLikesDialog(parentId); e.stopPropagation() }} >
-                        {likes ? likes.length : 0}
-                    </span>
-                </>
-                }
-                buttonClass="text-sm border px-1 rounded-md"
-                handleClick={() => { !liked ? handlelike(apiForLike) : handleUnlike(apiForUnlike) }}
-            />
-        </div>
-        <div>
-            <Dialog
-                id='blogpost-like-dialog'
-                parentClass='flex justify-center'
-                childClass=' w-full min-w-[280px] sm:min-w-[320px] max-w-[768px] overflow-y-scroll max-h-screen pb-[200px]'
-                currentDialog={parentId}
-                dialog={toggleLikesDialog}
-                setDialog={setToggleLikesDialog}
-                children={
-                    <div className="flex flex-col items-center gap-4 py-2">
-                        <span>{likes ? likes.length : 0} : likes</span>
-                        <div>
-                            {likes &&
-                                likes.length ?
-                                <>
-                                    {likes.map((item, index) =>
-                                        <div
-                                            key={item}
-                                            className={` relative  ${index % 2 == 0 ? 'border-b rounded-md' : 'border-none'}  ${targetLike === item ? 'bg-red-50' : ''} `} >
-                                            <div className="pr-12 py-3">
-                                                <UsershortInfor userName={item} />
-                                            </div>
-                                            <Userdotnav userName={item} />
-                                        </div>
-                                    )}
-                                </> :
-                                <div>be the first to like</div>
-                            }
-                        </div>
+        <Button
+            id='like-btn'
+            buttonClass="flex gap-2"
+            children={<>
+                <SlLike size={20} color={`${!liked ? '' : 'red'}`} />
+                <span onClick={(e) => { setToggleLikesDialog(parentId); e.stopPropagation() }} >
+                    {likes?.length || 0}
+                </span>
+            </>
+            }
+            handleClick={() => { !liked ? handlelike(apiForLike) : handleUnlike(apiForUnlike) }}
+        />
+        <Dialog
+            id='blogpost-like-dialog'
+            parentClass=''
+            childClass='container relative rounded-sm space-y-2 w-full h-full bg-white dark:bg-stone-800 dark:text-white py-4'
+            currentDialog={parentId}
+            dialog={toggleLikesDialog}
+            setDialog={setToggleLikesDialog}
+            children={
+                <>
+                    <div className="flex gap-2 items-center">
+                        <Button
+                            id="return-black"
+                            buttonClass=""
+                            children={<IoMdArrowRoundBack size={20} />}
+                            handleClick={() => setToggleLikesDialog(' ')}
+                        />
+                        <span id="search-history-title" className="text-xl font-semibold">
+                            Likes
+                        </span>
                     </div>
-                }
-            />
-        </div>
+                    <div className="w-full h-full max-h-full overflow-y-auto">
+                        {likes &&
+                            likes.length ?
+                            <>
+                                {likes.map((item, index) =>
+                                    <div key={item} className={targetLike === item ? 'bg-red-50' : ''} >
+                                        <Singleuser userName={item} index={index} />
+                                    </div>
+                                )}
+                            </> :
+                            <div>be the first to like</div>
+                        }
+                    </div>
+                </>
+            }
+        />
     </div>
 };
 

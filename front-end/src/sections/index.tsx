@@ -7,13 +7,13 @@ import Advatersec from "./Avatersec";
 import Followerssec from "./Followerssec";
 import Followingsec from "./Followingsec";
 import Interentssec from "./Interentssec";
-import Archiveds from "./Archiveds";
+import Drafts from "./Drafts";
 import Unpublisheds from "./Unpublisheds";
 import Displayblogpostimagessec from "./Displayblogpostimagessec";
 
 export {
     Displayblogpostimagessec,
-    Archiveds,
+    Drafts,
     Unpublisheds,
     Followerssec,
     Followingsec,

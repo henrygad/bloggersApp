@@ -46,7 +46,7 @@ const Selectinput = ({
                         key={item}
                         className={`block text-start w-full first-letter:capitalize
                            ${animation ? 
-                            `hover:text-white hover:bg-green-200 transition-colors ${selectedValue.trim().toLocaleLowerCase() === item.trim().toLocaleLowerCase() ?
+                            `hover:text-white hover:bg-green-200 transition-colors ${selectedValue?.trim().toLocaleLowerCase() === item?.trim().toLocaleLowerCase() ?
                                     'bg-green-400' :
                                     ' '}  ` :
                                 ''

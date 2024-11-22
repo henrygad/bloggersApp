@@ -12,8 +12,13 @@ const usePostData = () => {
         try {
             setLoading(true);
             setError('');
-
-            const res = await axios.post(url, body);
+        
+            const res = await axios.post('https://localhost:3000' + url, body, 
+                {
+                   baseURL: 'https://localhost:3000',
+                    withCredentials: true
+                }
+            );
 
             if (res.data &&
                 Object.keys(res.data)) {

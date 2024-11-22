@@ -2,9 +2,13 @@ import { useState } from "react";
 import Dropdownmenuwrapper from "../assests/Dropdownmenuwrapper";
 import { imageCmd } from "../cmds";
 import { Button, Dialog, Displayimage, Fileinput, Input } from "../../components";
-import { useGetLocalMedia, usePostData } from "../../hooks";
+import { useCreateImage, useGetLocalMedia, useImageGalary, } from "../../hooks";
 import { RiFolderImageLine } from "react-icons/ri";
 import addImagIcon from '../assests/add-image.svg';
+import { Imageprops } from "../../entities";
+import { addBlogpostImages } from "../../redux/slices/userImageSlices";
+import { useAppDispatch } from "../../redux/slices";
+import { Displayblogpostimagessec } from "../../sections";
 
 type Props = {
     onInputAreaChange: () => void
@@ -17,39 +21,31 @@ const Image = ({
     openDropDownMenu,
     setOpenDropDownMenu,
 }: Props) => {
-    const { postData: postImageData } = usePostData();
+
     const [displayTextEditorImageDialog, setDisplayTextEditorImageDialog] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
+    const [inputUrl, setInputUrl] = useState('');
     const [imageFileUrl, setImageFileUrl] = useState('');
     const [imageHeight, setImageHeight] = useState(100);
     const [imageWight, setImageWight] = useState(100);
     const [imagePosition, setImagePosition] = useState('object-contain');
     const [imageAlt, setImageAlt] = useState('');
-    const getMedia = useGetLocalMedia();
 
-    const handleInsertImage = (imageUrl: string, alt: string, imageHeight: string, imageWight: string, value: string[]) => {
-        if (!imageUrl) return;
-        imageCmd(imageUrl, alt, imageHeight, imageWight, value);
+    const getMedia = useGetLocalMedia();
+    const { createImage, loading, error } = useCreateImage();
+    const appDispatch = useAppDispatch();
+
+    const { imageGalary, setImageGalary } = useImageGalary();
+
+    const handleInsertImage = (inputUrl: string, alt: string, imageHeight: string, imageWight: string, value: string[]) => {
+        if (!inputUrl) return;
+        imageCmd(inputUrl, alt, imageHeight, imageWight, value);
         onInputAreaChange();
         setOpenDropDownMenu('');
     };
 
-    const handleSaveImage = (file: Blob) => {
-        const url = '/api/addimage';
-        const form = new FormData();
-        form.append('blogpostimage', file);
-        postImageData<{ imageId: string }>(url, form)
-            .then((res) => {
-                const { data, ok } = res;
-                if (data) {
-                    console.log(data);
-                };
-            })
-            .catch((res) => {});
-    };
-
     return <div id='texteditor-add-image'>
-        <button className='block cursor-pointer' onClick={() => setOpenDropDownMenu(openDropDownMenu === 'image' ? '' : 'image')}>
+        <button className='block cursor-pointer'
+            onClick={() => setOpenDropDownMenu(openDropDownMenu === 'image' ? '' : 'image')}>
             < RiFolderImageLine size={25} />
         </button>
         <Dropdownmenuwrapper
@@ -64,20 +60,19 @@ const Image = ({
                             inputName={'Add url'}
                             inputClass={'max-w-[190px] text-blue-700 py-1 px-1.5 mt-1 border outline-blue-500 rounded'}
                             labelClass={''}
-                            value={imageUrl}
-                            setValue={(value) => { setImageFileUrl(''); setImageUrl(value as string) }}
+                            value={inputUrl}
+                            setValue={(value) => { setImageFileUrl(''); setInputUrl(value as string) }}
                             placeHolder={'https://www.example.com'}
                         />
-                        <span className="block">
-                            <Displayimage
-                                id='blogpost-display-img'
-                                imageUrl={imageUrl || imageFileUrl}
-                                parentClass='h-[40px] w-[40px] mt-1'
-                                imageClass={`border-2 rounded cursor-pointer ${imagePosition}`}
-                                placeHolder={addImagIcon}
-                                onClick={() => setDisplayTextEditorImageDialog('texteditorimage')}
-                            />
-                        </span>
+                        <Displayimage
+                            id='blogpost-display-img'
+                            imageId={imageFileUrl}
+                            imageUrl={inputUrl}
+                            parentClass='h-[40px] w-[40px] mt-1'
+                            imageClass={`border-2 rounded cursor-pointer ${imagePosition}`}
+                            placeHolder={addImagIcon}
+                            onClick={() => setDisplayTextEditorImageDialog('texteditorimage')}
+                        />
                     </div>
                     <div id="image-infor" className='space-y-4'>
                         <Input
@@ -150,26 +145,25 @@ const Image = ({
                             Close
                         </button>
                         <button className='px-2 py-[.2rem] bg-green-800 text-white rounded shadow-sm'
-                            onClick={() => handleInsertImage(imageUrl || imageFileUrl, imageAlt, imageHeight + 'px', imageWight + 'px', ['h-[' + imageHeight + 'px]', 'w-[' + imageWight + 'px]', imagePosition, 'inline'])} >
+                            onClick={() => handleInsertImage(inputUrl || 'https://localhost:3000/api/image/' + imageFileUrl, imageAlt, imageHeight + 'px', imageWight + 'px', ['h-[' + imageHeight + 'px]', 'w-[' + imageWight + 'px]', imagePosition, 'inline'])} >
                             Add image
                         </button>
                     </div>
                     <div id="image-dialog">
-                        {/* run display image dialog */}
                         <Dialog
-                            id='textarea-image-ialog'
+                            id='change-image-dialog-for-blogpost-display-image'
                             parentClass="flex justify-center items-center"
-                            childClass=""
+                            childClass="-mt-60"
                             currentDialog={'texteditorimage'}
                             dialog={displayTextEditorImageDialog}
                             setDialog={setDisplayTextEditorImageDialog}
                             children={
                                 <div className='flex justify-around items-center gap-4 min-w-[280px] md:min-w-[480px] min-h-[140px] border-2 shadow rounded-md'>
                                     <Button
+                                        id="choose-image-from-library"
                                         children="Form library"
                                         buttonClass=""
-                                        id=""
-                                        handleClick={() => ''}
+                                        handleClick={() => setImageGalary({ displayImageGalary: 'blogpost-images-2', selectedImages: [] })}
                                     />
                                     <Fileinput
                                         id="computer"
@@ -180,19 +174,12 @@ const Image = ({
                                             getMedia({
                                                 files: value,
                                                 fileType: 'image',
-                                                getValue: ({ data, url, file }) => {
-                                                    const maxSizeInMB = 2;
-                                                    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-
-                                                    if (file && file.size > maxSizeInBytes) {
-                                                        alert(`Image size exceeds ${maxSizeInMB} MB. Please select a smaller file.`);
-
-                                                        setImageUrl('');
-                                                        setImageFileUrl(' ');
-                                                    } else {
-                                                        setImageUrl('');
-                                                        setImageFileUrl(data.toString());
-                                                        handleSaveImage(file);
+                                                getValue: async ({ dataUrl, tempUrl, file }) => {
+                                                    const image: Imageprops | null = await createImage({ fieldname: 'blogpostimage', file, url: '/api/image/blogpostimage/add' });
+                                                    if (image) {
+                                                        setInputUrl('');
+                                                        setImageFileUrl(image._id);
+                                                        appDispatch(addBlogpostImages(image))
                                                     };
                                                 },
                                             });
@@ -201,6 +188,37 @@ const Image = ({
                                     />
                                 </div>
                             }
+                        />
+                        <Dialog
+                            id="blogpost-image-galary-dialog-2"
+                            parentClass=""
+                            childClass="container relative w-full h-full py-10"
+                            currentDialog="blogpost-images-2"
+                            dialog={imageGalary.displayImageGalary === 'blogpost-images-2' ? 'blogpost-images-2' : ''}
+                            setDialog={() => null}
+                            children={<>
+                                <Displayblogpostimagessec selection={true} />
+                                <div className='absolute bottom-1 right-1 flex items-center gap-6'>
+                                    <Button
+                                        id='add-selected-image-galary-btn'
+                                        buttonClass='text-white px-2.5 py-1.5 rounded bg-green-800'
+                                        children={`(${imageGalary.selectedImages?.length || 0}) Add`}
+                                        handleClick={() => {
+                                            if (imageGalary.selectedImages?.length == 0) return;
+                                            setImageFileUrl(imageGalary.selectedImages[0]);
+                                            setImageGalary((pre) => pre ? { ...pre, displayImageGalary: '' } : pre);
+                                        }}
+                                    />
+                                    <Button
+                                        id='close-image-galary-btn'
+                                        buttonClass='text-white px-2 py-1.5 rounded bg-red-800'
+                                        children={'Close'}
+                                        handleClick={() => {
+                                            setImageGalary({ displayImageGalary: '', selectedImages: [] });
+                                        }}
+                                    />
+                                </div>
+                            </>}
                         />
                     </div>
                 </div>

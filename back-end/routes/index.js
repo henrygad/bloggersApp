@@ -8,8 +8,10 @@ const commentsRoute = require('./commentsRoute')
 const searchRoute = require('./searchRoute')
 const imagesRoute = require('./imagesRoute')
 const savesRoute = require('./savesRoute')
+const draftRoute = require('./draftRoute')
 
 module.exports = routers.use(
+    draftRoute,
     savesRoute,
     authenticationRoute,
     usersRoute,

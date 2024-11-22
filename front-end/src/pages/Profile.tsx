@@ -18,7 +18,6 @@ const Profile = () => {
     error: getOthersProfileError,
   } = useFetchData<Userprops>(!isAccountOwner ? `/api/users/${userName}` : null, [userName, isAccountOwner === false]);
 
-
   // Owner of account profile data ...
   const { userProfile: {
     data: ownerProfileData,

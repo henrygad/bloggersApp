@@ -5,6 +5,8 @@ import { useAppDispatch } from "../redux/slices";
 import { Blogpostprops } from "../entities";
 import { saveBlogposts, unSaveBlogpost } from "../redux/slices/userBlogpostSlices";
 import { addBlogpostIdToSaves, deleteBlogpostIdFromSaves } from "../redux/slices/userProfileSlices";
+import { IoSaveOutline } from "react-icons/io5"
+
 
 const Savesbutton = ({ saves, blogpost }: { saves: string[], blogpost: Blogpostprops }) => {
     const [isSaved, setIsSaved] = useState(saves.includes(blogpost._id));
@@ -42,12 +44,9 @@ const Savesbutton = ({ saves, blogpost }: { saves: string[], blogpost: Blogpostp
     };
 
     return <Button
-        id={'svaes-btn'}
-        buttonClass={'border-b'}
-        children={!loadingSaves ?
-            (isSaved ? 'unSave' : 'Save') :
-            'loading...'
-        }
+        id={'saves-btn'}
+        buttonClass={'flex gap-2'}
+        children={<><IoSaveOutline color={`${isSaved? 'green' : ''}`} size={20} /> Save</>}
         handleClick={() => { isSaved ? handleUnSave(blogpost._id) : handleSaves(blogpost._id) }}
     />
 };

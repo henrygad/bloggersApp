@@ -23,10 +23,22 @@ const usersData = new mongoose.Schema({
         checked: { type: Boolean, default: false },
     }],
     saves: { type: [String] },
-    archived: { type: [String] },
-    groupsIn: { type: [String] },
-    yourGroup: { type: [String] },
-    chat: { type: [String] },
+    drafts: {
+        type: [{
+            _id: String,
+            displayImage: { type: String },
+            authorUserName: { type: String },
+            title: { type: String },
+            body: { type: String },
+            _html: { title: String, body: String },
+            catigory: { type: String },
+            mentions: { type: String },
+            slug: { type: String },
+            url: { type: String },
+            preStatus: String,
+            status: {type: String, default: 'draft'},
+        }]
+    },
 },
     {
         timestamps: true

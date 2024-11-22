@@ -3,7 +3,6 @@ const usersData = require('../schema/usersDataSchema')
 const blogpostsData = require('../schema/blogpostsSchema')
 const { customError } = require('../middlewares/error')
 
-
 router.get('/search', async (req, res, next) => {
     const { query: { title = '', body = '', catigory = '', userName = '', name = '', skip = 0, limit = 0 }, session } = req
 
@@ -37,9 +36,9 @@ router.get('/search', async (req, res, next) => {
             !searchedUsers.length) throw new Error('not found: no search result found')
 
         const searchQuery = (title || body || catigory || userName || name)
-        const preSearchedQueries = session.searchHistory.map(item => item.searched)
-        if (!preSearchedQueries.includes(searchQuery)) {
-            session.searchHistory.push({
+        const preSearchedQueries = session.searchHistory?.map(item => item.searched)
+        if (!preSearchedQueries?.includes(searchQuery)) {
+            session.searchHistory?.push({
                 _id: Date.now().toString(),
                 searched: searchQuery
             })
@@ -48,7 +47,7 @@ router.get('/search', async (req, res, next) => {
         res.json({ // send successful search result
             userSearchResults: searchedUsers,
             blogpostSearchResult: searchedBlogposts,
-            searchHistory: session.searchHistory.reverse()
+            searchHistory: session.searchHistory?.reverse()
         })
 
     } catch (error) {
@@ -69,7 +68,7 @@ router.delete('/search/delete/history/:_ids', async (req, res, next) => {
         const deleteSearchHistory = (_id) => { // delete  search history
             session.searchHistory = session.searchHistory.filter(item => item._id !== _id)
         }
-        arrOfIds.map(item => { //delete each search history
+        arrOfIds?.map(item => { //delete each search history
             deleteSearchHistory(item)
         })
 

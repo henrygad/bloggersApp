@@ -1,1 +1,0 @@
-const imageFiles = require('../schema/imagefilesSchema')

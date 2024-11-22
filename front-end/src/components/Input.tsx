@@ -71,6 +71,7 @@ const Input = ({
                 ref={inputRef}
                 checked={checked}
                 onClick={onClick}
+                autoComplete="off"
             />
             {type === 'password' &&
                 <span
@@ -85,9 +86,11 @@ const Input = ({
         </span>
         <span className={error.errorClass}>
             {error.isTrue &&
+                error.errorMsg.trim() ?
                 <p className='text-red-800 text-[.85rem] text-wrap first-letter:capitalize px-1  '>
                     {error.errorMsg}
-                </p>
+                </p> :
+                null
             }
         </span>
     </label>

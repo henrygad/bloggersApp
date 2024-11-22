@@ -21,7 +21,6 @@ const Avatersec = ({
   numberOfAvaters,
 }: Props) => {
 
-
   return <div id="profile-advater">
     {
       !profileAvatersLoading ?
@@ -32,7 +31,7 @@ const Avatersec = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 " >
                 {profileAvatersData.map((item, index) =>
                   <SingleImage
-                    key={item._id || index}
+                    key={item._id}
                     image={item}
                     index={index}
                     placeHolder=""

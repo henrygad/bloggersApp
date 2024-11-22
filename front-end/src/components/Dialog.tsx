@@ -1,5 +1,6 @@
-import { ReactNode, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useClickOutSide } from "../hooks";
+import tw from "tailwind-styled-components";
 
 type Props = {
     id: string
@@ -12,25 +13,74 @@ type Props = {
 };
 
 const Dialog = ({
-    childClass,
-    children,
     id = 'dialog',
-    parentClass,
     currentDialog,
+    parentClass,
+    childClass,
     dialog,
     setDialog,
+    children,
 }: Props) => {
     const dialogRef = useRef(null);
     useClickOutSide(dialogRef, () => { setDialog(dialog ? '' : dialog) });
+    const [toggleDialog, setToggleDialog] = useState({
+        parent: false,
+        child: false,
+    });
 
-    return <main
+    const handleDialogmoves = () => {
+        if (dialog.trim().toLocaleLowerCase() === currentDialog.trim().toLocaleLowerCase()) {
+            setToggleDialog({parent: true, child: false });
+            setTimeout(() => {
+                setToggleDialog({parent: true, child: true });
+            }, 200);
+        } else {
+            setToggleDialog({parent: true, child: false });
+            setTimeout(() => {
+                setToggleDialog({parent: false, child: false });
+            }, 750);
+        };
+    };
+
+    useEffect(() => {
+        handleDialogmoves()
+    },
+        [
+            dialog.trim().toLocaleLowerCase(),
+            currentDialog.trim().toLocaleLowerCase()
+        ]);
+
+    return <Dialogwraaper
         id={id}
-        className={`${dialog.trim().toLocaleLowerCase() === currentDialog.trim().toLocaleLowerCase() ? 'block' : 'hidden'} 
-        fixed top-0 bottom-0 right-0 left-0 backdrop-blur-sm  z-50 ${parentClass}`}>
-        <div ref={dialogRef} className={`${childClass}  `}>
+        style={{ margin: 0 }}
+        className={`
+            ${toggleDialog.child ? `backdrop-blur-sm ${parentClass}` : ''}
+        ${toggleDialog.parent ?
+                'block' :
+                'hidden'
+            }`}>
+        <Dialogchildrenwrapper ref={dialogRef} className={`${
+            toggleDialog.child ?
+            'translate-y-0' :
+            'translate-y-[100%]'
+            } ${childClass} `}>
             {children}
-        </div>
-    </main>
+        </Dialogchildrenwrapper>
+    </Dialogwraaper>
 };
 
 export default Dialog;
+
+const Dialogchildrenwrapper = tw.div`
+transition-transform
+duration-700
+`
+
+const Dialogwraaper = tw.div`
+fixed
+top-0 
+bottom-0 
+right-0 
+left-0
+z-50
+`

@@ -1,163 +1,268 @@
 import { useEffect, useState } from "react";
-import { useCopyLink, useSanitize, useUserIsLogin } from "../hooks";
+import { useCopyLink, useDeleteData, useFetchData, useNotification, usePostData, useSanitize, useUserIsLogin } from "../hooks";
 import Dotnav from "./Dotnav";
 import UsershortInfor from "./UsershortInfor";
 import Menu from "./Menu";
 import Button from "./Button";
 import { Commentprops } from "../entities";
 import Likebutton from "./Likebutton";
+import { addComment, decreaseTotalNumberOfUserComments, deleteComments, increaseTotalNumberOfUserComments } from "../redux/slices/userCommentsSlices";
+import { useAppDispatch } from "../redux/slices";
+import Trythistexteditor from "../custom-text-editor/App";
+import { deleteAll } from "../custom-text-editor/settings";
+import tw from "tailwind-styled-components";
+import { MdBlock, MdOutlineChatBubbleOutline } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
+import { BsCopy } from "react-icons/bs";
+import { TfiFlagAlt2 } from "react-icons/tfi";
+
 
 type Props = {
   comment: Commentprops
   index?: number
   type?: string
-  allowNested: boolean
-  handleDeleteComment: (comment: Commentprops) => void
-  deletingLoading: boolean
-
-  setParentId?: React.Dispatch<React.SetStateAction<string | null>>
-  setReplying?: React.Dispatch<React.SetStateAction<string[] | null>>
-  setParentComment?: React.Dispatch<React.SetStateAction<Commentprops | null>>
+  setDisplayParentComment?: React.Dispatch<React.SetStateAction<Commentprops[]>>
 
   autoOpenTargetComment: { autoOpen: boolean, commentId: string, commentAddress: string, targetLike: { autoOpen: boolean, commentId: string, like: string } }
 };
 
 const Singlecomment = ({
-  comment,
   type = 'text',
-  deletingLoading,
-  allowNested = true,
-
-  setParentId = () => null,
-  setReplying = () => null,
-  setParentComment = () => null,
-  handleDeleteComment = (comment: Commentprops) => null,
+  comment,
+  index,
+  setDisplayParentComment = () => null,
 
   autoOpenTargetComment = { autoOpen: false, commentId: '', commentAddress: '', targetLike: { autoOpen: false, commentId: '', like: '' } },
 }: Props) => {
-  const { _id, body, authorUserName, parentUrl, likes, children, commentIsAReplyTo } = comment;
 
   const { loginStatus: { loginUserName } } = useUserIsLogin();
-  const isAccountOwner = loginUserName === authorUserName;
+  const { _id, blogpostId, parentId, body, authorUserName, parentUrl, likes, children, commentIsAReplyTo } = comment;
+
+  const isAccountOwner = loginUserName === authorUserName; // is user comment
+
+  const { fetchData: fetchChildCommentData, loading: loadingChildComment } = useFetchData<Commentprops[]>('');
+  const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
+  const [displayCommentChildren, setDisplayCommentChildren] = useState<Commentprops[]>([]);
+  const [getChildCommentContent, setChildGetCommentContent] = useState<{ _html: string, text: string }>()
+
   const sanitizeHTML = useSanitize();
   const [toggleSideMenu, setToggleSideMenu] = useState('');
   const { copied, handleCopyLink } = useCopyLink(parentUrl + '/' + _id);
 
-  const [seeMore, setSeeMore] = useState(0);
-  const [targetComment, setCommentTarget] = useState(' ');
+  const [toggleDisplayCommentInput, setToggleDisplayCommentInput] = useState(false);
+  const [targetComment, setTargetComment] = useState('');
 
-  const generalMenuForComment = [
+  const { postData: postReply, loading: loadingReplyComment } = usePostData();
+  const appDispatch = useAppDispatch();
+
+  const notify = useNotification();
+
+  const generalMenu = [
     {
-      name: 'copy link',
+      name: 'copy comment link',
       to: '',
       content: <Button
         id="copy-comment-link"
-        children={<>
-          Copy link {copied ? <span className="text-green-500">Copied</span> : null}
-        </>}
-        buttonClass="border-b"
+        buttonClass="flex items-center gap-2"
         handleClick={() => handleCopyLink()}
+        children={<>{copied ? <FaCheck color="green" size={20} /> : <BsCopy size={20} />} Copy</>}
       />
     },
+   
   ];
 
+  const intaracttionMenu = [
+    ...generalMenu,
+    {
+        name: 'report',
+        to: '',
+        content: <Button
+            id="report-content-btn"
+            buttonClass="flex gap-2"
+            children={<><TfiFlagAlt2 size={20} />  Report</>}
+            handleClick={() => ''}
+        />
+    },
+    {
+        name: 'block',
+        to: '',
+        content: <Button
+            id="report-content-btn"
+            buttonClass="flex gap-2"
+            children={<><MdBlock size={20} />  Block</>}
+            handleClick={() => ''}
+        />
+    },
+];
+
   const accountOnwerMenuForComment = [
-    ...generalMenuForComment,
+    ...generalMenu,
     {
       name: 'delete',
       to: '',
       content: <Button
         id="share-blogpost-link"
-        children={!deletingLoading ? 'Delete' : 'delete loading...'}
+        children={!deleteCommentLoading ? 'Delete' : 'delete loading...'}
         buttonClass="border-b"
-        handleClick={() => { handleDeleteComment(comment) }}
+        handleClick={() => { handleDeleteComment(comment._id) }}
       />
     },
 
   ];
 
-  const handeCreateReply = () => {
-    setParentId(_id);
-    setReplying(
-      commentIsAReplyTo.includes(authorUserName) ?
-        commentIsAReplyTo :
-        [...commentIsAReplyTo, authorUserName]
-    );
-    setParentComment(comment);
-    
-    handleSeeMoreComment([_id], children?.length);
+  const clearReplyInputArea = () => {
+    const contentEditAbleELe = document.querySelectorAll("[contenteditable]");  //Get all contenteditable div on page
+    contentEditAbleELe.forEach((element) => {
+      deleteAll(element as HTMLDivElement)
+    });
   };
 
-  const handleSeeMoreComment = (commentId: string[], seeMore: number) => {
-    if (commentId.includes(_id)) {
-      setSeeMore(seeMore);
-    } else {
-      setSeeMore(0);
+  const handleChildCommentNotification = (childComment: Commentprops) => {
+    const { commentIsAReplyTo, parentUrl, _id } = childComment;
+
+    commentIsAReplyTo.map(async (userNameInvolve) => {
+      if (loginUserName === userNameInvolve) return; // don't notify the commentor that he commented on his comment
+
+      const url = '/api/notification/' + userNameInvolve;
+      const newBody = {
+        typeOfNotification: 'replyComment',
+        msg: `replied to ${userNameInvolve === authorUserName ?
+          'your' :
+          `<span class="font-bold" >${authorUserName?.slice(1)}</span>`} 
+                comment, <span class="underline">${body?.text}</span>`,
+        url: parentUrl + '/' + _id,
+        notifyFrom: loginUserName,
+      };
+
+      await notify(url, newBody);
+    });
+  };
+
+  const handleAddReply = () => {
+    if (!blogpostId) return;
+    const url = '/api/addcomment';
+    const body = {
+      blogpostId,
+      parentId: _id,
+      parentUrl: parentUrl + "/" + _id,
+      body: getChildCommentContent || { _html: '', text: '' },
+      commentIsAReplyTo: [...commentIsAReplyTo, authorUserName]
+    };
+
+    postReply<Commentprops>(url, { ...body })
+      .then((req) => {
+        const { data } = req;
+
+        if (data) {
+          setDisplayParentComment((pre) => pre.map((item) => {
+            if (item._id === data.parentId) {
+              return { ...item, children: [...item.children, data._id] }
+            } else {
+              return item;
+            };
+          }));
+          setToggleDisplayCommentInput(false);
+          setDisplayCommentChildren((pre) => pre ? [data, ...pre] : pre);
+          appDispatch(addComment(data));
+          appDispatch(increaseTotalNumberOfUserComments(1));
+          clearReplyInputArea();
+          handleChildCommentNotification(data);
+        };
+      });
+  };
+
+  const handleDeleteComment = async (_id: string) => {
+    if (!_id) return;
+    const url = '/api/deletecomment/' + _id;
+    const response = await deleteCommentData(url);
+    const { data } = response;
+
+    if (data) {
+      if (parentId === 'null') {
+        setDisplayParentComment((pre) => pre.filter((item) => item._id !== _id));
+      } else {
+        setDisplayCommentChildren((pre) => pre.filter((item) => item._id !== _id));
+      }
+
+      appDispatch(deleteComments({ _id }));
+      appDispatch(decreaseTotalNumberOfUserComments(1));
     };
   };
 
+  const handleLoadCommentChildren =
+    async ({ blogpostId, commentId, limit }: { blogpostId: string, commentId: string, limit: number }) => {
+      fetchChildCommentData(`/api/comments/blogpost/${blogpostId}?parentId=${commentId}&skip=${displayCommentChildren.length}&limit=${limit}`)
+        .then((res) => {
+          const { data } = res;
+          if (data) {
+            setDisplayCommentChildren((pre) => pre ? [...pre, ...data] : pre);
+          }
+        });
+    };
+
   useEffect(() => {
-    if (autoOpenTargetComment?.autoOpen &&
-      autoOpenTargetComment?.commentAddress
-    ) {
-      const getCommentAddress: string[] = [];
-      const commentAddress = autoOpenTargetComment.commentAddress.split('&');
-      commentAddress.map((item, index) => {
-        getCommentAddress.push(item);
-        handleSeeMoreComment(getCommentAddress, children?.length);
+    if (autoOpenTargetComment?.autoOpen) {
+      const { commentAddress } = autoOpenTargetComment;
+      setTargetComment(autoOpenTargetComment.commentId);
 
-        if (index === (commentAddress.length - 1)) {
-          setTimeout(() => {
-            setCommentTarget(' ');
-          }, 2000);
-        };
-      });
-    }
+      if (commentAddress) {
 
-    setCommentTarget(
-      autoOpenTargetComment?.autoOpen ?
-        autoOpenTargetComment?.commentId :
-        '');
+        commentAddress.split('/')
+          .map((addressId, index) => {
+            if (addressId === _id) {
 
-  }, [
-    autoOpenTargetComment?.autoOpen,
-    autoOpenTargetComment?.commentAddress
-  ]);
+              if (loadingReplyComment) {
+                return;
+              };
 
-  return <div
-    id={'blogpost-comment-' + _id}
-    className={`relative w-full min-w-[280px] sm:min-w-[320px] md:min-w-[480px] max-w-[480xp] rounded-md px-3 py-4 space-y- 2 
-      ${_id === targetComment ? 'bg-red-50' : ''}
-    `}>
-    <Dotnav
-      id="commentsNav"
-      name={_id}
-      toggleSideMenu={toggleSideMenu}
-      setToggleSideMenu={setToggleSideMenu}
-      children={
-        <Menu
-          arrOfMenu={!isAccountOwner ?
-            generalMenuForComment
-            : accountOnwerMenuForComment}
-          id="MenuForComment"
-          parentClass='flex-col gap-2 absolute top-0 -right-2 min-w-[140px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer'
-          childClass=""
-        />
-      }
-    />
+              handleLoadCommentChildren({ blogpostId, commentId: _id, limit: 0 });
+            };
+
+          });
+
+      };
+
+      setTimeout(() => {
+        setTargetComment(' ');
+      }, 3000);
+
+    };
+  }, [autoOpenTargetComment, loadingReplyComment]);
+
+  return <Singcommentwrapper id={'blogpost-comment-' + _id} className={_id === targetComment ? 'bg-red-50' : ' '}>
+    <div className="relative">
+      <Dotnav
+        id="comments-nav"
+        name={_id}
+        toggleSideMenu={toggleSideMenu}
+        setToggleSideMenu={setToggleSideMenu}
+        children={
+          <Menu
+            id="MenuForComment"
+            parentClass='absolute top-0 -right-2 min-w-[140px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer space-y-4'
+            childClass=""
+            arrOfMenu={!isAccountOwner ?
+              intaracttionMenu
+              : accountOnwerMenuForComment}
+          />
+        }
+      />
+    </div>
     <UsershortInfor
       userName={authorUserName}
     />
+
     {type === 'text' ?
       <span className="block  text-base font-text first-letter:capitalize">{body?.text}</span> :
-      <div dangerouslySetInnerHTML={sanitizeHTML(body?._html)} ></div>}
-    <div id="comment-statistics" className="flex justify-center items-center gap-4">
-      <span
-        id="reply-comment"
-        className="cursor-pointer"
-        onClick={handeCreateReply} >
-        reply : {children ? children.length : 0}
-      </span>
+      <div dangerouslySetInnerHTML={sanitizeHTML(body?._html)} ></div>
+    }
+    <div id="comment-statistics" className="flex justify-start items-center gap-4">
+      <Button
+        id="reply-comment-btn"
+        buttonClass="flex items-center gap-2"
+        children={<> <MdOutlineChatBubbleOutline size={20} /> {children.length || 0}</>}
+        handleClick={() => setToggleDisplayCommentInput(!toggleDisplayCommentInput)}
+      />
       <Likebutton
         parentId={_id}
         arrOfLikes={likes}
@@ -168,56 +273,74 @@ const Singlecomment = ({
 
         notificationTitle={body.text}
         userNameToNotify={authorUserName}
-        notificationUrl={parentUrl + '&' + _id}
+        notificationUrl={parentUrl + '/' + _id}
         liking="commentLike"
       />
     </div>
+    {toggleDisplayCommentInput ?
+      <div id="comment-text-area-wrapper" className="flex flex-col gap-4 justify-center p-2">
+        <Trythistexteditor
+          id='comment-text-editor'
+          placeHolder={`Reply ${isAccountOwner ? 'to your comment' : authorUserName}...`}
+          InputWrapperClassName="w-full max-h-[140px] border-2 p-3 rounded-md  overflow-y-auto"
+          InputClassName=""
+          createNewText={{ IsNew: true }}
+          useTextEditors={false}
+          inputTextAreaFocus={toggleDisplayCommentInput}
+          setGetContent={setChildGetCommentContent}
+        />
+        <div id="comment-btn" className="flex justify-center">
+          <Button
+            id="create-comment"
+            buttonClass="font-simibold bg-green-800 rounded-md py-2 px-4 border border-green-400 shadow active:bg-green-400 transition-color"
+            children={!loadingReplyComment ? 'Reply' : 'loading...'}
+            handleClick={() => handleAddReply()}
+          />
+        </div>
+      </div> :
+      null}
 
-    {/*  if there is a children, recursive Singlecomment function component */}
-    <>
-      {allowNested &&
-        children &&
-        children.length ?
-        <div id={_id}>
-          <div className="ml-1 border-l">
-            {
-              children.map((item, index) => {
-                if (index === seeMore) {
-                  return;
-                } else {
-                  return <Singlecomment
-                    key={item._id || index}
-                    type="text"
-                    comment={item}
-                    index={index}
-                    allowNested={allowNested}
-                    setParentId={setParentId}
-                    setReplying={setReplying}
-                    setParentComment={setParentComment}
-                    handleDeleteComment={handleDeleteComment}
-                    deletingLoading={deletingLoading}
 
-                    autoOpenTargetComment={autoOpenTargetComment}
-                  />
-                }
-              })
-            }
-          </div>
+    {/*  if there is a children, perform nested children comment */}
 
-          <div className="flex items-center justify-center">
-            {(children.length - seeMore) > 0 ?
-              <span className="cursor-pointer" onClick={() => handleSeeMoreComment([_id], children.length)}>{
-                'View' + ' ' + (children.length) + ' ' + 'replies'
-              }</span> :
+    <div id={`${_id}-comment-children`}>
+      <div className="border-l border-l-gray-400">
+        {!loadingChildComment ?
+          <>{
+            displayCommentChildren &&
+              displayCommentChildren.length ?
+              displayCommentChildren.map((item, index) =>
+                <Singlecomment
+                  key={item._id}
+                  index={index}
+                  type="text"
+                  comment={item}
 
-              <span className="cursor-pointer" onClick={() => setSeeMore(0)}>close replies</span>
-            }
-          </div>
-        </div> :
-        null
-      }
-    </>
-  </div>
+                  autoOpenTargetComment={autoOpenTargetComment}
+                />
+              ) :
+              null
+          }</> :
+          <div>loading...</div>
+        }
+      </div>
+      <div className="flex items-center justify-center mt-6">
+        <Button
+          id="view-comment-btn"
+          buttonClass="text-slate-500"
+          children={"View" + " " + "(" + children.length + ")"}
+          handleClick={() => handleLoadCommentChildren({ blogpostId, commentId: _id, limit: 5 })}
+        />
+      </div>
+    </div>
+  </Singcommentwrapper>
 };
 
 export default Singlecomment;
+
+const Singcommentwrapper = tw.div`
+w-full 
+space-y-4
+px-3 
+py-4 
+`

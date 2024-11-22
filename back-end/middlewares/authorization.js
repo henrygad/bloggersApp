@@ -10,8 +10,7 @@ const authorization = async (req, res, next) => {
 
     try {
 
-        if (!jwtToken) {
-            req.session.jwtTokenExpired = true // jwst tokon is properly expire
+        if (!jwtToken?.trim()) {
             throw new Error('Unauthorized, no token provided!') // check if jwtToken is provided
         }
 
@@ -21,14 +20,13 @@ const authorization = async (req, res, next) => {
 
         if (err) {
             if (err.name === 'TokenExpiredError') { // check whether login jwtToken has expired
-                req.session.jwtTokenExpired = true
                 throw new Error('Unauthorized, Your login session has expired')
             } else { // check whether jwtToken is valid
                 throw new Error('Unauthorized, invalid token!')
             }
         }
 
-        if (jwtToken && !isLogin) throw new Error('Unauthorized, you are log out') // check whether user is logout
+        if (jwtToken && !isLogin) throw new Error('Unauthorized, you are log out') // user is logout
 
         const authenticateUser = await authenticatedUsers.findById(decoded?._id) // check if this user is a valid user
         if (!authenticateUser) throw new Error('Unauthorized, no user was found!')

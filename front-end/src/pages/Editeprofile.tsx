@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
-import { Dialog, Displayimage, Fileinput, Input, Selectinput, Texarea } from "../components";
-import { useGetLocalMedia, usePatchData } from "../hooks";
-import { useDispatch, useSelector } from "react-redux";
+import { Button, Dialog, Displayimage, Fileinput, Input, Selectinput, Texarea } from "../components";
+import { useCreateImage, useGetLocalMedia, useImageGalary, usePatchData } from "../hooks";
 import { editProfile } from "../redux/slices/userProfileSlices";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
-import { Userprops } from "../entities";
-import { increaseTotalNumberOfUserAvaters } from "../redux/slices/userImageSlices";
+import { Imageprops, Userprops } from "../entities";
+import { addAvaters, increaseTotalNumberOfUserAvaters } from "../redux/slices/userImageSlices";
+import avaterPlaceholder from '../assert/avaterplaceholder.svg'
+import { Advatersec } from "../sections";
 
 const Editeprofile = () => {
     const { userProfile: {
         data: accountProfile,
         loading: accountProfileLoading,
         error: accountProfileError
-    } } = useAppSelector((state) => state.userProfileSlices)
+    } } = useAppSelector((state) => state.userProfileSlices) // get user data
+
+    const { userAvaters: {
+        data: avaters,
+        loading: loadingAvater,
+        error: errorAvater
+    } } = useAppSelector((state) => state.userImageSlices); // user profile avaters
 
     const [dateOfBirth, setDateOfBirth] = useState<Date | string>('');
     const [website, setWebsite] = useState('');
@@ -22,18 +29,19 @@ const Editeprofile = () => {
     const [sex, setSex] = useState('male');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
-    const [imageUrl, setImageUrl] = useState('gethenryimage.com');
+    const [imageUrl, setImageUrl] = useState(' ');
     const [caretIsOn, setCaretIsOn] = useState('');
     const [viewImage, setViewImage] = useState(false);
     const [loadingDialog, setLoadingDialog] = useState('');
-    const [imageSettingDialog, setImageSettingDialog] = useState('')
+    const [toggleChangeProfileImage, setToggleChangeProfileImage] = useState('')
     const [imageChanged, setImageChange] = useState(false);
     const getMedia = useGetLocalMedia();
     const { patchData, loading, error } = usePatchData();
-    const [file, setFile] = useState<Blob | string>('');
 
     const appDispatch = useAppDispatch();
+    const { createImage, loading: loadingCreateImage, error: errorCreateImage } = useCreateImage();
 
+    const { imageGalary, setImageGalary } = useImageGalary();
 
     const arrOfInputs = [
         {
@@ -80,9 +88,8 @@ const Editeprofile = () => {
 
     const handleEditProfile = async () => {
         if (loading) return;
-
         const body = {
-            displayImage: null,
+            displayImage: imageUrl,
             email,
             name: fullName,
             dateOfBirth,
@@ -92,23 +99,15 @@ const Editeprofile = () => {
             bio,
             phoneNumber,
         };
-        const formData = new FormData();
-        formData.append('avater', file);
-        formData.append('data', JSON.stringify(body));
         const url = '/api/editprofile';
 
-        await patchData<Userprops>(url, formData)
+        await patchData<Userprops>(url, body)
             .then((res) => {
                 const { data } = res;
                 if (!data) return;
-
-                if(file) appDispatch(increaseTotalNumberOfUserAvaters(1));
-                
                 appDispatch(editProfile(data));
                 setImageChange(false);
                 setCaretIsOn('');
-                setFile('');
-
             });
     };
 
@@ -127,15 +126,15 @@ const Editeprofile = () => {
             displayImage, email, name, dateOfBirth, country, sex, website, bio, phoneNumber,
         } = accountProfile;
 
-        if (input.toLocaleLowerCase().trim() === 'dateofbirth') setDateOfBirth(dateOfBirth);
-        if (input.toLocaleLowerCase().trim() === 'image') setImageUrl("/api/image/" + displayImage);
-        if (input.toLocaleLowerCase().trim() === 'fullname') setFullName(name);
-        if (input.toLocaleLowerCase().trim() === 'country') setCountry(country);
-        if (input.toLocaleLowerCase().trim() === 'website') setWebsite(website);
-        if (input.toLocaleLowerCase().trim() === 'bio') setBio(bio);
-        if (input.toLocaleLowerCase().trim() === 'sex') setSex(sex);
-        if (input.toLocaleLowerCase().trim() === 'phonenumber') setPhoneNumber(phoneNumber.toString());
-        if (input.toLocaleLowerCase().trim() === 'email') setEmail(email);
+        if (input.toLocaleLowerCase()?.trim() === 'dateofbirth') setDateOfBirth(dateOfBirth);
+        if (input.toLocaleLowerCase()?.trim() === 'image') setImageUrl(displayImage);
+        if (input.toLocaleLowerCase()?.trim() === 'fullname') setFullName(name);
+        if (input.toLocaleLowerCase()?.trim() === 'country') setCountry(country);
+        if (input.toLocaleLowerCase()?.trim() === 'website') setWebsite(website);
+        if (input.toLocaleLowerCase()?.trim() === 'bio') setBio(bio);
+        if (input.toLocaleLowerCase()?.trim() === 'sex') setSex(sex);
+        if (input.toLocaleLowerCase()?.trim() === 'phonenumber') setPhoneNumber(phoneNumber?.toString());
+        if (input.toLocaleLowerCase()?.trim() === 'email') setEmail(email);
 
         setCaretIsOn('');
     };
@@ -146,28 +145,20 @@ const Editeprofile = () => {
             displayImage, email, name, dateOfBirth, country, sex, website, bio, phoneNumber,
         } = accountProfile;
 
-        setDateOfBirth(dateOfBirth);
-        setImageUrl("/api/image/" + displayImage);
-        setFullName(name);
-        setCountry(country);
-        setWebsite(website);
-        setBio(bio);
-        setSex(sex);
-        setPhoneNumber(phoneNumber.toString());
-        setEmail(email);
+        setDateOfBirth(dateOfBirth || '');
+        setImageUrl(displayImage || '');
+        setFullName(name || '');
+        setCountry(country || '');
+        setWebsite(website || '');
+        setBio(bio || '');
+        setSex(sex || '');
+        setPhoneNumber(phoneNumber?.toString() || '');
+        setEmail(email || '');
     };
 
     useEffect(() => {
         accountProfile && handleDefaultStateValues()
     }, [accountProfile]);
-
-    useEffect(() => {
-        if (loading) {
-            setLoadingDialog('loadingDialog');
-        } else {
-            setLoadingDialog('');
-        };
-    }, [loading]);
 
     return <div>
         {!accountProfileLoading ?
@@ -180,11 +171,11 @@ const Editeprofile = () => {
                     <div id="avater" className=" space-y-4">
                         <Displayimage
                             id="advater"
-                            placeHolder=""
-                            imageUrl={imageUrl}
+                            placeHolder={avaterPlaceholder}
+                            imageId={imageUrl || ''}
                             parentClass="h-[70px] w-[70px] cursor-pointer"
                             imageClass=" rounded-full object-contain"
-                            onClick={() => setImageSettingDialog('imageSettingDialog')}
+                            onClick={() => setToggleChangeProfileImage('change-profile-avater-dialog')}
                         />
                         {caretIsOn === 'addImage' &&
                             <div className="flex items-center gap-4">
@@ -284,7 +275,7 @@ const Editeprofile = () => {
                                     callBack={(target) => setCaretIsOn(target?.name || '')}
                                 />
 
-                                {caretIsOn?.trim() === item.name.trim() &&
+                                {caretIsOn?.trim() === item.name?.trim() &&
                                     <div className="flex justify-between items-center gap-4">
                                         <span
                                             className="block cursor-pointer border px-1 rounded-md"
@@ -338,99 +329,70 @@ const Editeprofile = () => {
                     </div>
                 </div>
                 <div id="save-all" className="flex justify-end items-center">
-                    {caretIsOn.trim() && <button className="cursor-pointer border px-1 rounded-md">Save all changes</button>}
+                    {caretIsOn?.trim() &&
+                        <button
+                            className="cursor-pointer border px-1 rounded-md"
+                            onClick={() => setLoadingDialog('loadingDialog')}
+                        >
+                            Save all changes
+                        </button>
+                    }
                 </div>
-
-                <div id="dialog">
-                    {/* avater dialog */}
-                    <Dialog
-                        id="imageSettingDialog"
-                        currentDialog="imageSettingDialog"
-                        parentClass="flex justify-center items-center w-full h-full"
-                        childClass="relative"
-                        children={
-                            <div className="relative min-w-[280px] border shadow-md rounded-md ">
-                                <div className="flex justify-between items-center relative w-full">
-                                    {!viewImage ?
-                                        <span
-                                            className="block absolute top-0 left-0 cursor-pointer z-20"
-                                            onClick={() => setImageSettingDialog('')}
-                                        >close</span> :
-                                        <span
-                                            className="block absolute top-0 right-0 cursor-pointer z-20"
-                                            onClick={() => setViewImage(!viewImage)}
-                                        >Go back</span>
-                                    }
-                                </div>
-                                <div
-                                    className={`${!viewImage ? 'h-[200px] w-[320px] cursor-pointer' : ' container h-screen w-screen'} py-2 border `}
-                                >
-                                    <Displayimage
-                                        id="advater"
-                                        placeHolder=""
-                                        imageUrl={imageUrl}
-                                        parentClass="w-full h-full"
-                                        imageClass="object-contain"
-                                        onClick={() => !viewImage && setViewImage(!viewImage)}
-                                    />
-                                </div>
-                                {!viewImage &&
-                                    <>
-                                        <div className="flex justify-center items-center gap-4 p-2">
-                                            <span
-                                                className="cursor-pointer border px-1 rounded-md"
-                                                onClick={() => setViewImage(!viewImage)}
-                                            >
-                                                View image
-                                            </span>
-                                            <Fileinput
-                                                name="avater"
-                                                id="choose-local-image"
-                                                type="image"
-                                                accept="image/*"
-                                                setValue={(value) => {
-                                                    getMedia({
-                                                        files: value,
-                                                        fileType: 'image',
-                                                        getValue: ({ url, file }) => {
-                                                            setFile(file);
-                                                            setImageUrl(url.toString())
-                                                        }
-                                                    });
-                                                    setCaretIsOn('addImage');
-                                                    setImageChange(true);
-                                                }}
-                                                height="30px"
-                                                width="40px"
-                                            />
-                                            {imageChanged && <span
-                                                className="cursor-pointer border px-1 rounded-md"
-                                                onClick={() => setImageSettingDialog('')}
-                                            >
-                                                Add image
-                                            </span>}
-                                        </div>
-                                    </>
-                                }
-                            </div>
-                        }
-                        dialog={imageSettingDialog}
-                        setDialog={setImageSettingDialog}
-                    />
-                    {/* display loading to the screan */}
-                    <Dialog
-                        id="loadingDialog"
-                        currentDialog="loadingDialog"
-                        parentClass=" container w-full h-full"
-                        childClass="flex justify-center items-center w-full h-full "
-                        children={
-                            <svg className="animate-spin h-5 w-5 mr-3  rounded-e-full border-black border-2 " viewBox="0 0 24 24">
-                            </svg>
-                        }
-                        dialog={loadingDialog}
-                        setDialog={setLoadingDialog}
-                    />
-                </div>
+                <Dialog
+                    id='change-image-dialog-for-profile-avater'
+                    parentClass="flex justify-center items-center"
+                    childClass="-mt-60"
+                    currentDialog={'change-profile-avater-dialog'}
+                    dialog={toggleChangeProfileImage}
+                    setDialog={() => setToggleChangeProfileImage('')}
+                    children={
+                        <div className='flex justify-around items-center gap-4 min-w-[280px] md:min-w-[480px] min-h-[140px] border-2 shadow rounded-md'>
+                            <Button
+                                id="choose-image-from-library"
+                                buttonClass=""
+                                children="Form library"
+                                handleClick={() => setImageGalary({ displayImageGalary: 'blogpost-images-1', selectedImages: [] })}
+                            />
+                            <Fileinput
+                                name=""
+                                id="choose-local-image"
+                                type="image"
+                                placeHolder='From computer'
+                                accept="image/*"
+                                setValue={(value) => {
+                                    getMedia({
+                                        files: value,
+                                        fileType: 'image',
+                                        getValue: async ({ dataUrl, tempUrl, file }) => {
+                                            setLoadingDialog('loading-dialog');
+                                            const image: Imageprops | null = await createImage({ file, url: '/api/image/avater/add', fieldname: 'avater' })
+                                            if (image) {
+                                                setImageUrl(image._id)
+                                                setLoadingDialog('');
+                                                appDispatch(addAvaters(image));
+                                                appDispatch(increaseTotalNumberOfUserAvaters(1));
+                                            }
+                                        }
+                                    });
+                                    setCaretIsOn('addImage');
+                                    setImageChange(true);
+                                }}
+                            />
+                        </div>
+                    }
+                />
+                <Dialog
+                    id="loading-dialog"
+                    currentDialog="loading-dialog"
+                    parentClass=""
+                    childClass="flex justify-center items-center w-full h-full "
+                    dialog={loadingDialog}
+                    setDialog={setLoadingDialog}
+                    children={
+                        <svg className="animate-spin h-5 w-5 mr-3  rounded-e-full border-black border-2 " viewBox="0 0 24 24">
+                        </svg>
+                    }
+                />
             </form> :
             <div>loading editing profile...</div>
         }

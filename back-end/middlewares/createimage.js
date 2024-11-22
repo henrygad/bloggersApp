@@ -5,9 +5,9 @@ const createimage = async (req, res, next) => {
     const {file, authorizeUser} = req;
 
     try {
-        // create new image
-        if (typeof req.file === 'object') {
-            const addImage = await imageFiles.create({
+    
+        if (typeof req.file === 'object') { // if file is available
+            const addImage = await imageFiles.create({ // create image
                 data: file.buffer,
                 contentType: file.mimetype,
                 fileName: file.originalname,
@@ -17,18 +17,15 @@ const createimage = async (req, res, next) => {
             })
 
             if (!addImage) throw new Error('bad request: image not save')
-
-            // assign image to request
-            req.image = addImage._id
+            req.image = addImage // assign image to request object
         }
+        
         next()
-
+        
     } catch (error) {
 
         next(new customError(error, 400))
     }
-
 }
 
-
-module.exports = createimage
+module.exports = createimage;

@@ -88,17 +88,6 @@ const userBlogposts = createSlice({
                 (item) => item._id !== action.payload._id
             );
         },
-        fetchArchivedBlogposts: (state, action: {payload: Initialstate['archivedBlogposts']}) => {
-            state.archivedBlogposts = action.payload;
-        },
-        archivedBlogposts: (state, action: {payload: Blogpostprops})=>{
-            state.archivedBlogposts.data = [action.payload, ...state.archivedBlogposts.data];
-        },
-        deleteArchivedBlogposts: (state, action: {payload: {_id: string}}) => {
-            state.archivedBlogposts.data = state.archivedBlogposts.data.filter(
-                (item) => item._id !== action.payload._id
-            );
-        },
         fetchUnpublishedBlogposts: (state, action: {payload: Initialstate['unpublishedBlogposts']}) => {
             state.unpublishedBlogposts = action.payload;
         },
@@ -138,7 +127,6 @@ const userBlogposts = createSlice({
 export const {
     fetchPublishedBlogposts, publishBlogpost, editPublishedBlogpost, deletePublishedBlogpost, 
     fetchTotalNumberOfPublishedBlogposts, increaseTotalNumberOfPublishedBlogposts, decreaseTotalNumberOfPublishedBlogposts,
-    fetchArchivedBlogposts, archivedBlogposts, deleteArchivedBlogposts,
     fetchUnpublishedBlogposts, unpublishBlogposts, deleteUnpublishedBlogposts,
     fetchSavedsBlogpost, saveBlogposts, unSaveBlogpost,
     fetchTimelineFeeds,

@@ -1,8 +1,5 @@
-import { Button, Singlecomment } from "../components";
+import { Button, Usercomment } from "../components";
 import { Commentprops } from "../entities";
-import { useDeleteData } from "../hooks";
-import { useAppDispatch } from "../redux/slices";
-import { decreaseTotalNumberOfUserComments, deleteComments } from "../redux/slices/userCommentsSlices";
 
 
 type Props = {
@@ -26,18 +23,6 @@ const CommentSec = ({
   numberOfComments,
 }: Props) => {
 
-  const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
-  const appDispatch = useAppDispatch();
-
-  const handleDeleteComment = async (_id: string) => {
-    const url = '/api/deletecomment';
-    const response = await deleteCommentData(url + "/" + _id);
-
-    if (response.ok) {
-      appDispatch(deleteComments({ _id }));
-      appDispatch(decreaseTotalNumberOfUserComments(1));
-    };
-  };
 
   return <div>
     {
@@ -48,25 +33,9 @@ const CommentSec = ({
               profileCommentsData.length ?
               <>{
                 profileCommentsData.map((item, index) =>
-                  <Singlecomment
+                  <Usercomment
                     key={item._id}
                     comment={item}
-                    type={'_html'}
-                    index={index}
-                    handleDeleteComment={() => handleDeleteComment(item._id)}
-                    deletingLoading={deleteCommentLoading}
-                    allowNested={false}
-                    autoOpenTargetComment={{
-                      autoOpen: false,
-                      commentId: '',
-                      commentAddress: '',
-                      targetLike: {
-                        autoOpen: false,
-                        commentId: '',
-                        like: '',
-                      }
-                    }
-                    }
                   />
                 )
               }

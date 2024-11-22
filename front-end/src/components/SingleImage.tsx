@@ -79,8 +79,8 @@ const SingleImage = ({ image: { _id, uploader, fieldname }, index, placeHolder =
 
     return <div className="relative w-[240px] h-[240px] bg-gray-100 rounded-md">
         <Displayimage
-            id={'avater' + index}
-            imageUrl={"/api/image/" + _id}
+            id={'avater-image'}
+            imageId={_id}
             parentClass='w-full h-full cursor-pointer'
             imageClass='object-cover'
             onClick={handleViewExpandImageIsize}
@@ -114,8 +114,8 @@ const SingleImage = ({ image: { _id, uploader, fieldname }, index, placeHolder =
                             />
                         </div>
                         <Displayimage
-                            id={'avater' + index}
-                            imageUrl={"/api/image/" + _id}
+                            id={'image' + index}
+                            imageId={_id}
                             parentClass='w-full h-full'
                             imageClass='object-contain'
                             placeHolder={placeHolder.trim() !== '' ? placeHolder : ''}

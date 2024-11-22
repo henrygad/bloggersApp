@@ -10,6 +10,7 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
         data: profileData, 
         loading: loadingUserProfileData
     } } = useAppSelector((state) => state.userProfileSlices);
+
     const [followed, setFollowed] = useState(false);
     const { patchData, loading: loadingFollow } = usePatchData();
     const appDispatch = useAppDispatch();
@@ -20,11 +21,11 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
         if (followed) return;
 
         const body = null;
-        const response = await patchData<{ userName: string }>('/api/follow/' + userNameToFollow, body);
+        const response = await patchData<{ followed: string }>('/api/follow/' + userNameToFollow, body);
         const { data, ok } = response;
 
-        if (ok && data) {
-            appDispatch(follow({userName: data.userName}));
+        if (data) {
+            appDispatch(follow({userName: data.followed}));
             setFollowed(true);
 
             await handleNotification(userNameToFollow, 'followed you, you can follow them back', 'follow');
@@ -35,11 +36,11 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
         if (!followed) return;
 
         const body = null;
-        const response = await patchData<{ userName: string }>('/api/unfollow/' + userNameToFollow, body);
-        const { data, ok } = response;
+        const response = await patchData<{ unFollowed: string }>('/api/unfollow/' + userNameToFollow, body);
+        const { data} = response;
 
-        if (ok && data) {
-            appDispatch(unFollow({userName: data.userName}));
+        if (data) {
+            appDispatch(unFollow({userName: data.unFollowed}));
             setFollowed(false);
 
             await handleNotification(userNameToFollow, 'unfollowed you, you can unfollow them back', 'unfollow');
@@ -66,13 +67,13 @@ const Followbutton = ({ userNameToFollow }: { userNameToFollow: string }) => {
         setFollowed(profileData.following.includes(userNameToFollow));
     }, [profileData?.following, loadingUserProfileData]);
 
-    return <Button
+    return  <Button
         id='follow-btn'
+        buttonClass="font-secondary text-base font-semibold  border py-1 px-2 rounded-md"
         children={!loadingFollow ?
             (!followed ? 'Follow' : 'Following') :
             'loading...'
         }
-        buttonClass="text-sm border px-1 rounded-md"
         handleClick={() => { !followed ? handleFollow(userNameToFollow) : handleUnfollow(userNameToFollow) }}
     />
 };

@@ -21,7 +21,6 @@ import UsershortInfor from './UsershortInfor';
 import Dotnav from './Dotnav';
 import Singlecomment from './Singlecomment';
 import SingleImage from './SingleImage';
-import Userdotnav from './Userdotnav';
 import Followbutton from './Followbutton';
 import Likebutton from './Likebutton';
 import Commentbutton from './Commentbutton';
@@ -32,8 +31,14 @@ import Deleteuseraccount from './Deleteuseraccount';
 import Searchform from './Searchform';
 import Singlesearchhistory from './Singlesearchhistory';
 import Savesbutton from './Savesbutton';
+import Usercomment from './Usercomment';
+import Singleuser from './Singleuser';
+import Userdotnav from './Userdotnav';
 
 export {
+    Userdotnav,
+    Singleuser,
+    Usercomment,
     Savesbutton,
     Singlesearchhistory,
     Searchform,
@@ -73,7 +78,6 @@ export {
     Dotnav,
     Singlecomment,
     SingleImage,
-    Userdotnav,
     Followbutton,
 };
 

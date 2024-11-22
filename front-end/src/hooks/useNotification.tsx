@@ -10,11 +10,7 @@ const useNotification = () => {
         notifyFrom: string
     }) => {
         
-        const response = await patchData(url, body);
-        const { data, ok } = response;
-        if (ok) {
-            console.log(data);
-        };
+        await patchData(url, body);
     };
 
     return notify;

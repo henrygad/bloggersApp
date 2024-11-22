@@ -1,11 +1,10 @@
 import { Button, SingleImage } from "../components";
 import { Imageprops } from "../entities";
-import { useFetchData, useUserIsLogin } from "../hooks";
+import { useFetchData, useImageGalary, useUserIsLogin } from "../hooks";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
 import { fetchBlogpostImages } from "../redux/slices/userImageSlices";
 
-const Displayblogpostimagessec = () => {
-
+const Displayblogpostimagessec = ({ selection = false }: { selection?: boolean }) => {
     const { loginStatus: { loginUserName } } = useUserIsLogin();
 
     const { userBlogpostimage: {
@@ -20,6 +19,7 @@ const Displayblogpostimagessec = () => {
         error: errorMoreBlogpostImages } = useFetchData<Imageprops[]>(null);
     const appDispatch = useAppDispatch();
 
+    const { imageGalary, setImageGalary } = useImageGalary();
 
     const handleServerLoadMoreAvaters = async () => { // load more avater
         if (!blogpostImages.length) return;
@@ -37,8 +37,17 @@ const Displayblogpostimagessec = () => {
             });
     };
 
+    const handleSelectImage = (_id: string) => {
+        if (_id) {
+            if (imageGalary.selectedImages.includes(_id)) {
+                setImageGalary((pre) => pre ? { ...pre, selectedImages: pre.selectedImages.filter(item => item !== _id) } : pre);
+            } else {
+                setImageGalary((pre) => pre ? { ...pre, selectedImages: [...pre.selectedImages, _id] } : pre);
+            };
+        };
+    };
 
-    return <div id="profile-advater">
+    return <div id="blogpost-images">
         {
             !blogpostImagesLoading ?
                 <>{
@@ -47,12 +56,22 @@ const Displayblogpostimagessec = () => {
                         <>{
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 " >
                                 {blogpostImages.map((item, index) =>
-                                    <SingleImage
-                                        key={item._id || index}
-                                        image={item}
-                                        index={index}
-                                        placeHolder=""
-                                    />
+                                    <div className="relative" key={item._id}>
+                                        {selection ?
+                                            <span id="select-image-btn"
+                                                className={`absolute top-1 left-1 h-4 w-4 ${imageGalary.selectedImages.includes(item._id) ?
+                                                    'bg-green-400' :
+                                                    'bg-gray-50'} rounded-full border-2 border-white z-20 cursor-pointer` }
+                                                onClick={() => handleSelectImage(item._id)} >
+                                            </span> :
+                                            null
+                                        }
+                                        <SingleImage                                    
+                                            image={item}
+                                            index={index}
+                                            placeHolder=""
+                                        />
+                                    </div>
                                 )}
                             </div>
                         }
@@ -63,9 +82,9 @@ const Displayblogpostimagessec = () => {
                                 handleClick={handleServerLoadMoreAvaters}
                             />
                         </> :
-                        <div>no advater</div>
+                        null
                 }</> :
-                <div>advater loading...</div>
+                <div>loading...</div>
         }
     </div>
 };

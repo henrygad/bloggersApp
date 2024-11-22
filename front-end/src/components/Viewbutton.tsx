@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNotification, usePatchData, useUserIsLogin } from "../hooks";
+import { IoStatsChart } from "react-icons/io5"
+import Button from "./Button";
 
 type Props = {
-    url: string
+    apiForView: string
     arrOfViews: string[]
     elementRef: React.MutableRefObject<HTMLElement | null>
     onLoadView: boolean
@@ -10,31 +12,45 @@ type Props = {
     notificationTitle: string
 };
 
-const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificationTitle, notificationUrl }: Props) => {
+const Viewbutton = ({ apiForView, arrOfViews, onLoadView = false, elementRef, notificationTitle, notificationUrl }: Props) => {
     const { loginStatus: { loginUserName, sessionId } } = useUserIsLogin();
     const [views, setViews] = useState<string[]>(arrOfViews);
     const { patchData } = usePatchData();
-
     const notify = useNotification();
 
-    const handleView = async (url: string, sessionId: string) => {
+    const handleView = async (apiForView: string, sessionId: string) => {
         if (views.includes(sessionId)) return;
         const body = null;
-        const response = await patchData<string[]>(url, body);
-        const { data, ok } = response;
+        const response = await patchData<{ view: string }>(apiForView, body);
+        const { data } = response;
         if (data) {
-            setViews(data);
-           //handleViewsNotification()
+            setViews((pre) => pre ? [...pre, data.view] : pre);
+            if (views.length === 21) {
+                handleViewsNotification(views.length);
+            };
+            if (views.length === 41) {
+                handleViewsNotification(views.length);
+            };
+            if (views.length === 61) {
+                handleViewsNotification(views.length);
+            };
+            if (views.length === 81) {
+                handleViewsNotification(views.length);
+            };
+            if (views.length === 101) {
+                handleViewsNotification(views.length);
+            };
         };
     };
 
     const handleOnMouseHover = (e: MouseEvent) => {
         if (elementRef.current &&
-            elementRef.current.contains(e.target as Node)
+            elementRef.current.contains(e.target as Node) &&
+            sessionId
         ) {
             setTimeout(() => {
-                handleView(url, sessionId || '');
-            }, 1000);
+                handleView(apiForView, sessionId);
+            }, 2000);
         }
     };
 
@@ -42,14 +58,12 @@ const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificat
         const url = '/api/notification/' + loginUserName;
         const body = {
             typeOfNotification: 'view',
-            msg: `${views} people viewed ${notificationTitle}`,
+            msg: `${views}+ people have viewed, ${notificationTitle}`,
             url: notificationUrl,
-            notifyFrom: 'blogger',
+            notifyFrom: 'blogback',
         };
 
-        setTimeout(async () => {
-            await notify(url, body);
-        }, 1000);
+        await notify(url, body);
     };
 
     useEffect(() => {
@@ -65,15 +79,23 @@ const Viewbutton = ({ url, arrOfViews, onLoadView = false, elementRef, notificat
     }, []);
 
     useEffect(() => {
-        if (onLoadView) {
+        if (onLoadView && sessionId) {
             setTimeout(() => {
-                handleView(url, sessionId || '');
-            }, 1000);
+                handleView(apiForView, sessionId);
+            }, 2000);
         };
 
-    }, []);
+    }, [onLoadView, sessionId]);
 
-    return <span id="views" className="cursor-none">View: {views ? views.length : 0}</span>
+
+    return <Button
+        id="stat-btn"
+        buttonClass='flex items gap-2 cursor-default'
+        children={<>
+            <IoStatsChart size={19} />
+            {views?.length || 0}</>
+        }
+    />
 };
 
 export default Viewbutton;

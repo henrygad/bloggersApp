@@ -9,7 +9,7 @@ import Textlisting from './action-buttons/Textlisting';
 import Video from './action-buttons/Video';
 import Writecode from './action-buttons/Writecode';
 import Inputarea from './Inputarea';
-import { deleteAll, deleteUnacceptedHtmlTag, focusCaretOnInputArea } from './settings';
+import { deleteAll, deleteUnacceptedHtmlTag, focusCaretOnInputArea, getCaretPosition } from './settings';
 import { arrOfBgColors, arrOfEmojis, arrOfFontColors, arrOfFontFamily, arrOfFontSizes, arrOfHeadings } from './assests/data';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -53,20 +53,6 @@ const App = ({
     const [openDropDownMenu, setOpenDropDownMenu] = useState('');
     useTextEditors && useClickOutSide(textEdictorRef, () => { setOpenDropDownMenu('') });
 
-    const getCaretPosition = (element: Node) => {
-        const selection = document.getSelection(); // get selected element or node
-        if (!selection) return 0;
-
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0); // get the selected range object 
-
-            const preCaretRange = range.cloneRange(); // clone range
-            preCaretRange.selectNodeContents(element); // select the entire content of the element
-            preCaretRange.setEnd(range.endContainer, range.endOffset); // set the end to the caret position
-            return preCaretRange.toString().length; // return the position number of caret in the input text editor area
-        };
-        return 0;
-    };
 
     const setCaretPosition = (position: number) => {
         const selection = window.getSelection();

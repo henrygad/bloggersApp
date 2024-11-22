@@ -44,42 +44,47 @@ const Treadingfeeds = ({
 
 
   return <div>
-    <div>
-    <Searchform />
+    <div id="search-form-wrapper" className="relative flex justify-center w-full">
+      <div className="absolute -top-8">
+        <Searchform />
+      </div>
     </div>
-    {
-      !treadingFeedsLoading ?
-        <div id="display-blogpost-wrapper">
-          {treading &&
-            treading.length ?
-            <>
-              <span className="cursor-pointer" onClick={handleLoadNewFeeds}>
-                {!loadingNewFeeds ? 'load new feeds' : 'loading...'}
-              </span>
-              <div id="list-treading-blogposts">
-                {
-                  treading.map((item, index) =>
-                    item.status === 'published' ?
-                      <Singleblogpost
-                        key={item._id}
-                        type={'text'}
-                        index={index}
-                        blogpost={item}
-                      /> :
-                      null
-                  )
+    <div id="display-blogpost-wrapper"
+      className="flex justify-center py-10">
+      {
+        !treadingFeedsLoading ?
+          <>
+            {treading &&
+              treading.length ?
+              <div>
+                <span className="block text-center cursor-pointer mb-8" onClick={handleLoadNewFeeds}>
+                  {!loadingNewFeeds ? 'load new feeds' : 'loading...'}
+                </span>
+                <>
+                  {
+                    treading.map((item, index) =>
+                      item.status === 'published' ?
+                        <Singleblogpost
+                          key={item._id}
+                          type={'text'}
+                          index={index}
+                          blogpost={item}
+                        /> :
+                        null
+                    )
 
-                }
-              </div>
-              <span className="cursor-pointer" onClick={handleLoadMoreOldFeeds}>
-                {!loadingMoreFeeds ? 'load more feeds' : 'loading...'}
-              </span>
-            </> :
-            <div>no blogpost found</div>
-          }
-        </div> :
-        <div>laoding...</div>
-    }
+                  }
+                </>
+                <span className="block text-center cursor-pointer mb-8" onClick={handleLoadMoreOldFeeds}>
+                  {!loadingMoreFeeds ? 'load more feeds' : 'loading...'}
+                </span>
+              </div> :
+              null
+            }
+          </> :
+          <div>laoding...</div>
+      }
+    </div>
   </div>
 };
 

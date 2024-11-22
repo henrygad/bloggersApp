@@ -13,7 +13,8 @@ const blogpostsData = new mongoose.Schema({
     likes: [String],
     views: [String],
     shares: [String],
-    status: { type: String, default: 'archived' },
+    preStatus: String,
+    status: { type: String, default: 'published' },
 },
     {
         timestamps: true

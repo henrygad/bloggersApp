@@ -2,11 +2,12 @@ const router = require('express').Router()
 const authenticatedUsers = require('../schema/authenticatedUsersSchema')
 const usersData = require('../schema/usersDataSchema')
 const hashPassword = require('../utils/hashPassword')
-const validator = require('validator')
+const { body, validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken')
 const bcypt = require('bcryptjs')
 const authorization = require('../middlewares/authorization')
 const { customError } = require('../middlewares/error')
+const sendEmail = require('../middlewares/sendEmails')
 require('dotenv').config()
 
 const SECRETE = process.env.SECRETE
@@ -34,103 +35,122 @@ router.get('/status', authorization, (req, res, next) => {
 
 })
 
-router.post('/signup', async (req, res, next) => {
-    const { body: { userName, email, password, comfirmPassword }, session } = req
+router.post('/signup',
+    [
+        body('userName')
+            .trim()
+            .isLength({ min: 5 }).withMessage('Username must be at least 5 characters long.')
+            .escape(),
 
-    try {
+        body('email')
+            .trim()
+            .isEmail().withMessage('Must be a valid email.'),
 
-        if (!userName.trim() ||
-            !email.trim() ||
-            !password.trim() ||
-            !comfirmPassword.trim()
-        ) throw new Error('All field must been fill!') // if one field is empty reject request
+        body('password')
+            .trim()
+            .escape()
+            .isStrongPassword()
+            .withMessage('Password is not strong enough, must be at least 8 characters long.')
 
-        // validate username, email, password, comfirmPassword for malicious attack
-        if (!validator.isLength(userName, { min: 5 })) throw new Error('Username must be atleat 5 letters!')
-        if (!validator.isEmail(email)) throw new Error('Invalid email!')
-        if (!validator.isStrongPassword(password)) throw new Error('Password is not strong enough!')
+    ], async (req, res, next) => {
+        const { body: { userName, email, password, comfirmPassword }, session } = req
 
-        const validatedUserName = validator.escape(userName)  // Sanitize username (i.e, replace code syntax to html entities)
+        try {
 
-        const userNameUnavialiable = await authenticatedUsers.findOne({ userName: '@' + validatedUserName })  // check if username is available
-        if (userNameUnavialiable) throw new Error('This username is unavaliable!')
+            const error = validationResult(req)
+            if (!error.isEmpty()) throw new Error(error.array().map((error) => error.msg + ' ').join('')) // if there is errors durring validating body throw error
+            if (password !== comfirmPassword) throw new Error('Comfirmation passwords did not match!') // comfirm whether password and comfirmation password is the same for accurrancy
 
-        const emailUnavialable = await authenticatedUsers.findOne({ email }) // also check if therr is a user with this email
-        if (emailUnavialable) throw new Error('There is an account with this email, try login!')
+            const userNameUnavialiable = await authenticatedUsers.findOne({ userName: '@' + userName })  // check if username is available
+            if (userNameUnavialiable) throw new Error('This username is not avaliable!')
 
-        if (password.trim() !== comfirmPassword.trim()) throw new Error('Passwords did not match') // comfirm whether password and comfirmation password is the same for accurrancy
+            const emailUnavialable = await authenticatedUsers.findOne({ email }) // also check if therr is a user with this email
+            if (emailUnavialable) throw new Error('There is an account with this email, try login!')
 
-        const hashedPassword = hashPassword(password) // hash password 
+            const hashedPassword = hashPassword(password) // hash password 
 
-        const newUserData = {
-            userName: '@' + validatedUserName,
-            email,
-            password: hashedPassword
-        };
+            const createNewUser = await authenticatedUsers.create({ userName: '@' + userName, email, password: hashedPassword }) // create a new authenticated user
+            if (!createNewUser) throw new Error('Bad resquest: user was not created')
 
-        const createUser = await authenticatedUsers.create(newUserData)   // create a new authenticated user
-        if (!createUser) throw new Error('Bad resquest: user was not created')
+            await usersData.create({ userName: createNewUser.userName, email: createNewUser.email, timeline: [createNewUser.userName] }) // create a new user space for each new user
 
-        await usersData.create({ userName: createUser.userName, email: createUser.email, timeline: [createUser.userName] }) // create a new user space for each new user
-
-        const token = jwt.sign({ _id: createUser._id }, SECRETE, { expiresIn: '1h' }) // generate authentication token and assign it to user
-        req.session.jwtToken = token // attach authentication  token to req property
-        req.session.isLogin = req.session.jwtToken && true // login user
-        const isLogin = req.session.isLogin
-
-        res.json({  //send back athorizetion
-            greetings: `Hi! ${createUser.userName}`,
-            isLogin,
-            loginUserName: createUser.userName,
-            sessionId: session.id,
-            searchHistory: session.searchHistory,
-        })
-
-    } catch (error) {
-
-        next(new customError(error, 500))
-    }
-})
-
-router.post('/login', async (req, res, next) => {
-    const { body: { value, password }, session } = req
-
-    try {
-
-        if (!value.trim() ||
-            !password.trim()
-        ) throw new Error('Fields are empty!') // if fields are empty
-
-        let userExist = null // declear a exiting user varible
-
-        userExist = await authenticatedUsers.findOne({ userName: "@" + value }) // check if user already exist by username 
-        if (!userExist) userExist = await authenticatedUsers.findOne({ email: value })  // if user does'nt already exist by userName, check if user exist by email
-        if (!userExist) throw new Error('Invalid credentials!')  // if user does'nt exist either by userName or email
-        const validPassword = bcypt.compareSync(password, userExist.password) // compare raw password with hashed password
-        if (!validPassword) throw new Error('Invalid credentials!') // if password is not valid
-
-        if (session.jwtTokenExpired) {
-            console.log('creating new jwt token')
-            const token = jwt.sign({ _id: userExist._id }, SECRETE, { expiresIn: '1h' }) // generate authentication token and assign it to user
+            const token = jwt.sign({ _id: createNewUser._id }, SECRETE, { expiresIn: '24h' }) // generate authentication token and assign it to user
             req.session.jwtToken = token // attach authentication  token to req property
             req.session.isLogin = req.session.jwtToken ? true : false // login user
-        } else {
-            req.session.isLogin = true // login user 
+
+            const emailOTP = Math.floor(Math.random() * 10000) // generate new OPT Token
+
+            sendEmail({ // send an email verification OPT token to the user mail box
+                to: createNewUser.email, // recipient email
+                subject: 'OTP Email Verification', // email subject
+                // text: 'This is a test email sent using Nodemailer!', // plain text body
+                html: `<h1 style="color: green, font-weight: bold" >Blogger Logo</h1> 
+                 <div>
+                   <div style=" display: font-size:20px">Verify your email henrygad.orji@gmail.com</div>
+                   <div>Verification Token: ${emailOTP}</div>
+                 </div>`, // html body
+            })
+
+            req.session.emailVerificationToken = null // clear up any avaliable email verification OTP token
+            const jwtEmailOTPToken = jwt.sign({ emailOTP }, SECRETE, { expiresIn: '24h' }) // assign new one
+            req.session.emailVerificationToken = jwtEmailOTPToken //  attached the new email verification OTP token to the req session object
+
+            const isLogin = req.session.isLogin
+            res.json({  //send back athorizetion
+                greetings: `Hi! ${createNewUser.userName}`,
+                isLogin,
+                loginUserName: createNewUser.userName,
+                sessionId: session.id,
+                searchHistory: session.searchHistory,
+            })
+
+        } catch (error) {
+
+            next(new customError(error, 500))
         }
+})
 
-        const isLogin = req.session.isLogin // get login  status
-        res.json({ //send back athorizetion
-            greetings: `Hi! ${userExist.userName}`,
-            isLogin,
-            loginUserName: userExist.userName,
-            sessionId: session.id,
-            searchHistory: session.searchHistory,
-        })
+router.post('/login',
+    [
+        body(['value', 'password'])
+            .trim()
+            .notEmpty().withMessage('Field cannot be empty')
+            .escape(),
 
-    } catch (error) {
+    ], async (req, res, next) => {
+        const { body: { value, password }, session } = req
 
-        next(new customError(error, 400))
-    }
+        try {
+
+            const error = validationResult(req)
+            if (!error.isEmpty()) throw new Error(error.array().map((error) => error.msg + ' ').join('')) // if there is errors durring validating body throw error
+
+            let userExist = null // declear a exiting user varible
+
+            userExist = await authenticatedUsers.findOne({ userName: "@" + value }) // check if user already exist by username 
+            if (!userExist) userExist = await authenticatedUsers.findOne({ email: value })  // if user does'nt already exist by userName, check if user exist by email
+            if (!userExist) throw new Error('Invalid credentials!') // if user does'nt exist either by userName or email
+
+            const validPassword = bcypt.compareSync(password, userExist.password) // compare raw password with hashed password
+            if (!validPassword) throw new Error('Invalid credentials!') // if password is not valid
+
+            const token = jwt.sign({ _id: userExist._id }, SECRETE, { expiresIn: '24h' }) // generate authentication token and assign it to user
+            req.session.jwtToken = token // attach authentication  token to req property
+            req.session.isLogin = req.session.jwtToken ? true : false // login user
+            const isLogin = req.session.isLogin // get login  status
+
+            res.json({ //send back athorizetion
+                greetings: `Hi! ${userExist.userName}`,
+                isLogin,
+                loginUserName: userExist.userName,
+                sessionId: session.id,
+                searchHistory: session.searchHistory,
+            })
+
+        } catch (error) {
+
+            next(new customError(error, 400))
+        }
 })
 
 router.post('/logout', authorization, async (req, res, next) => {
@@ -178,6 +198,45 @@ router.post('/forgetpassword', async (req, res, next) => {
     }
 })
 
+router.post('/verifyemail',
+    [
+        body('OTP')
+            .trim()
+            .notEmpty().withMessage('No OTP provided!')
+            .escape()
+    ], authorization, async (req, res, next) => {
+        const { body: { OTP }, session, authorizeUser } = req;
+
+        try {
+            const error = validationResult(req)
+            if (!error.isEmpty()) throw new Error(error.array().map((error) => error.msg + ' ').join('')) // if there is errors durring validating body throw error
+
+            jwt.verify(session.emailVerificationToken, SECRETE, (err, decoded) => {// veriry email OTP jwt token
+                if (err) {
+                    if (err.name === 'TokenExpiredError') { // check whether login jwtToken has expired
+                        throw new Error('Invalid OPT token!')
+                    } else { // check whether jwtToken is valid
+                        throw new Error('Invalid OPT token!')
+                    }
+                }
+                const emailOTP = decoded.emailOTP // get OTP
+                if (emailOTP !== parseFloat(OTP)) throw new Error('Invalid OPT token!') // throw error if decode opt did not match with the incoming opt
+            })
+
+            res.json({  // send back athorizetion
+                greetings: `Hi! ${authorizeUser}`,
+                isLogin: session.isLogin,
+                loginUserName: authorizeUser,
+                sessionId: session.id,
+                searchHistory: session.searchHistory,
+            })
+
+        } catch (error) {
+
+            next(new customError(error, 400))
+        }
+})
+
 router.patch('/changeforgetpassword/:jwtTokenFor30min', async (req, res, next) => {
     const { params: { jwtTonkenFor30min } } = req
 
@@ -200,5 +259,6 @@ router.patch('/changeforgetpassword/:jwtTokenFor30min', async (req, res, next) =
         next(new customError(error, 400))
     }
 })
+
 
 module.exports = router

@@ -10,10 +10,15 @@ const useDeleteData = () => {
             setLoading(true);
             setError('');
 
-            const response = await axios.delete(url);
+            const response = await axios.delete('https://localhost:3000' + url,
+                {
+                    baseURL: 'https://localhost:3000',
+                     withCredentials: true
+                 }
+            );
             const data: T | null = await response.data;
 
-            if (data){
+            if (data) {
                 setError('');
                 setLoading(false);
                 return { data: data, ok: true };

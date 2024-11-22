@@ -9,6 +9,7 @@ import Followingsec from './Followingsec';
 import Interentssec from './Interentssec';
 import { Link } from 'react-router-dom';
 import Avatersec from './Avatersec';
+import avaterPlaceholder from '../assert/avaterplaceholder.svg'
 
 type Props = {
   profileLoading: boolean
@@ -45,7 +46,8 @@ type Props = {
 };
 
 
-const Profilesec = ({
+const Profilesec = (
+  {
   profileData,
   profileLoading,
 
@@ -179,11 +181,11 @@ const Profilesec = ({
                     {/* profile data */}
                     <Link to={isAccountOwner ? '/editprofile' : ''} className='' >
                       <Displayimage
-                        placeHolder=''
+                        placeHolder={avaterPlaceholder}
                         id={'avater'}
-                        imageUrl={"/api/image/" + profileData?.displayImage}
+                        imageId={profileData?.displayImage}
                         parentClass='h-14 w-14'
-                        imageClass='object-contain rounded-full border-2 border-green-300'
+                        imageClass='object-contain rounded-full'
                         onClick={() => ''}
                       />
                       <div className='flex flex-col font-secondary '>

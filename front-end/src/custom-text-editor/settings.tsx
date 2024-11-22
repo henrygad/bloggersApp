@@ -1,4 +1,4 @@
-import { getSelection, insertSingleElementToTheDOM } from "./cmds";
+import { getSelection, insertSingleElementToTheDOM, resetSelections } from "./cmds";
 
 export const createNewSpan = (): HTMLSpanElement => {
     const span = document.createElement('span');
@@ -24,18 +24,19 @@ export const addSpanToInputAreaIfEmpty = (inputAreaRef: React.RefObject<HTMLDivE
     };
 };
 
-export const selectedElement = () => {
-    const selection = window.getSelection();
-    if (!selection) return;
-    let element: HTMLElement | null = null
+export const getCaretPosition = (element: Node) => {
+    const selection = document.getSelection(); // get selected element or node
+    if (!selection) return 0;
 
     if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const node = range.startContainer;
-        element = range.startContainer.parentElement;
-    };
+        const range = selection.getRangeAt(0); // get the selected range object 
 
-    return element;
+        const preCaretRange = range.cloneRange(); // clone range
+        preCaretRange.selectNodeContents(element); // select the entire content of the element
+        preCaretRange.setEnd(range.endContainer, range.endOffset); // set the end to the caret position
+        return preCaretRange.toString().length; // return the position number of caret in the input text editor area
+    };
+    return 0;
 };
 
 export const handleSpacialCharacters = (value: string[]) => {
@@ -97,21 +98,25 @@ export const deleteUnacceptedHtmlTag = () => {
 };
 
 export const focusCaretOnInputArea = (contenteditableDiv: HTMLDivElement | null) => {
-    contenteditableDiv?.focus();
+    const range = document.createRange();
+    const selection = window.getSelection();
+    if (!selection || !contenteditableDiv) return;
+
+    resetSelections(selection, range, contenteditableDiv, 'start')
 };
 
 export const handleWhenPasteIntoInputArea = (e: React.ClipboardEvent<HTMLDivElement>) => { // filter a text pasted into the text area
     e.preventDefault();
     const selectedNode = getSelection(); // get the selected node properties
+    if (!selectedNode) return;
+    const { selection, range } = selectedNode;
 
-    if (selectedNode) {
-        const { selection, range} = selectedNode;
-        const clipboardData = e.clipboardData;  // Get the clipboard data
-        const pastedData = clipboardData?.getData('text/plain'); // or 'text/plain
+    range.deleteContents();
 
-        const textNode = document.createTextNode(pastedData); // create text node and insert emoji in the caret position
-        insertSingleElementToTheDOM(textNode, range, selection); // insert emoji to the DOM
-    };
+    const clipBoard = e.clipboardData;
+    const incomingData = clipBoard.getData('text/plain');
+    const newTextNode = document.createTextNode(incomingData);
+    insertSingleElementToTheDOM(newTextNode, range, selection);
 };
 
 export const deleteAll = (contenteditableDiv: HTMLDivElement | null) => {
@@ -124,5 +129,5 @@ export const deleteAll = (contenteditableDiv: HTMLDivElement | null) => {
 
     childSpan?.appendChild(initialEditableSpan);
     parentSpan?.replaceChildren(childSpan); // replace all chidspan children with  a new initialEditablespan
-   focusCaretOnInputArea(contenteditableDiv); // place focus on input area
+    focusCaretOnInputArea(contenteditableDiv); // place focus on input area
 };

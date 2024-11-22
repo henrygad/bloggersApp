@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, Tab } from "../components";
 import { Button } from "../components";
-import { Archiveds, Createblogpostsec, Displayblogpostimagessec, Unpublisheds } from "../sections";
+import { Drafts, Createblogpostsec, Displayblogpostimagessec, Unpublisheds } from "../sections";
 import { useLocation } from "react-router-dom";
 import { Blogpostprops } from "../entities";
 
@@ -26,12 +26,11 @@ const Post = () => {
     _html: blogpostToEdit?._html.body || '',
     text: blogpostToEdit?.body || '',
   });
-  const [displayImage, setDisplayImage] = useState(('/api/image/' + blogpostToEdit?.displayImage) || ' ');
+  const [displayImage, setDisplayImage] = useState(blogpostToEdit?.displayImage || '');
   const [catigory, setCatigory] = useState(blogpostToEdit?.catigory || '');
   const [slug, setSlug] = useState(blogpostToEdit?.slug || '');
-  const [blogpostStatus, setBlogpostStatus] = useState(blogpostToEdit?.status || 'archive');
-
-  const [imageFile, setImageFile] = useState<Blob | string>('');
+  const [blogpostStatus, setBlogpostStatus] = useState(blogpostToEdit?.status || '');
+  const [blogpostPreStatus, setBlogpostPreStatus] = useState(blogpostToEdit?.preStatus || '');
 
   const sideBar = [
     {
@@ -64,8 +63,8 @@ const Post = () => {
           setSlug={setSlug}
           blogpostStatus={blogpostStatus}
           setBlogpostStatus={setBlogpostStatus}
-          imageFile={imageFile}
-          setImageFile={setImageFile}
+          blogpostPreStatus={blogpostPreStatus}
+          setBlogpostPreStatus={setBlogpostPreStatus}
         />
       }
     },
@@ -73,25 +72,29 @@ const Post = () => {
       menu: {
         name: 'Articles',
         to: '',
-        content: <Button children="Article" buttonClass="" id="" handleClick={() => ''} />,
+        content: <Button
+          children="Article"
+          buttonClass=""
+          id=""
+          handleClick={() => ''} />,
         child: [
           {
             name: "Unpublished",
             to: '',
-            content: <Button 
-            children="Unpublished" 
-            buttonClass="" 
-            id=""
-             handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('unpublished') }} />
+            content: <Button
+              children="Unpublished"
+              buttonClass=""
+              id=""
+              handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('unpublished') }} />
           },
           {
-            name: "Archived",
+            name: "drafts",
             to: '',
-            content: <Button 
-            children="Archived"
-             buttonClass="" 
-             id=""
-              handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('Archived') }} />
+            content: <Button
+              children="Draft"
+              buttonClass=""
+              id=""
+              handleClick={() => { handleSwitchBetweenParentTabs('articles'); setChildrenTabs('drafts') }} />
           },
         ]
       },
@@ -104,8 +107,8 @@ const Post = () => {
             content: <Unpublisheds />,
           },
           {
-            name: "Archived",
-            content: <Archiveds />,
+            name: "drafts",
+            content: <Drafts />,
           },
         ]
       }
@@ -156,25 +159,26 @@ const Post = () => {
   };
 
   useEffect(() => {
-    if (toEdit) {
+    if (toEdit && blogpostToEdit) {
       setInputAreasStatus('old');
-      setGetBlogpostId(blogpostToEdit?._id);
+      setGetBlogpostId(blogpostToEdit._id);
       setTitleContent({
-        _html: blogpostToEdit?._html.title,
-        text: blogpostToEdit?.title,
+        _html: blogpostToEdit._html.title,
+        text: blogpostToEdit.title,
       });
       setBodyContent({
-        _html: blogpostToEdit?._html.body,
-        text: blogpostToEdit?.body,
+        _html: blogpostToEdit._html.body,
+        text: blogpostToEdit.body,
       });
-      setDisplayImage(('/api/image/' + blogpostToEdit?.displayImage));
-      setCatigory(blogpostToEdit?.catigory);
-      setSlug(blogpostToEdit?.slug);
-      setBlogpostStatus(blogpostToEdit?.status);
+      setDisplayImage((blogpostToEdit.displayImage));
+      setCatigory(blogpostToEdit.catigory);
+      setSlug(blogpostToEdit.slug);
+      setBlogpostStatus(blogpostToEdit.status);
+      setBlogpostPreStatus(blogpostToEdit.preStatus || '');
 
       handleSwitchBetweenParentTabs('post');
     };
-  }, [toEdit]);
+  }, [toEdit, blogpostToEdit]);
 
   return <div>
     <div className="flex">

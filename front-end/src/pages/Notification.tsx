@@ -5,9 +5,6 @@ import { Notificationsprops } from "../entities";
 const Notification = () => {
   const { userProfile: { data: profileData, loading: loadingProfile } } = useAppSelector((state) => state.userProfileSlices);
 
-  const handleReturnBack = () => {
-  };
-
   const handleDisplayNotifications = (arr: Notificationsprops[]) => {
     return arr.reduce((acc: Notificationsprops[], curr: Notificationsprops) => {
       const preValue = acc?.[acc.length - 1]
@@ -35,7 +32,6 @@ const Notification = () => {
   
   return <div>
     <div id="notification-header" className="flex gap-x-2">
-      <span onClick={handleReturnBack} >go back</span>
       <span className="font-bold text-base">Notifications</span>
     </div>
     <div className="flex justify-center mt-10">

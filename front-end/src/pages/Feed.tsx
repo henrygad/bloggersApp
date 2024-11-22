@@ -1,11 +1,12 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Blogpostprops } from "../entities";
-import { useFetchData } from "../hooks";
+import { useEventSource, useFetchData } from "../hooks";
 import { Singleblogpost } from "../components";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
 import { fetchTimelineFeeds } from "../redux/slices/userBlogpostSlices";
 
 const Feed = () => {
+
     const { userProfile: {
         data: getProfileData
     } } = useAppSelector((state) => state.userProfileSlices);
@@ -14,35 +15,31 @@ const Feed = () => {
         data: timelineFeeds,
         loading: loadingTimelineFeeds
     } } = useAppSelector((state) => state.userBlogpostSlices);
+
     const appDispatch = useAppDispatch();
 
-    const { fetchData: fetchNewFeedData, loading: loadingNewFeeds } = useFetchData<Blogpostprops[]>(null);
-    const { fetchData: fetchMoreFeedData, loading: loadingMoreFeeds } = useFetchData<Blogpostprops[]>(null);
-
+    const { fetchData: fetchStreamNewFeedData, data: newStreamedFeed, loading: newFeedsLoading, error: newFeedsError } = useEventSource<Blogpostprops>('');
+    const { fetchData: fetchOldFeedsData, loading: loadingMoreFeeds } = useFetchData<Blogpostprops[]>(null);
 
     const handleLoadNewFeeds = async () => {
         if (!getProfileData ||
-            !getProfileData.timeline ||
-            !getProfileData.timeline.length) return;
+            !getProfileData.timeline) return;
 
-        await fetchNewFeedData(`/api/blogposts/timeline/${getProfileData.timeline.join('&')}`)
-            .then((res) => {
-                const { data } = res;
-                if (!data) return;
-                appDispatch(fetchTimelineFeeds({
-                    data,
-                    loading: false,
-                    error: '',
-                }));
-            });
+        fetchStreamNewFeedData(`/api/stream/changes/blogposts/timeline/${getProfileData && getProfileData.timeline.join('&')}`);
+        if (newStreamedFeed) {
+            appDispatch(fetchTimelineFeeds({
+                data: [newStreamedFeed, ...timelineFeeds],
+                loading: false,
+                error: '',
+            }));
+        };
     };
 
     const handleLoadMoreOldFeeds = async () => {
         if (!getProfileData ||
-            !getProfileData.timeline ||
-            !getProfileData.timeline.length) return;
+            !getProfileData.timeline) return;
 
-        await fetchMoreFeedData(`/api/blogposts/timeline/${getProfileData.timeline.join('&')}?status=published&skip=${timelineFeeds?.length}&limit=5`)
+        fetchOldFeedsData(`/api/blogposts/timeline/${getProfileData.timeline.join('&')}?status=published&skip=${timelineFeeds?.length}&limit=5`)
             .then((res) => {
                 const { data } = res;
                 if (!data) return;
@@ -54,6 +51,10 @@ const Feed = () => {
             });
     };
 
+    useEffect(() => {
+        handleLoadNewFeeds();
+    }, [getProfileData]);
+
 
     return <div>
         {
@@ -63,7 +64,7 @@ const Feed = () => {
                         timelineFeeds.length ?
                         <div id="display-timelineFeeds-wrapper">
                             <span className="cursor-pointer" onClick={handleLoadNewFeeds}>
-                                {!loadingNewFeeds ? 'load new feeds' : 'loading...'}
+                                {!newFeedsLoading ? 'load new feeds' : 'loading...'}
                             </span>
                             <div>
                                 {

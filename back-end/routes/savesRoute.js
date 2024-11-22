@@ -37,8 +37,7 @@ router.patch('/profile/saves/delete', authorization, async (req, res, next) => {
             { $pull: { saves: _id } },
             { new: true }
         )
-        if (!user.saves.length) throw new Error('Bad request: blogpost was not unsaved')
-
+        
         res.json({ _id })
 
     } catch (error) {

@@ -1,5 +1,8 @@
 import { useDeleteData, useUserIsLogin } from "../hooks";
+import Button from "./Button";
 import Input from "./Input";
+import { FaHistory } from "react-icons/fa"
+import { MdDeleteOutline } from "react-icons/md";
 
 type Props = {
     history: { _id: string, searched: string }
@@ -25,13 +28,13 @@ const Singlesearchhistory = ({
     const handleDeleteSearchHistory = async (_id: string) => {
         if (!settings) return
         await deleteData<{ _id: string, searched: string }[]>('/api/search/delete/history/' + _id)
-        .then((response) => {
-            const { data } = response
-            console.log(data)
-            if (data) {
-                setLoginStatus((pre) => pre ? { ...pre, searchHistory: data } : pre)
-            }
-        });
+            .then((response) => {
+                const { data } = response
+                console.log(data)
+                if (data) {
+                    setLoginStatus((pre) => pre ? { ...pre, searchHistory: data } : pre)
+                }
+            });
     };
 
     const handleAddOrRemoveSelection = (_id: string) => {
@@ -41,11 +44,20 @@ const Singlesearchhistory = ({
     };
 
     return <div className="flex justify-between items-center gap-6">
-        <span className="cursor-pointer" onClick={() => { !settings && setGetSearchInput(history.searched) }} >{history.searched}</span>
-
+        <Button
+            id="return-black"
+            buttonClass=""
+            children={history.searched}
+            handleClick={() => !settings && setGetSearchInput(history.searched)}
+        />
         <span className="cursor-pointer" >
             {!settings ?
-                <span onClick={() => setGetSearchInput(history.searched)} >/</span> :
+                <Button
+                    id="return-black"
+                    buttonClass=""
+                    children={< FaHistory size={14} />}
+                    handleClick={() => setGetSearchInput(history.searched)}
+                /> :
                 <>
                     {selectMultipleSelections ?
                         <Input
@@ -56,7 +68,12 @@ const Singlesearchhistory = ({
                             checked={multipleSearchHistorySelection.includes(history._id)}
                             onClick={() => handleAddOrRemoveSelection(history._id)}
                         /> :
-                        <span onClick={() => handleDeleteSearchHistory(history._id)} >{!loadingDeletSearchHistory ? 'Delete' : 'loaidng...'}</span>
+                        <Button
+                            id="return-black"
+                            buttonClass=""
+                            children={<MdDeleteOutline size={20} />}
+                            handleClick={() => handleDeleteSearchHistory(history._id)}
+                        />
                     }
                 </>
             }
