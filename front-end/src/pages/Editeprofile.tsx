@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Dialog, Displayimage, Fileinput, Input, Selectinput, Texarea } from "../components";
+import { Backwardnav, Button, Dialog, Displayimage, Fileinput, Input, Selectinput, Texarea } from "../components";
 import { useCreateImage, useGetLocalMedia, useImageGalary, usePatchData } from "../hooks";
 import { editProfile } from "../redux/slices/userProfileSlices";
 import { useAppDispatch, useAppSelector } from "../redux/slices";
@@ -161,6 +161,7 @@ const Editeprofile = () => {
     }, [accountProfile]);
 
     return <div>
+        <Backwardnav pageName="Edite profile" />
         {!accountProfileLoading ?
             <form
                 action=""

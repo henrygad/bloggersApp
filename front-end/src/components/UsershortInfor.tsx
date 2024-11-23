@@ -18,7 +18,7 @@ const UsershortInfor = ({ userName, displayName = true }: { userName: string, di
         };
     }, [!data]);
 
-    return <div>
+    return <>
         {userData ?
             <Link to={'/' + userName} className="flex items-start justify-start gap-3 w-full">
                 {
@@ -28,7 +28,7 @@ const UsershortInfor = ({ userName, displayName = true }: { userName: string, di
                                 id={'avater'}
                                 placeHolder={avaterPlaceholder}
                                 imageId={userData.displayImage}
-                                parentClass='h-11 w-11'
+                                parentClass='h-9 w-9'
                                 imageClass='object-contain rounded-full'
                                 onClick={() => ''}
                             />
@@ -44,8 +44,7 @@ const UsershortInfor = ({ userName, displayName = true }: { userName: string, di
             </Link>
             :
             <div className="h-11 w-11">loading profile...</div>}
-    </div>
-
+    </>
 }
 
 export default UsershortInfor

@@ -1,5 +1,7 @@
-import { Singleblogpost } from "../components";
+import { useEffect } from "react";
+import { LandLoading, Singleblogpost } from "../components";
 import { Blogpostprops } from "../entities";
+import { useScrollPercent } from "../hooks";
 
 type Props = {
   profileBlogposts: Blogpostprops[]
@@ -21,13 +23,29 @@ const Blogpostsec = ({
   moreBlogpostsError,
   numberOfBlogposts,
 }: Props) => {
+  const { scrollPercent } = useScrollPercent();
 
-  return <div id="profile-blogpost-wrapper">
+  const handleAutoLoadMoreBlogposts = () => {
+    if (scrollPercent === 100 &&
+      !moreBlogpostsLoading
+    ) {
+      if (numberOfBlogposts !== profileBlogposts.length) {
+        handleServerLoadMoreBlogposts();
+      };
+    };
+
+  };
+
+  useEffect(() => {
+    handleAutoLoadMoreBlogposts();
+  }, [scrollPercent]);
+
+  return <div>
     {!profileBlogpostsLoading ?
-      <div>
+      <>
         {profileBlogposts &&
           profileBlogposts.length ?
-          <div id="display-blogpost">
+          <>
             {profileBlogposts.map((item, index) =>
               item.status === 'published' ?
                 < Singleblogpost
@@ -38,20 +56,11 @@ const Blogpostsec = ({
                 /> :
                 null
             )}
-            {numberOfBlogposts !== profileBlogposts.length ?
-              <button onClick={handleServerLoadMoreBlogposts}>
-                {
-                  !moreBlogpostsLoading ?
-                    'load more' :
-                    'loading...'
-                }
-              </button> :
-              null
-            }
-          </div> :
-          <div id="no-blogpost-found">no blog post</div>
+            <LandLoading loading={moreBlogpostsLoading} />
+          </> :
+          null
         }
-      </div> :
+      </> :
       <div id="loading-blogpost">loading blogpost...</div>}
   </div>
 };

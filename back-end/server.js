@@ -31,8 +31,6 @@ if (process.env.NODE_ENV === 'production') {
     })
 }
 
-
-
 app.use(cors({
     origin: ['https://localhost:5173', 'https://localhost:4173'],
     credentials: true // send cookies to cross-orgin request resourse

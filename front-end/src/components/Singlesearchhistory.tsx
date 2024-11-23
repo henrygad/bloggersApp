@@ -43,14 +43,14 @@ const Singlesearchhistory = ({
             [...pre, _id])
     };
 
-    return <div className="flex justify-between items-center gap-6">
+    return <div className="flex justify-between items-start gap-6">
         <Button
             id="return-black"
-            buttonClass=""
+            buttonClass="text-wrap text-start w-full"
             children={history.searched}
             handleClick={() => !settings && setGetSearchInput(history.searched)}
         />
-        <span className="cursor-pointer" >
+        <span className="cursor-pointer"  >
             {!settings ?
                 <Button
                     id="return-black"
@@ -78,7 +78,6 @@ const Singlesearchhistory = ({
                 </>
             }
         </span>
-
     </div>
 };
 

@@ -10,6 +10,7 @@ import Interentssec from './Interentssec';
 import { Link } from 'react-router-dom';
 import Avatersec from './Avatersec';
 import avaterPlaceholder from '../assert/avaterplaceholder.svg'
+import { IoMdArrowRoundBack } from 'react-icons/io';
 
 type Props = {
   profileLoading: boolean
@@ -48,57 +49,50 @@ type Props = {
 
 const Profilesec = (
   {
-  profileData,
-  profileLoading,
+    profileData,
+    profileLoading,
 
-  profileBlogposts,
-  profileBlogpostsLoading,
-  profileBlogpostsError,
-  handleServerLoadMoreBlogposts,
-  moreBlogpostsLoading,
-  moreBlogpostsError,
-  numberOfBlogposts,
-  numberOfBlogpostsLoading,
+    profileBlogposts,
+    profileBlogpostsLoading,
+    profileBlogpostsError,
+    handleServerLoadMoreBlogposts,
+    moreBlogpostsLoading,
+    moreBlogpostsError,
+    numberOfBlogposts,
+    numberOfBlogpostsLoading,
 
-  profileCommentsData,
-  profileCommentsLoading,
-  profileCommentsError,
-  handleServerLoadMoreComments,
-  moreCommentsLoading,
-  moreCommentsError,
-  numberOfComments,
-  numberOfCommentsLoading,
+    profileCommentsData,
+    profileCommentsLoading,
+    profileCommentsError,
+    handleServerLoadMoreComments,
+    moreCommentsLoading,
+    moreCommentsError,
+    numberOfComments,
+    numberOfCommentsLoading,
 
-  profileAvatersData,
-  profileAvatersLoading,
-  profileAvatersError,
-  handleServerLoadMoreAvaters,
-  moreAvatersLoading,
-  moreAvatersError,
-  numberOfAvaters,
-  numberOfAvatersLoading,
-
-}: Props) => {
+    profileAvatersData,
+    profileAvatersLoading,
+    profileAvatersError,
+    handleServerLoadMoreAvaters,
+    moreAvatersLoading,
+    moreAvatersError,
+    numberOfAvaters,
+    numberOfAvatersLoading,
+  }: Props) => {
   const { loginStatus: { loginUserName } } = useUserIsLogin();
   const isAccountOwner = profileData && profileData?.userName === loginUserName;
 
   const [profileDialog, setProfileDialog] = useState(' ');
-  const [currentProfileTab, setCurrentProfileTab] = useState('followerssec');
-  const [currentProfileAtivitiesTab, setCurrentProfileAtivitiesTab] = useState('blogpostssec');
+
+  const [currentProfileDialogTab, setCurreentProfileDialogTab] = useState('followerssec');
+  const [currentProfileContentTab, setCurrentProfileContentTab] = useState<string>(() => localStorage.getItem('currentProfileContentTab') || 'blogpostssec');
 
   const profileAtivitiesTabs = [
     {
       menu: {
         name: 'blogpostssec',
-        content: <Button children={<>
-          Post
-          <span>
-            {!numberOfBlogpostsLoading ?
-              numberOfBlogposts :
-              'loading...'}
-          </span>
-        </>}
-          buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('blogpostssec')} />,
+        content: <Button children={` Post (${!numberOfBlogpostsLoading ? numberOfBlogposts : 0}) `}
+          buttonClass='' handleClick={() => handleCurrentProfileContentTab('blogpostssec')} />,
       },
       tab: {
         name: 'blogpostssec',
@@ -116,15 +110,8 @@ const Profilesec = (
     {
       menu: {
         name: 'commentssec',
-        content: <Button children={<>
-          Comment
-          <span>{
-            !numberOfCommentsLoading ?
-              numberOfComments :
-              'loading...'
-          }</span>
-        </>}
-          buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('commentssec')} />,
+        content: <Button children={`Comment (${!numberOfCommentsLoading ? numberOfComments : 0})`}
+          buttonClass='' handleClick={() => handleCurrentProfileContentTab('commentssec')} />,
       },
       tab: {
         name: 'commentssec',
@@ -142,14 +129,8 @@ const Profilesec = (
     {
       menu: {
         name: 'advaterssec',
-        content: <Button children={<>
-          Advater
-          <span>{
-            !numberOfAvatersLoading ?
-              numberOfAvaters :
-              'loading...'
-          }</span>
-        </>} buttonClass='' handleClick={() => setCurrentProfileAtivitiesTab('advaterssec')} />,
+        content: <Button children={`Advater (${!numberOfAvatersLoading ? numberOfAvaters : 0}) `}
+          buttonClass='' handleClick={() => handleCurrentProfileContentTab('advaterssec')} />,
         tab: <div>Profile images</div>,
       },
       tab: {
@@ -166,6 +147,11 @@ const Profilesec = (
       },
     },
   ];
+
+  const handleCurrentProfileContentTab = (sec: string) => {
+    setCurrentProfileContentTab(sec);
+    localStorage.setItem('currentProfileContentTab', sec);
+  };
 
   return <div>
     {
@@ -193,19 +179,21 @@ const Profilesec = (
                         <span id='userName' className='text-sm opacity-50 ' >{profileData?.userName}</span>
                       </div>
                     </Link>
-                    <div className='font-text'>
+                    <div id='bio' className='font-text'>
                       <div className='mt-4' ></div>
-                      <span id='bio' className='block text-[0.94rem] md:text-base text-wrap max-w-[480px]'>{profileData?.bio}</span>
+                      <span className='block text-[0.94rem] md:text-base text-wrap max-w-[480px]'>{profileData?.bio}</span>
                     </div>
-                    <div className='flex flex-col gap-1 text-sm'>
-                      <span id='sex' className=' capitalize' >{profileData?.sex}</span>
-                      <span id="dateOfBirth">{profileData?.dateOfBirth}</span>
+                    <div id='sex-dateOfBirth' className='flex flex-col gap-1 text-sm'>
+                      <span className=' capitalize' >{profileData?.sex || ''}</span>
+                      <span >{profileData?.dateOfBirth || ''}</span>
                     </div>
-                    <div className='flex flex-col gap-1 text-sm'>
+                    <div id="email-phoneNumber-website" className='flex flex-col gap-1 text-sm'>
                       <div className='mt-1'></div>
-                      <span id='email'>{profileData?.email}</span>
-                      <span id='phoneNumber'>{profileData?.phoneNumber}</span>
-                      <a id="website" href={profileData?.website} className='underline cursor-pointer '>{profileData?.website}</a>
+                      <span>{profileData?.email || ''}</span>
+                      <span>{profileData?.phoneNumber || ''}</span>
+                      <a href={profileData?.website || ''} className='underline cursor-pointer' target='_blank'>
+                        {profileData?.website || ''}
+                      </a>
                       <span id='country'>{profileData?.country}</span>
                     </div>
                   </div>
@@ -216,27 +204,29 @@ const Profilesec = (
                     />
                     <div id='space'></div>
                     {!isAccountOwner ?
-                      <Followbutton userNameToFollow={profileData?.userName} />:
+                      <Followbutton userNameToFollow={profileData?.userName} /> :
                       null
                     }
                     <div className='flex flex-wrap items-center justify-end gap-4'>
                       <Button
-                        buttonClass=''
-                        handleClick={() => { setProfileDialog('profiledialog'); setCurrentProfileTab('followerssec') }}
+                        id='followers-btn'
+                        buttonClass='font-text hover:text-green-500 transition-color'
+                        handleClick={() => { setProfileDialog('profiledialog'); setCurreentProfileDialogTab('followerssec') }}
                         children={
                           <>
-                            <span className='border-b pb-1'>Followers</span>
-                            <span className='block pt-1'>{profileData?.followers?.length}</span>
+                            <span>Followers</span>
+                            <span className='block text-center'>{profileData?.followers?.length || 0}</span>
                           </>
                         }
                       />
                       <Button
-                        buttonClass=''
-                        handleClick={() => { setProfileDialog('profiledialog'); setCurrentProfileTab('followingsec') }}
+                        id='following-btn'
+                        buttonClass='font-text hover:text-green-500 transition-color'
+                        handleClick={() => { setProfileDialog('profiledialog'); setCurreentProfileDialogTab('followingsec') }}
                         children={
                           <>
-                            <span className='border-b pb-1'>Following</span>
-                            <span className='block pt-1'>{profileData?.following?.length}</span>
+                            <span>Following</span>
+                            <span className='block text-center'>{profileData?.following?.length || 0}</span>
                           </>
                         }
                       />
@@ -253,25 +243,36 @@ const Profilesec = (
                     />
                   </div>
                   <Tab
-                    id={'profile-activities-tab'}
-                    arrOfTab={profileAtivitiesTabs.map(item => item.tab)}
+                    id='profile-activities-tab'
                     tabClass="flex justify-center pt-5"
-                    currentTab={currentProfileAtivitiesTab}
+                    currentTab={currentProfileContentTab}
+                    arrOfTab={profileAtivitiesTabs.map(item => item.tab)}
                   />
                 </div>
                 <Dialog
                   id="profile-intertractions-dialog"
-                  parentClass="flex justify-center"
-                  childClass=""
+                  parentClass=""
+                  childClass="container relative rounded-sm space-y-2 w-full h-full py-8 bg-white dark:bg-stone-800 dark:text-white overflow-hidden"
                   currentDialog="profiledialog"
                   dialog={profileDialog}
                   setDialog={setProfileDialog}
                   children={
                     <>
+                      <div className='flex gap-4'>
+                        <Button
+                          id="authentication-dialog-close-btn"
+                          buttonClass='flex gap-3 items-center'
+                          children={<IoMdArrowRoundBack size={20} />}
+                          handleClick={() => setProfileDialog(' ')}
+                        />
+                        <span className="text-xl font-secondary font-bold capitalize">
+                          {currentProfileDialogTab.slice(0, -3)}
+                        </span>
+                      </div>
                       <Tab
                         id='profile-tab'
-                        tabClass=" flex justify-center items-center"
-                        currentTab={currentProfileTab}
+                        tabClass=""
+                        currentTab={currentProfileDialogTab}
                         arrOfTab={[
                           {
                             name: 'followerssec',

@@ -6,7 +6,7 @@ import { useCreateImage, useDeleteData, useGetLocalMedia, useImageGalary, usePat
 import { Blogpostprops, Imageprops } from '../entities';
 import { deleteAll } from '../custom-text-editor/settings';
 import { useAppDispatch } from '../redux/slices';
-import { decreaseTotalNumberOfPublishedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, editPublishedBlogpost, increaseTotalNumberOfPublishedBlogposts, publishBlogpost, unpublishBlogposts } from '../redux/slices/userBlogpostSlices';
+import { decreaseTotalNumberOfPublishedBlogposts, deletePublishedBlogpost, deleteUnpublishedBlogposts, editPublishedBlogpost, increaseTotalNumberOfPublishedBlogposts, publishBlogpost, addUnpublishBlogposts } from '../redux/slices/userBlogpostSlices';
 import { addDrafts, deleteDrafts, editDrafts } from '../redux/slices/userProfileSlices';
 import { addBlogpostImages } from '../redux/slices/userImageSlices';
 import Displayblogpostimagessec from './Displayblogpostimagessec';
@@ -258,7 +258,7 @@ const Createblogpostsec = ({
                         setInputAreasStatus('empty');
                     };
                     if (data.status === 'unpublished') {
-                        appDispatch(unpublishBlogposts(data));
+                        appDispatch(addUnpublishBlogposts(data));
                         appDispatch(decreaseTotalNumberOfPublishedBlogposts(1))
                         setInputAreasStatus('old');
                     };

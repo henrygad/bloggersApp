@@ -13,7 +13,7 @@ type Props = {
 
 const Dotnav = ({ setToggleSideMenu, toggleSideMenu, name, id, children }: Props) => {
     const toggleRef = useRef(null);
-    useClickOutSide(toggleRef, () => setToggleSideMenu(''));
+    useClickOutSide(toggleRef, () => setToggleSideMenu(' '));
     const [toggleDialog, setToggleDialog] = useState({
         parent: false,
         child: false,
@@ -53,7 +53,7 @@ const Dotnav = ({ setToggleSideMenu, toggleSideMenu, name, id, children }: Props
             </>}
             handleClick={() => setToggleSideMenu(toggleSideMenu.trim() ? '' : name)}
         />
-        <div className={toggleDialog.parent ? 'block absolute top-0 right-0 left-0 bottom-0' : 'hidden'}>
+        <div className={toggleDialog.parent ? 'block absolute top-0 right-0 left-0' : 'hidden'}>
             <Dotswrapper className={`${toggleDialog.child ? 'translate-x-0 ' : ' translate-x-[20%] '}`} >
                 {children}
             </Dotswrapper>

@@ -221,7 +221,7 @@ router.post('/addblogpost',
             next(new customError(error, 400))
         }
     })
-
+    
 router.patch('/editblogpost/:_id',
     [body(['displayImage', 'title', 'body', 'catigory', 'status', '_html.title', '_html.body'])
         .optional()

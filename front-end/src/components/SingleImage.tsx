@@ -8,7 +8,11 @@ import { useDeleteData, useUserIsLogin } from "../hooks";
 import Dialog from "./Dialog";
 import Button from "./Button";
 import { useAppDispatch } from "../redux/slices";
-import { decreaseTotalNumberOfUserAvaters, deleteAvaters, deleteBlogpostImages} from "../redux/slices/userImageSlices";
+import { decreaseTotalNumberOfUserAvaters, deleteAvaters, deleteBlogpostImages } from "../redux/slices/userImageSlices";
+import { TfiFlagAlt2 } from "react-icons/tfi";
+import { MdBlock, MdDeleteOutline } from "react-icons/md";
+import { LuExternalLink } from "react-icons/lu";
+import { IoMdArrowRoundBack } from "react-icons/io";
 
 type Props = {
     image: Imageprops,
@@ -24,38 +28,54 @@ const SingleImage = ({ image: { _id, uploader, fieldname }, index, placeHolder =
     const [toggleAdvaterSideNav, setToggleAdvaterSideNav] = useState(' ');
     const [imageDialog, setDialog] = useState('');
 
-    const {deleteData, loading: LoadingDelete, error: errorDelete}  = useDeleteData();
+    const { deleteData, loading: LoadingDelete, error: errorDelete } = useDeleteData();
     const appDispatch = useAppDispatch();
 
-    const generalAdvaterNavChildren = [
+    const generalMenu = [
         {
             name: 'view',
-            to: '',
             content: <Button
-                children={'View'}
-                buttonClass=" border-b"
+                id="see-all-of-blogpost-btn"
+                buttonClass="flex gap-2"
+                children={<><LuExternalLink size={20} />  View</>}
                 handleClick={() => handleViewExpandImageIsize()}
-            />
-        },
-        {
-            name: 'share',
-            to: '',
-            content: <Button
-                children={'Share'}
-                buttonClass=" border-b"
-                handleClick={() => handleShareImage()}
             />
         },
     ];
 
-    const OwnerAdvaterNavChildren = [
-        ...generalAdvaterNavChildren,
+    const intaracttionMenu = [
+        ...generalMenu,
+        {
+            name: 'report',
+            to: '',
+            content: <Button
+                id="report-content-btn"
+                buttonClass="flex gap-2"
+                children={<><TfiFlagAlt2 size={20} />  Report</>}
+                handleClick={() => ''}
+            />
+        },
+        {
+            name: 'block',
+            to: '',
+            content: <Button
+                id="report-content-btn"
+                buttonClass="flex gap-2"
+                children={<><MdBlock size={20} />  Block</>}
+                handleClick={() => ''}
+            />
+        },
+    ];
+
+    const accountOnwerMenuForBlogpost = [
+        ...generalMenu,
         {
             name: 'delete',
             to: '',
             content: <Button
-                children={!LoadingDelete ? 'Delete' : 'loading...'}
-                buttonClass=" border-b"
+                id="delete-image-avater"
+                buttonClass="flex gap-2"
+                children={<><MdDeleteOutline size={22} /> Delete </>}
                 handleClick={() => handleDeleteImage(_id, fieldname)}
             />
         },
@@ -67,13 +87,13 @@ const SingleImage = ({ image: { _id, uploader, fieldname }, index, placeHolder =
 
     const handleShareImage = () => { };
 
-    const handleDeleteImage = async(_id: string, fieldname: string) => { 
-        const response = await deleteData('/api/deleteimage/'+_id);
-        const { ok}= response;
-        if(ok){
-            appDispatch(deleteAvaters({_id}));
-            appDispatch(deleteBlogpostImages({_id}));
-           if(fieldname == 'avater') appDispatch(decreaseTotalNumberOfUserAvaters(1));
+    const handleDeleteImage = async (_id: string, fieldname: string) => {
+        const response = await deleteData('/api/deleteimage/' + _id);
+        const { ok } = response;
+        if (ok) {
+            appDispatch(deleteAvaters({ _id }));
+            appDispatch(deleteBlogpostImages({ _id }));
+            if (fieldname == 'avater') appDispatch(decreaseTotalNumberOfUserAvaters(1));
         };
     };
 
@@ -91,41 +111,44 @@ const SingleImage = ({ image: { _id, uploader, fieldname }, index, placeHolder =
             toggleSideMenu={toggleAdvaterSideNav}
             name={'advaterNav' + _id}
             id={'advater-nav'}
-            children={<Menu
-                arrOfMenu={!isAccountOwner ? generalAdvaterNavChildren : OwnerAdvaterNavChildren}
-                parentClass="flex-col gap-2 absolute top-0 right-0 min-w-[120px] max-w-[120px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer"
-                childClass=''
-                id='avaterMenus'
-            />}
+            children={
+                <Menu
+                    id='avaterMenus'
+                    parentClass="absolute top-0 -right-2 min-w-[100px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer space-y-4"
+                    childClass=''
+                    arrOfMenu={!isAccountOwner ?
+                        intaracttionMenu :
+                        accountOnwerMenuForBlogpost
+                    }
+                />}
         />
-        <div id="image-dialog" >
-            <Dialog
-                id='image-dialog-wrapper'
-                parentClass='p-4'
-                childClass='flex justify-center items-center relative w-full h-full'
-                currentDialog={_id}
-                children={
-                    <>
-                        <div className="absolute -top-1 -left-1 z-50">
-                            <Button
-                                children={'Go back'}
-                                buttonClass=""
-                                handleClick={() => setDialog(' ')}
-                            />
-                        </div>
-                        <Displayimage
-                            id={'image' + index}
-                            imageId={_id}
-                            parentClass='w-full h-full'
-                            imageClass='object-contain'
-                            placeHolder={placeHolder.trim() !== '' ? placeHolder : ''}
-                        />
-                    </>
-                }
-                dialog={imageDialog}
-                setDialog={setDialog}
-            />
-        </div>
+        <Dialog
+            id='image-dialog-wrapper'
+            parentClass=''
+            childClass='container relative rounded-sm space-y-2 w-full h-full'
+            currentDialog={_id}
+            children={
+                <>
+                    <div className="absolute -top-1 -left-1 z-50">
+                        <Button
+                            id="authentication-dialog-close-btn"
+                            buttonClass='absolute top-1 left-1'
+                            children={<IoMdArrowRoundBack size={20} />}
+                            handleClick={() => setDialog(' ')}
+                        />                       
+                    </div>
+                    <Displayimage
+                        id={'image' + index}
+                        imageId={_id}
+                        parentClass='w-full h-full'
+                        imageClass='object-contain'
+                        placeHolder={placeHolder.trim() !== '' ? placeHolder : ''}
+                    />
+                </>
+            }
+            dialog={imageDialog}
+            setDialog={setDialog}
+        />
     </div>
 };
 

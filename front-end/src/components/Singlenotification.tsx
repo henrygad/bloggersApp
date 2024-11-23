@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { Notificationsprops, UsershortInforprops } from "../entities";
-import Displayimage from "./Displayimage";
-import { useFetchData, usePatchData } from "../hooks";
+import { Notificationsprops } from "../entities";
+import { usePatchData } from "../hooks";
 import Button from "./Button";
 import { useAppDispatch } from "../redux/slices";
 import { viewedNotification, deleteNotification } from "../redux/slices/userProfileSlices";
 import UsershortInfor from "./UsershortInfor";
+import { FaRegComments, FaRegEye } from "react-icons/fa";
+import { SlLike, SlUserFollow, SlUserUnfollow } from "react-icons/sl";
+import { MdDeleteOutline } from "react-icons/md";
 
 type Props = {
     notification: Notificationsprops,
@@ -43,7 +45,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
 
     };
 
-    const handleViewNotification = (url: string, type: string, notifyFrom: string) => {
+    const handleNavigateToNotification = (url: string, type: string, notifyFrom: string) => {
         const splitUrl = url.split('/'); //slipt url to get each address
         const getUrl = splitUrl.slice(0, 2).join('/'); // get blogpost url
         const parentCommentId = splitUrl[2]; // get parent comment id
@@ -61,7 +63,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
                 commentAddress,
             };
 
-            navigate("/" + getUrl, { state: { commentNotification } });
+            navigate(getUrl, { state: { commentNotification } });
 
         } else if (type === 'replyComment') {
 
@@ -72,7 +74,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
                 commentId,
             };
 
-            navigate("/" + getUrl, { state: { commentNotification } });
+            navigate(getUrl, { state: { commentNotification } });
 
         } else if (type === 'commentLike') {
 
@@ -84,7 +86,7 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
                 targetCommentLike: { autoOpenCommentLike: true, likeCommentId: commentId, commentlike: notifyFrom }
             };
 
-            navigate("/" + getUrl, { state: { commentNotification } });
+            navigate(getUrl, { state: { commentNotification } });
 
         } else if (type === 'blogpostLike') {
             const blogpostLikeNotification = {
@@ -92,10 +94,10 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
                 blogpostlike: notifyFrom,
             };
 
-            navigate("/" + getUrl, { state: { blogpostLikeNotification } });
+            navigate(getUrl, { state: { blogpostLikeNotification } });
 
         } else {
-            navigate("/" + getUrl);
+            navigate(getUrl);
         };
 
         reStructureIncomingNotifications.map(item => {
@@ -120,11 +122,24 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
 
     };
 
+    const Displayicon = () => {
+        if (typeOfNotification === 'view') return <FaRegEye size={24} />
+        if (typeOfNotification === 'follow') return <SlUserFollow size={24} />
+        if (typeOfNotification === 'unfollow') return <SlUserUnfollow size={24} />
+        if (typeOfNotification === 'blogpostComment') return <FaRegComments size={24} />
+        if (typeOfNotification === 'replyComment') return <FaRegComments size={24} />
+        if (typeOfNotification === 'commentLike') return <SlLike size={22} />
+        if (typeOfNotification === 'blogpostlike') return <SlLike size={22} />
+    };
+
     return <div
         id="comment-Notifications-layout"
-        className={`flex gap-2 items-start p-2 rounded-md w-full ${checked ? ' ' : 'bg-red-50'} cursor-pointer`}
-        onClick={() => handleViewNotification(url, typeOfNotification, notifyFrom)}
+        className={`flex gap-2 items-center p-2 rounded-md ${checked ? ' ' : 'bg-yellow-500'} cursor-pointer`}
+        onClick={() => handleNavigateToNotification(url, typeOfNotification, notifyFrom)}
     >
+        <div>
+            <Displayicon />
+        </div>
         <div className="flex -space-x-6">
             {displayImage ?
                 reStructureIncomingNotifications.map((item, index) =>
@@ -158,14 +173,13 @@ const Singlenotification = ({ notification, displayImage }: Props) => {
                 <span className="ml-1" dangerouslySetInnerHTML={{ __html: msg }}></span>
             </>
         }</div>
-        <div className="flex-1 flex justify-end pl-4">
+        <div className="flex-1 flex justify-end">
             <Button
                 id="delete-notification"
-                buttonClass=" block border"
-                children={!loadingDelete ? 'delete' : 'loaidng...'}
+                buttonClass=""
+                children={<MdDeleteOutline size={22} />}
                 handleClick={(e) => handleDeleteNotification(e)}
             />
-
         </div>
     </div>
 };

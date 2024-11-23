@@ -1,13 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-const useScrollPercent = (callBack: (getScrollPercent: number) => void) => {
+const useScrollPercent = () => {
+    const  [scrollPercent, setScrollPercent] = useState(1);
 
     const handleOnScroll = () => {
         const scrollTop = window.scrollY; // Distance scrolled from the top
         const docHeight = document.documentElement.scrollHeight; // Total scrollable height (the document height)
         const winHeight = window.innerHeight; // Height of the viewport or device screen
-        const scrollPercent = (scrollTop / (docHeight - winHeight)) * 100; // percentage of the distance scrolled from the top
-        //callBack(scrollPercent);
+        setScrollPercent(Math.floor((scrollTop / (docHeight - winHeight)) * 100)) // percentage of the distance scrolled from the top
     };
 
     useEffect(() => {
@@ -16,6 +16,8 @@ const useScrollPercent = (callBack: (getScrollPercent: number) => void) => {
             document.removeEventListener('scroll', handleOnScroll);
         };
     }, []);
+
+    return {scrollPercent};
 };
 
 export default useScrollPercent;

@@ -12,12 +12,14 @@ const useEventSource = <T,>(url: string) => {
         setError('');
 
         const eventSource = new EventSource('https://localhost:3000' + url);
+        
         eventSource.onmessage = (event) => {
             const data: T = JSON.parse(event.data)
             setData(data);
             setLoading(false);
             setError('');
         }
+
         eventSource.onerror = (error) => {
             setData(null);
             setLoading(false);
@@ -37,7 +39,7 @@ const useEventSource = <T,>(url: string) => {
         fetchData(url);
     }, [url]);
 
-    return { fetchData, data, error, loading };
+    return { fetchData, data, setData, error, loading };
 };
 
 export default useEventSource;

@@ -91,7 +91,7 @@ const userBlogposts = createSlice({
         fetchUnpublishedBlogposts: (state, action: {payload: Initialstate['unpublishedBlogposts']}) => {
             state.unpublishedBlogposts = action.payload;
         },
-        unpublishBlogposts: (state, action: {payload: Blogpostprops}) => {
+        addUnpublishBlogposts: (state, action: {payload: Blogpostprops}) => {
             state.unpublishedBlogposts.data = [action.payload, ...state.unpublishedBlogposts.data];
         },
         deleteUnpublishedBlogposts: (state, action: {payload: {_id: string}}) => {
@@ -120,15 +120,17 @@ const userBlogposts = createSlice({
         fetchTimelineFeeds: (state, action: {payload: Initialstate['timelineFeeds']}) => {
             state.timelineFeeds = action.payload;
         },
-
+        removeTimelineFeeds: (state, action: {payload: {_id: string}}) => {
+            state.timelineFeeds.data =  state.timelineFeeds.data.filter(item=> item._id !== action.payload._id );
+        },
     },
 });
 
 export const {
     fetchPublishedBlogposts, publishBlogpost, editPublishedBlogpost, deletePublishedBlogpost, 
     fetchTotalNumberOfPublishedBlogposts, increaseTotalNumberOfPublishedBlogposts, decreaseTotalNumberOfPublishedBlogposts,
-    fetchUnpublishedBlogposts, unpublishBlogposts, deleteUnpublishedBlogposts,
+    fetchUnpublishedBlogposts, addUnpublishBlogposts, deleteUnpublishedBlogposts,
     fetchSavedsBlogpost, saveBlogposts, unSaveBlogpost,
-    fetchTimelineFeeds,
+    fetchTimelineFeeds, removeTimelineFeeds,
 } = userBlogposts.actions;
 export default userBlogposts.reducer;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Commentprops } from "../entities";
-import { useCopyLink, useDeleteData, useSanitize } from "../hooks";
+import { useCopyLink, useDeleteData, useSanitize, useUserIsLogin } from "../hooks";
 import { useAppDispatch } from "../redux/slices";
 import { decreaseTotalNumberOfUserComments, deleteComments } from "../redux/slices/userCommentsSlices";
 import Button from "./Button";
@@ -9,6 +9,13 @@ import Likebutton from "./Likebutton";
 import Menu from "./Menu";
 import UsershortInfor from "./UsershortInfor";
 import { useNavigate } from "react-router-dom";
+import { MdBlock, MdDeleteOutline, MdOutlineChatBubbleOutline } from "react-icons/md";
+import tw from "tailwind-styled-components";
+import { TfiFlagAlt2 } from "react-icons/tfi";
+import { FaCheck } from "react-icons/fa";
+import { BsCopy } from "react-icons/bs";
+
+
 type Props = {
     comment: Commentprops
     index?: number
@@ -17,7 +24,9 @@ type Props = {
 
 
 const Usercomment = ({ comment, index }: Props) => {
-    const { _id, blogpostId, parentId, body, authorUserName, parentUrl, likes, children, commentIsAReplyTo } = comment;
+    const { loginStatus: { loginUserName } } = useUserIsLogin();
+    const { _id, parentId, body, authorUserName, parentUrl, likes, children, commentIsAReplyTo } = comment;
+    const isAccountOwner = loginUserName === authorUserName; // is user comment
 
     const { deleteData: deleteCommentData, loading: deleteCommentLoading } = useDeleteData();
 
@@ -29,31 +38,60 @@ const Usercomment = ({ comment, index }: Props) => {
 
     const [toggleSideMenu, setToggleSideMenu] = useState('');
 
-    const menuForComment = [
+    const generalMenu = [
         {
-            name: 'copy link',
+            name: 'copy comment link',
             to: '',
             content: <Button
                 id="copy-comment-link"
-                children={<>
-                    Copy link {copied ? <span className="text-green-500">Copied</span> : null}
-                </>}
-                buttonClass="border-b"
+                buttonClass="flex items-center gap-2"
                 handleClick={() => handleCopyLink()}
-            />
-        },
-        {
-            name: 'delete',
-            to: '',
-            content: <Button
-                id="share-blogpost-link"
-                children={!deleteCommentLoading ? 'Delete' : 'delete loading...'}
-                buttonClass="border-b"
-                handleClick={() => { handleDeleteComment(comment._id) }}
+                children={<>{copied ? <FaCheck color="green" size={20} /> : <BsCopy size={20} />} Copy</>}
             />
         },
 
     ];
+
+    const intaracttionMenu = [
+        ...generalMenu,
+        {
+            name: 'report',
+            to: '',
+            content: <Button
+                id="report-content-btn"
+                buttonClass="flex gap-2"
+                children={<><TfiFlagAlt2 size={20} />  Report</>}
+                handleClick={() => ''}
+            />
+        },
+        {
+            name: 'block',
+            to: '',
+            content: <Button
+                id="report-content-btn"
+                buttonClass="flex gap-2"
+                children={<><MdBlock size={20} />  Block</>}
+                handleClick={() => ''}
+            />
+        },
+    ];
+
+    const accountOnwerMenuForComment = [
+        ...generalMenu,
+        {
+            name: 'delete',
+            to: '',
+            content: <Button
+                id="delete-comment-btn"
+                buttonClass="flex items-center gap-1"
+                children={<><MdDeleteOutline size={26} /> Delete</>}
+                handleClick={() => { handleDeleteComment(_id) }}
+            />
+        },
+
+    ];
+
+  
 
     const handleViewComment = () => {
         const splitUrl = (parentUrl + '/' + _id).split('/'); //slipt url to get each address
@@ -73,9 +111,6 @@ const Usercomment = ({ comment, index }: Props) => {
             commentId,
         };
 
-        console.log(parentUrl)
-        console.log(commentNotification)
-
         navigate("/" + getUrl, { state: { commentNotification } });
     };
 
@@ -91,36 +126,37 @@ const Usercomment = ({ comment, index }: Props) => {
         };
     };
 
-    return <div
-        id={'blogpost-comment-' + _id}
-        className="relative w-full min-w-[280px] sm:min-w-[320px] md:min-w-[480px] max-w-[480xp] rounded-md px-3 py-4 space-y- 2">
-        <Dotnav
-            id="comments-nav"
-            name={_id}
-            toggleSideMenu={toggleSideMenu}
-            setToggleSideMenu={setToggleSideMenu}
-            children={
-                <Menu
-                    arrOfMenu={menuForComment}
-                    id="MenuForComment"
-                    parentClass='flex-col gap-2 absolute top-0 -right-2 min-w-[140px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer'
-                    childClass=""
-                />
-            }
-        />
+    return <Singleusercomment id={'blogpost-comment-' + _id} >
+        <div className="relative">
+            <Dotnav
+                id="comments-nav"
+                name={_id}
+                toggleSideMenu={toggleSideMenu}
+                setToggleSideMenu={setToggleSideMenu}
+                children={
+                    <Menu
+                        arrOfMenu={!isAccountOwner ?
+                            intaracttionMenu
+                            : accountOnwerMenuForComment}
+                        id="MenuForComment"
+                        parentClass='absolute top-0 -right-2 min-w-[140px] max-w-[320px] backdrop-blur-sm p-3 rounded shadow-sm z-20 cursor-pointer space-y-4'
+                        childClass=""
+                    />
+                }
+            />
+        </div>
         <UsershortInfor
             userName={authorUserName}
         />
-        <div className="cursor-pointer" onClick={() => handleViewComment()}>
+        <div className="space-y-4 cursor-pointer" onClick={() => handleViewComment()}>
             <div id="comment-text" dangerouslySetInnerHTML={sanitizeHTML(body?._html)} >
-
             </div>
-            <div id="comment-statistics" className="flex justify-center items-center gap-4">
-                <span
+            <div id="comment-statistics" className="flex justify-start items-center gap-4">
+                <Button
                     id="reply-comment-btn"
-                    className="">
-                    Replies {children.length || 0}
-                </span>
+                    buttonClass="flex items-center gap-2"
+                    children={<> <MdOutlineChatBubbleOutline size={20} /> {children.length || 0}</>}
+                />
                 <Likebutton
                     parentId={_id}
                     arrOfLikes={likes}
@@ -136,7 +172,19 @@ const Usercomment = ({ comment, index }: Props) => {
                 />
             </div>
         </div>
-    </div>
+    </Singleusercomment>
 };
 
 export default Usercomment;
+
+const Singleusercomment = tw.div`
+relative 
+w-full 
+min-w-[280px] 
+sm:min-w-[320px] 
+md:min-w-[480px] 
+max-w-[480xp] 
+py-4 
+px-3 
+space-y-4
+`

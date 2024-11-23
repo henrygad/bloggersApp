@@ -1,8 +1,8 @@
-import { Menu } from "../components";
-import {Deleteuseraccount, Signoutuser } from "../components";
+import { Backwardnav, Menu } from "../components";
+import { Deleteuseraccount, Signoutuser } from "../components";
 
 const Settings = () => {
-    
+
     const settingsMenus = [
         {
             name: 'Edit profile',
@@ -20,7 +20,7 @@ const Settings = () => {
         {
             name: 'deleteprofile',
             to: '',
-            content:  <Deleteuseraccount />,
+            content: <Deleteuseraccount />,
         },
         {
             name: 'FAQ',
@@ -37,13 +37,16 @@ const Settings = () => {
     ];
 
     return <div>
-        <Menu
-            id="sitting-sideBar"
-            arrOfMenu={settingsMenus}
-            parentClass="text-base font-secondary space-y-3 "
-            childClass=""
-            nestedChildParentClass='space-y-2 ml-4 py-2'
-        />
+        <Backwardnav pageName="settings" />
+        <div className="flex justify-start">
+            <Menu
+                id="sitting-sideBar"
+                arrOfMenu={settingsMenus}
+                parentClass="text-base font-secondary space-y-3 "
+                childClass=""
+                nestedChildParentClass='space-y-2 ml-4 py-2'
+            />
+        </div>
     </div>
 };
 

@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import Button from "./Button";
 import { useNotification, usePatchData, useUserIsLogin } from "../hooks";
 import Dialog from "./Dialog";
-import UsershortInfor from "./UsershortInfor";
-import Userdotnav from "./Userdotnav";
 import { SlLike } from "react-icons/sl";
 import Singleuser from "./Singleuser";
 import { IoMdArrowRoundBack } from "react-icons/io";
@@ -36,6 +34,7 @@ const Likebutton = ({
     liking,
 }: Props) => {
     const { loginStatus: { loginUserName } } = useUserIsLogin();
+    const [toggleLikeIcon , setToggleLikeIcon] = useState(false);
 
     const [liked, setLiked] = useState(false);
     const [likes, setLikes] = useState<string[]>(
@@ -53,6 +52,11 @@ const Likebutton = ({
     const handlelike = async (apiForLike: string) => {
         if (liked) return;
         setLiked(true);
+        setToggleLikeIcon(true);
+
+        setTimeout(() => {
+            setToggleLikeIcon(false);
+        }, 100);
 
         const url = apiForLike;
         const body = null;
@@ -70,6 +74,12 @@ const Likebutton = ({
     const handleUnlike = async (apiForUnlike: string) => {
         if (!liked) return;
         setLiked(false);
+
+        setToggleLikeIcon(true);
+
+        setTimeout(() => {
+            setToggleLikeIcon(false);
+        }, 100);
 
         const url = apiForUnlike;
         const body = null;
@@ -105,7 +115,7 @@ const Likebutton = ({
     }, [likes, loginUserName]);
 
     useEffect(() => {
-        /*   setToggleLikesDialog(autoOpenTargetLike?.autoOpen ?
+          setToggleLikesDialog(autoOpenTargetLike?.autoOpen ?
               autoOpenTargetLike?.commentId :
               ' '
           );
@@ -116,15 +126,15 @@ const Likebutton = ({
           setTimeout(() => {
               setTargetLike(' ');
           }, 3000);
-   */
-    }, [autoOpenTargetLike]);
+  
+    }, [autoOpenTargetLike?.autoOpen]);
 
     return <div>
         <Button
             id='like-btn'
             buttonClass="flex gap-2"
             children={<>
-                <SlLike size={20} color={`${!liked ? '' : 'red'}`} />
+                <SlLike size={20}  className={`relative transition-all ${toggleLikeIcon ? '-translate-y-1' : 'translate-y-0'} ${liked ? 'text-pink-600' : ''} `} />
                 <span onClick={(e) => { setToggleLikesDialog(parentId); e.stopPropagation() }} >
                     {likes?.length || 0}
                 </span>

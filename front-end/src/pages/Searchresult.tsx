@@ -1,12 +1,12 @@
 import { useLocation } from "react-router-dom";
 import { useFetchData, useUserIsLogin } from "../hooks";
-import { Searchresultprops} from "../entities";
-import { Button, Menu, Searchform, Singleblogpost, Tab, UsershortInfor } from "../components";
+import { Searchresultprops } from "../entities";
+import { Backwardnav, Button, Menu, Searchform, Singleblogpost, Tab, UsershortInfor } from "../components";
 import { useEffect, useState } from "react";
 
 const Searchresult = () => {
   const location: { state: { getSearchInput: null } } = useLocation()
-  const { getSearchInput } = location.state;
+  const { getSearchInput } = location.state || { getSearchInput: null };
   const { setLoginStatus } = useUserIsLogin();
   const { data: searchResult, loading: loadingSearchResult } =
     useFetchData<Searchresultprops>(getSearchInput ? `/api/search?title=${getSearchInput}&body=${getSearchInput}&catigory=${getSearchInput}&userName=${getSearchInput}&name=${getSearchInput}` : '', [getSearchInput]);
@@ -17,7 +17,7 @@ const Searchresult = () => {
       name: 'all',
       content: <Button
         id={'search-result-all'}
-        buttonClass={'border-b'}
+        buttonClass={`transition-color duration-500 hover:text-green-500 ${searchResultCurrentTab === 'allresults' ? 'text-green-500' : ''}`}
         handleClick={() => setSearchResultCurrentTab('allresults')}
         children={'All'}
       />
@@ -26,7 +26,7 @@ const Searchresult = () => {
       name: 'blogposts',
       content: <Button
         id={'search-result-blogposts'}
-        buttonClass={'border-b'}
+        buttonClass={`transition-color duration-500 hover:text-green-500 ${searchResultCurrentTab === 'blogpostresults' ? 'text-green-500' : ''}`}
         handleClick={() => setSearchResultCurrentTab('blogpostresults')}
         children={'Blogposts'}
       />
@@ -35,8 +35,8 @@ const Searchresult = () => {
       name: 'users',
       content: <Button
         id={'search-result-users'}
-        buttonClass={'border-b'}
-        handleClick={() => setSearchResultCurrentTab('userResults')}
+        buttonClass={`transition-color duration-500 hover:text-green-400 ${searchResultCurrentTab === 'userresults' ? 'text-green-500' : ''}`}
+        handleClick={() => setSearchResultCurrentTab('userresults')}
         children={'Users'}
       />
     },
@@ -52,16 +52,13 @@ const Searchresult = () => {
   }, [searchResult?.searchHistory]);
 
   return <div className="space-y-5">
-    <div id="search-form-wrapper" className="relative flex justify-center items-center">
-      <div className="absolute -top-8">
-        <Searchform />
-      </div>
-    </div>
+    <Searchform />
+    <Backwardnav pageName="Search result" />
     <div id="search-result-menu" className="border-b" >
       <Menu
         id={'search-tab-menu'}
         arrOfMenu={searchTabMenu}
-        parentClass={'flex justify-between pb-2'}
+        parentClass={'flex justify-between font-text text-sm px-2'}
         childClass=""
       />
     </div>
@@ -77,72 +74,84 @@ const Searchresult = () => {
               (searchResult?.blogpostSearchResult || searchResult?.userSearchResults) ?
                 <>
                   <div id="all-search-result-for-userName">
-                    {searchResult?.userSearchResults.length ?
-                      searchResult?.userSearchResults.map((item) =>
-                        <UsershortInfor
-                          key={item.userName}
-                          userName={item.userName}
-                        />
-                      ) :
+                    {searchResult &&
+                      searchResult.userSearchResults &&
+                      searchResult.userSearchResults.length ?
+                      searchResult.userSearchResults
+                        .map((item) =>
+                          <UsershortInfor
+                            key={item.userName}
+                            userName={item.userName}
+                          />
+                        ) :
                       null
                     }
                   </div>
                   <div id="all-search-result-for-blogpost">
-                    {searchResult?.blogpostSearchResult.length ?
-                      searchResult?.blogpostSearchResult.map((item, index) =>
-                        item.status === 'published' ?
+                    {searchResult &&
+                      searchResult.blogpostSearchResult &&
+                      searchResult.blogpostSearchResult.length ?
+                      searchResult.blogpostSearchResult
+                        .map((item, index) =>
                           <Singleblogpost
                             key={item._id}
                             index={index}
                             blogpost={item}
                             type="text"
-                          /> :
-                          null
-                      ) :
-                      null}
+                          />
+                        ) :
+                      null
+                    }
                   </div>
                 </> :
-                <div>no search result</div>
+                <span className="text-base font-text font-semibold" >
+                  Noting found
+                </span>
             }</div>
           },
           {
             name: 'blogpostresults',
             content: <div id="search-result-for-blogpost">
-              <div>{searchResult?.blogpostSearchResult &&
-                searchResult?.blogpostSearchResult.length ?
-                searchResult?.blogpostSearchResult.map((item, index) =>
-                  item.status === 'published' ?
+              <div>{searchResult &&
+                searchResult.blogpostSearchResult &&
+                searchResult.blogpostSearchResult.length ?
+                searchResult.blogpostSearchResult
+                  .map((item, index) =>
                     <Singleblogpost
                       key={item._id}
                       index={index}
                       blogpost={item}
                       type="text"
-                    /> :
-                    null
-                ) :
-                <div>no search result</div>
+                    />
+                  ) :
+                <span className="text-base font-text font-semibold" >
+                  Noting found
+                </span>
               }</div>
             </div>
           },
           {
-            name: 'userResults',
+            name: 'userresults',
             content: <div id="search-result-for-users">
-              <div>{
-                searchResult?.userSearchResults &&
-                  searchResult?.userSearchResults.length ?
-                  searchResult?.userSearchResults.map((item) =>
+              <div>{searchResult &&
+                searchResult.userSearchResults &&
+                searchResult.userSearchResults.length ?
+                searchResult.userSearchResults
+                  .map((item) =>
                     <UsershortInfor
                       key={item.userName}
                       userName={item.userName}
                     />
                   ) :
-                  <div>no search result</div>
+                <span className="text-base font-text font-semibold" >
+                  Noting found
+                </span>
               }</div>
             </div>
           }
         ]}
       /> :
-      <div>loading search result...</div>
+      <div>loading...</div>
     }
   </div>
 };

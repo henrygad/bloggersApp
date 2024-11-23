@@ -1,5 +1,7 @@
-import { Button, Usercomment } from "../components";
+import { useEffect } from "react";
+import { Button, LandLoading, Usercomment } from "../components";
 import { Commentprops } from "../entities";
+import { useScrollPercent } from "../hooks";
 
 
 type Props = {
@@ -23,6 +25,22 @@ const CommentSec = ({
   numberOfComments,
 }: Props) => {
 
+  const { scrollPercent } = useScrollPercent();
+
+  const handleAutoLoadMoreComments = () => {
+    if (scrollPercent === 100 &&
+      !moreCommentsLoading
+    ) {
+      if (numberOfComments !== profileCommentsData.length) {
+        handleServerLoadMoreComments();
+      };
+    };
+
+  };
+
+  useEffect(() => {
+    handleAutoLoadMoreComments();
+  }, [scrollPercent]);
 
   return <div>
     {
@@ -39,20 +57,11 @@ const CommentSec = ({
                   />
                 )
               }
-                {numberOfComments !== profileCommentsData.length ?
-                  <Button
-                    id="loading-more-comment"
-                    buttonClass=""
-                    children={!moreCommentsLoading ? 'load more' : 'loading...'}
-                    handleClick={handleServerLoadMoreComments}
-                  /> :
-                  null
-                }
+                <LandLoading loading={moreCommentsLoading} />
               </> :
-              <div>no comments yet</div>
+              null
           }
         </> :
-
         <div>loading comment...</div>
     }
   </div>

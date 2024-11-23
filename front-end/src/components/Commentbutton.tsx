@@ -116,13 +116,13 @@ const Commentbutton = ({
                 [autoOpenTargetComment.comment, ...arrOfcomment.filter(item => item._id !== autoOpenTargetComment.comment?._id)] :
                 arrOfcomment
         );
-    }, [arrOfcomment, autoOpenTargetComment]);
+    }, [arrOfcomment, autoOpenTargetComment.comment]);
 
     useEffect(() => {
         setTimeout(() => {
            setToggleCommentDialog(autoOpenTargetComment?.autoOpen ? autoOpenTargetComment.blogpostId : '');
         }, 1000);
-    }, [autoOpenTargetComment]);
+    }, [autoOpenTargetComment?.autoOpen]);
 
     return <div>
         <Button

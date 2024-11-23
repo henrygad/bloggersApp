@@ -127,7 +127,7 @@ const Singleblogpostpage = () => {
                   null
               }
             </> :
-            <div>loading single blogpost...</div>
+            null
           }
 
         </div>

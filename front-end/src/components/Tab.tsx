@@ -1,6 +1,5 @@
 import { ReactNode} from "react";
 
-
 type TabProps = {
     id: string
     arrOfTab: {

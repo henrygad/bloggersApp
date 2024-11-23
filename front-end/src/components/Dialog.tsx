@@ -30,25 +30,43 @@ const Dialog = ({
 
     const handleDialogmoves = () => {
         if (dialog.trim().toLocaleLowerCase() === currentDialog.trim().toLocaleLowerCase()) {
-            setToggleDialog({parent: true, child: false });
+            setToggleDialog({ parent: true, child: false });
             setTimeout(() => {
-                setToggleDialog({parent: true, child: true });
+                setToggleDialog({ parent: true, child: true });
             }, 200);
         } else {
-            setToggleDialog({parent: true, child: false });
+            setToggleDialog(pre => pre ? { ...pre, child: false } : pre);
             setTimeout(() => {
-                setToggleDialog({parent: false, child: false });
+                setToggleDialog({ parent: false, child: false });
             }, 750);
         };
     };
 
+    const preventDefaultScroll = (e: WheelEvent | TouchEvent) => {
+        if (dialog.trim().toLocaleLowerCase() === currentDialog.trim().toLocaleLowerCase()) {
+            e.preventDefault();
+        };
+    };
+
     useEffect(() => {
-        handleDialogmoves()
+        handleDialogmoves();
+
+        window.addEventListener('wheel', preventDefaultScroll, { passive: false });
+        window.addEventListener('touchmove', preventDefaultScroll, { passive: false });
+
+        return () => {
+            window.removeEventListener('wheel', preventDefaultScroll);
+            window.removeEventListener('touchmove', preventDefaultScroll);
+        };
+
     },
         [
             dialog.trim().toLocaleLowerCase(),
             currentDialog.trim().toLocaleLowerCase()
         ]);
+
+
+
 
     return <Dialogwraaper
         id={id}
@@ -59,8 +77,7 @@ const Dialog = ({
                 'block' :
                 'hidden'
             }`}>
-        <Dialogchildrenwrapper ref={dialogRef} className={`${
-            toggleDialog.child ?
+        <Dialogchildrenwrapper ref={dialogRef} className={`${toggleDialog.child ?
             'translate-y-0' :
             'translate-y-[100%]'
             } ${childClass} `}>

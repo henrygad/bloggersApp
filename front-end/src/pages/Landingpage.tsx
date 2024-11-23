@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useScrollPercent, useFetchData } from "../hooks";
 import { Blogpostprops } from "../entities";
-import { Searchform, Singleblogpost } from "../components";
+import { LandLoading, Searchform, Singleblogpost } from "../components";
 
 type Props = {
     treadingFeedsData: Blogpostprops[]
@@ -14,14 +14,14 @@ const Landingpage = ({
     treadingFeedsLoading,
     treadingFeedsError,
 }: Props) => {
-
+    const { scrollPercent } = useScrollPercent();
     const [treading, setTreading] = useState<Blogpostprops[]>([]);
 
     const { fetchData: fetchRefreshFeedData, loading: loadingRefreshFeeds } = useFetchData<Blogpostprops[]>(null);
-    const { fetchData: fetchMoreFeedData, loading: loadingMoreFeeds, error } = useFetchData<Blogpostprops[]>(null);
+    const { fetchData: fetchMoreFeedData, loading: loadingMoreFeeds } = useFetchData<Blogpostprops[]>(null);
 
-    const handleRefreshFeed = async () => {
-        await fetchRefreshFeedData(`/api/blogposts?status=published&skip=0&limit=${treading.length}`)
+    const handleRefreshFeeds = async () => {
+        fetchRefreshFeedData(`/api/blogposts?status=published&skip=0&limit=${treading.length}`)
             .then((res) => {
                 const { data } = res;
                 if (!data) return;
@@ -30,8 +30,7 @@ const Landingpage = ({
     };
 
     const handleLoadMoreFeeds = async () => {
-        console.log(treading.length)
-        await fetchMoreFeedData(`/api/blogposts?status=published&skip=${treading.length}&limit=10`)
+        fetchMoreFeedData(`/api/blogposts?status=published&skip=${treading.length}&limit=10`)
             .then((res) => {
                 const { data } = res;
                 if (!data) return;
@@ -39,26 +38,26 @@ const Landingpage = ({
             });
     };
 
-    useScrollPercent((getScollPercentage) => {
-        if (getScollPercentage === 0) {
-            handleRefreshFeed();
-        };
-
-        if (getScollPercentage === 100) {
+    const handleLoadFeedsOnScroll = () => {
+        if (scrollPercent === 0) {
+            if (loadingMoreFeeds) return;
+            handleRefreshFeeds();
+        } else if (scrollPercent === 100) {
+            if (loadingRefreshFeeds) return;
             handleLoadMoreFeeds();
         };
-    });
+    };
 
     useEffect(() => {
         if (treadingFeedsData) setTreading(treadingFeedsData);
     }, [treadingFeedsData]);
 
-    return <div>
-        <div id="search-form-wrapper" className="relative flex justify-center w-full">
-            <div className="absolute -top-8">
-                <Searchform />
-            </div>
-        </div>
+    useEffect(() => {
+        handleLoadFeedsOnScroll();
+    }, [scrollPercent]);
+
+    return <div >
+        <Searchform />
         <div id="display-blogpost-wrapper" className="flex justify-center py-10">
             {
                 !treadingFeedsLoading ?
@@ -66,9 +65,7 @@ const Landingpage = ({
                         {treading &&
                             treading.length ?
                             <div>
-                                <span className={`block text-center ${!loadingRefreshFeeds ? '' : 'h-5'} cursor-pointer mt-8`}>
-                                    {!loadingRefreshFeeds ? null : 'loading...'}
-                                </span>
+                                <LandLoading loading={loadingRefreshFeeds} />
                                 <>
                                     {
                                         treading.map((item, index) =>
@@ -78,15 +75,14 @@ const Landingpage = ({
                                                     type={'text'}
                                                     index={index}
                                                     blogpost={item}
+                                                    callBack={({ _id }) => setTreading(pre => pre.filter(item => item._id !== _id))}
                                                 /> :
                                                 null
                                         )
 
                                     }
                                 </>
-                                <span className={`block text-center ${!loadingMoreFeeds ? 'h-0' : 'h-5'} cursor-pointer mt-8`}>
-                                    {!loadingMoreFeeds ? null : 'loading...'}
-                                </span>
+                                <LandLoading loading={loadingMoreFeeds} />
                             </div> :
                             null
                         }

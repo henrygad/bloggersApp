@@ -11,7 +11,7 @@ import { useAppDispatch } from "../redux/slices";
 import Trythistexteditor from "../custom-text-editor/App";
 import { deleteAll } from "../custom-text-editor/settings";
 import tw from "tailwind-styled-components";
-import { MdBlock, MdOutlineChatBubbleOutline } from "react-icons/md";
+import { MdBlock, MdDeleteOutline, MdOutlineChatBubbleOutline } from "react-icons/md";
 import { FaCheck } from "react-icons/fa";
 import { BsCopy } from "react-icons/bs";
 import { TfiFlagAlt2 } from "react-icons/tfi";
@@ -101,11 +101,11 @@ const Singlecomment = ({
       name: 'delete',
       to: '',
       content: <Button
-        id="share-blogpost-link"
-        children={!deleteCommentLoading ? 'Delete' : 'delete loading...'}
-        buttonClass="border-b"
-        handleClick={() => { handleDeleteComment(comment._id) }}
-      />
+      id="delete-comment-btn"
+      buttonClass="flex items-center gap-1"
+      children={<><MdDeleteOutline size={26} /> Delete</>}
+      handleClick={() => { handleDeleteComment(_id) }}
+  />
     },
 
   ];

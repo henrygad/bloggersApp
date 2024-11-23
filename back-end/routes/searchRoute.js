@@ -22,7 +22,7 @@ router.get('/search', async (req, res, next) => {
             !userConditions.length) throw new Error('Bad request: epmty field search query provided')
 
         const searchedBlogposts = await blogpostsData // search through all blogpost and return search result
-            .find({ $or: blogpostConditions })
+            .find({ $or: blogpostConditions, status: 'published' })
             .skip(skip)
             .limit(limit)
 

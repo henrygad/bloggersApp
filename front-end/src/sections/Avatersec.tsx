@@ -1,5 +1,7 @@
-import { Button, SingleImage } from "../components";
+import { useEffect } from "react";
+import { LandLoading, SingleImage } from "../components";
 import { Imageprops } from "../entities";
+import { useScrollPercent } from "../hooks";
 
 type Props = {
   profileAvatersData: Imageprops[]
@@ -21,6 +23,20 @@ const Avatersec = ({
   numberOfAvaters,
 }: Props) => {
 
+  const { scrollPercent } = useScrollPercent();
+
+  const handleAutoLoadMoreAvater = ()=>{
+
+    if(numberOfAvaters !== profileAvatersData.length){
+      handleServerLoadMoreAvaters();
+    };
+
+  };
+
+  useEffect(() => {
+    handleAutoLoadMoreAvater();
+  }, [scrollPercent]);
+
   return <div id="profile-advater">
     {
       !profileAvatersLoading ?
@@ -28,7 +44,7 @@ const Avatersec = ({
           profileAvatersData &&
             profileAvatersData.length ?
             <>{
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 " >
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2" >
                 {profileAvatersData.map((item, index) =>
                   <SingleImage
                     key={item._id}
@@ -39,17 +55,9 @@ const Avatersec = ({
                 )}
               </div>
             }
-              {numberOfAvaters !== profileAvatersData.length ?
-                <Button
-                  id="load-more-advater"
-                  children={!moreAvatersLoading ? 'load more' : 'loading...'}
-                  buttonClass=" "
-                  handleClick={handleServerLoadMoreAvaters}
-                /> :
-                null
-              }
+             <LandLoading loading={moreAvatersLoading} />
             </> :
-            <div>no advater</div>
+           null
         }</> :
         <div>advater loading...</div>
     }

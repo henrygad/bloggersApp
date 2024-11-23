@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Closedeye, Openeye } from "./Icons";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 
 type Props = {
     id: string
@@ -78,8 +78,8 @@ const Input = ({
                     className="flex justify-center items-center absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer z-10"
                     onClick={() => setPassWordVisibility(!passWordIsVisible)}>
                     {passWordIsVisible ?
-                        <Closedeye height="20px" width="20px" /> :
-                        <Openeye height="20px" width="20px" />
+                        <FaRegEye size={20} /> :
+                        <FaRegEyeSlash size={20} />
                     }
                 </span>
             }

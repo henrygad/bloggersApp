@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import {
   Feed,
   Contact,
@@ -17,8 +17,7 @@ import {
 } from './pages';
 import { Suspense, useEffect, useState } from "react";
 import { useChangeMode, useFetchData, useUserIsLogin } from "./hooks";
-import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser, Button } from "./components";
-import { Homeicon, Notificationsicon, Penicon, Profileicon, Searchicon } from "./components/Icons";
+import { Menu, Conpanylogo, Dialog, Tab, Signinuser, Signupuser, Button, Displayimage } from "./components";
 import tw from "tailwind-styled-components";
 import { fetchProfile } from "./redux/slices/userProfileSlices";
 import { fetchPublishedBlogposts, fetchSavedsBlogpost, fetchTimelineFeeds, fetchTotalNumberOfPublishedBlogposts, fetchUnpublishedBlogposts } from "./redux/slices/userBlogpostSlices";
@@ -27,13 +26,19 @@ import { fetchComments, fetchTotalNumberOfUserComments } from "./redux/slices/us
 import { Imageprops, Blogpostprops, Commentprops, Userprops } from "./entities";
 import { fetchAvaters, fetchBlogpostImages, fetchTotalNumberOfUserAvaters } from "./redux/slices/userImageSlices";
 import { MdDarkMode } from "react-icons/md"
-import { IoMdArrowRoundBack } from "react-icons/io";
+import { IoIosNotificationsOutline, IoMdArrowRoundBack } from "react-icons/io";
+import { GoHome } from "react-icons/go";
+import { TfiWrite } from "react-icons/tfi";
+import avaterPlaceholder from './assert/avaterplaceholder.svg';
+import { GrStatusPlaceholder } from "react-icons/gr";
+import { IoSaveOutline, IoSettingsOutline } from "react-icons/io5";
 
 const App = () => {
+  const location = useLocation();
   const { mode: changeBgMode, handleToggleTheme } = useChangeMode('themMode', 'light');
-  const { loginStatus: { isLogin, loginUserName, greetings, searchHistory } } = useUserIsLogin();
-
-  const { data: treadingFeedsData, loading: treadingFeedsLoading, error: treadingFeedsError } = useFetchData<Blogpostprops[]>('/api/blogposts?status=published&skip=0&limit=5');
+  const { loginStatus: { isLogin, loginUserName } } = useUserIsLogin();
+  
+  const { data: treadingFeedsData, loading: treadingFeedsLoading, error: treadingFeedsError } = useFetchData<Blogpostprops[]>('/api/blogposts?status=published&skip=0&limit=5', []);
   const { fetchData: fetchProfileData } = useFetchData<Userprops>(null);
   const { fetchData: fetchPublishedBlogpostData } = useFetchData<Blogpostprops[]>(null);
   const { fetchData: fetchTotalNumberOfPublishedBlogpostData } = useFetchData<Blogpostprops[]>(null);
@@ -45,7 +50,6 @@ const App = () => {
   const { fetchData: fetchTotalNumberOfCommentData } = useFetchData<Commentprops[]>(null);
   const { fetchData: fetchTimelineFeedData } = useFetchData<Blogpostprops[]>(null);
   const { fetchData: fetchSavesBlogpostsData } = useFetchData<Blogpostprops[]>(null);
-
 
   const { userProfile: { data: getProfileData } } = useAppSelector((state) => state.userProfileSlices);
   const appDispatch = useAppDispatch();
@@ -80,7 +84,6 @@ const App = () => {
   ];
 
   const loginHeaderMenu = [
-    { name: 'saves', to: '/saves' },
     {
       name: 'notifications',
       to: '',
@@ -95,10 +98,23 @@ const App = () => {
             :
             null
         }
-        <Notificationsicon width="30px" height="30px" />
+        <IoIosNotificationsOutline size={28} />
       </Link>
     },
-    { name: 'settings', to: '/settings' }
+    {
+      name: 'saves',
+      to: '',
+      content: <Link to='/saves'>
+        <IoSaveOutline size={22} />
+      </Link>
+    },
+    {
+      name: 'settings',
+      to: '',
+      content: <Link to='/settings'>
+        <IoSettingsOutline size={23} />
+      </Link>
+    }
   ];
 
   const logOutFooterMenu = [
@@ -114,28 +130,38 @@ const App = () => {
       name: 'feeds',
       to: '',
       content: <Link to='/feeds'>
-        <Homeicon width="30px" height="30px" />
+        <GoHome size={29}
+          className={`${location.pathname === '/feeds' ? 'text-green-500' : ''}`} />
       </Link>
     },
     {
       name: 'treading',
       to: '',
       content: <Link to='/treading' >
-        <Searchicon width="30px" height="30px" />
+        <GrStatusPlaceholder size={24}
+          className={`${location.pathname === '/treading' ? 'text-green-500' : ''}`} />
       </Link>
     },
     {
       name: 'createpost',
       to: '',
-      content: <Link to='/createpost' >
-        <Penicon width="30px" height="30px" />
+      content: <Link to='/createpost'
+        className={`${location.pathname === '/createpost' ? 'text-green-500' : ''}`}>
+        <TfiWrite size={22} />
       </Link>
     },
     {
       name: 'profile',
       to: '',
       content: <Link to={'/' + loginUserName} >
-        <Profileicon width="30px" height="30px" />
+        <Displayimage
+          id="profilw-nav-avater"
+          imageId={getProfileData ? getProfileData.displayImage : ''}
+          parentClass={`h-8 w-8 border border-gray-800 rounded-full
+             ${location.pathname === '/' + loginUserName ? 'border-green-500' : ''}`}
+          imageClass='object-contain rounded-full'
+          placeHolder={avaterPlaceholder}
+        />
       </Link>
     },
 
@@ -452,22 +478,23 @@ const App = () => {
     <header className="container w-full">
       <nav id="header-nav" className="flex justify-between items-center h-12">
         <Conpanylogo />
-        <span className="flex gap-4 items-center">
+        <div className="flex items-start gap-6">
           <Menu
-            parentClass="flex item-center gap-3 text-sm"
+            parentClass="flex item-center gap-4"
             childClass=""
             arrOfMenu={isLogin ? loginHeaderMenu : logOutHeaderMenu}
           />
           <Button
             id="change-bg-mode"
             buttonClass={''}
-            children={<MdDarkMode color={changeBgMode === 'light' ? 'black' : 'white'} size={20} />}
+            children={<MdDarkMode color={changeBgMode === 'light' ? 'black' : 'white'} size={24} />}
             handleClick={handleToggleTheme}
           />
-        </span>
+        </div>
+
       </nav>
     </header>
-    <main className="container w-full">
+    <main className={`container w-full ${isLogin ? 'pb-16' : ''}`}>
       <Suspense fallback={<Pageloading />}>
         <Routes>
           <Route path="*" element={<Page404 />} />
@@ -500,69 +527,67 @@ const App = () => {
         </Routes>
       </Suspense>
     </main>
-    <footer className="container relative w-full ">
-      <div>
-        {isLogin ?
-          <nav id="login-footer-nav" className="container fixed bottom-0 right-0 left-0 w-ful py-2">
-            <Menu
-              arrOfMenu={loginFooterMenu}
-              parentClass="w-full flex justify-around items-center"
-              childClass="cursor-pointer"
-            />
-          </nav>
-          :
-          <nav id="logout-footer-nav" className="space-y-3">
-            <Conpanylogo />
-            <Menu
-              arrOfMenu={logOutFooterMenu}
-              parentClass="capitalize space-y-3 max-w-[480px]"
-              childClass="block text-start"
-            />
-            {/* authentication dialog */}
-            <Dialog
-              id="authenticationDialog"
-              parentClass=""
-              childClass="container relative rounded-sm space-y-2 w-full h-full"
-              currentDialog="authenticationDialog"
-              children={
-                <>
-                  <Button
-                    id="authentication-dialog-close-btn"
-                    buttonClass='absolute top-1 left-1'
-                    children={<IoMdArrowRoundBack size={20} />}
-                    handleClick={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }}
-                  />
-                  <Tab
-                    id="authentication-tab"
-                    tabClass="pt-20"
-                    currentTab={authenticationCurrentTabOn}
-                    arrOfTab={[
-                      {
-                        name: 'login',
-                        content: <Signinuser
-                          switchPages={() => setAuthenticationCurrentTabOn('signup')}
-                          closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />,
-                      },
-                      {
-                        name: 'signup',
-                        content: <Signupuser
-                          switchPages={() => setAuthenticationCurrentTabOn('login')}
-                          closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />
-                      }
-                    ]}
-                  />
-                </>
-              }
-              dialog={authenticationDialog}
-              setDialog={setAuthenticationDialog}
-            />
-            <div className="w-full flex justify-center items-center py-4">
-              <p> © {new Date().getFullYear()} Blogback. All rights reserved</p>
-            </div>
-          </nav>
-        }
-      </div>
-    </footer>
+    <Footer>
+      {isLogin ?
+        <nav id="login-footer-nav" className="container fixed bottom-0 right-0 left-0 bg-inherit py-2 border-t">
+          <Menu
+            arrOfMenu={loginFooterMenu}
+            parentClass="w-full flex justify-between items-center"
+            childClass="cursor-pointer"
+          />
+        </nav>
+        :
+        <nav id="logout-footer-nav" className="space-y-3">
+          <Conpanylogo />
+          <Menu
+            arrOfMenu={logOutFooterMenu}
+            parentClass="capitalize space-y-3 max-w-[480px]"
+            childClass="block text-start"
+          />
+          {/* authentication dialog */}
+          <Dialog
+            id="authenticationDialog"
+            parentClass=""
+            childClass="container relative rounded-sm space-y-2 w-full h-full"
+            currentDialog="authenticationDialog"
+            children={
+              <>
+                <Button
+                  id="authentication-dialog-close-btn"
+                  buttonClass='absolute top-1 left-1'
+                  children={<IoMdArrowRoundBack size={20} />}
+                  handleClick={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }}
+                />
+                <Tab
+                  id="authentication-tab"
+                  tabClass="pt-20"
+                  currentTab={authenticationCurrentTabOn}
+                  arrOfTab={[
+                    {
+                      name: 'login',
+                      content: <Signinuser
+                        switchPages={() => setAuthenticationCurrentTabOn('signup')}
+                        closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />,
+                    },
+                    {
+                      name: 'signup',
+                      content: <Signupuser
+                        switchPages={() => setAuthenticationCurrentTabOn('login')}
+                        closePages={() => { setAuthenticationDialog(''); setAuthenticationCurrentTabOn('login') }} />
+                    }
+                  ]}
+                />
+              </>
+            }
+            dialog={authenticationDialog}
+            setDialog={setAuthenticationDialog}
+          />
+          <div className="w-full flex justify-center items-center py-4">
+            <p> © {new Date().getFullYear()} Blogback. All rights reserved</p>
+          </div>
+        </nav>
+      }
+    </Footer>
   </Appwrapper>
 };
 
@@ -575,4 +600,11 @@ dark:bg-stone-800
 dark:text-white
 w-full
 min-h-screen
+`
+const Footer = tw.div`
+container 
+relative w-full
+bg-white
+dark:bg-stone-800 
+dark:text-white
 `

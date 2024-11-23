@@ -1,10 +1,4 @@
 import Menu from './Menu';
-import {
-    Viewicon, Likeicon, Commenticon, CopyLinkicon, Penicon, Editicon,
-    Deleteicon, Searchicon, Settingsicon, Addphotoicon,
-    Openeye,
-    Closedeye, Imageplaceholder
-} from './Icons';
 import Conpanylogo from './Conpanylogo';
 import Dialog from './Dialog';
 import Tab from './Tab';
@@ -34,8 +28,12 @@ import Savesbutton from './Savesbutton';
 import Usercomment from './Usercomment';
 import Singleuser from './Singleuser';
 import Userdotnav from './Userdotnav';
+import LandLoading from './LandLoading';
+import Backwardnav from './Backwardnav';
 
 export {
+    Backwardnav,
+    LandLoading,
     Userdotnav,
     Singleuser,
     Usercomment,
@@ -50,18 +48,6 @@ export {
     Button,
     Menu,
     Conpanylogo,
-    Viewicon,
-    Likeicon,
-    Commenticon,
-    CopyLinkicon,
-    Penicon,
-    Editicon,
-    Deleteicon,
-    Searchicon,
-    Settingsicon,
-    Addphotoicon,
-    Openeye,
-    Closedeye,
     Dialog,
     Likebutton,
     Tab,
@@ -71,7 +57,6 @@ export {
     Texarea,
     Displayimage,
     Fileinput,
-    Imageplaceholder,
     Selectinput,
     Singleblogpost,
     UsershortInfor,
